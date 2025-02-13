@@ -9,4 +9,4 @@ Master User: admin
 Master pass: ThereWasATeamHere!
 
 FYI this should only be used if a table manually needs to be accessed. Llamda and otherwise should be configured through AWS.
-
+I reccomend using mySQL workbench to access it, as it simplifies and speeds up connecting to the DB.
