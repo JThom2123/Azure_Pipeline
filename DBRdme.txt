@@ -3,25 +3,23 @@ This is documentation for our Database and Tables
 VPC Setup
 Name: CPSC4910-Team22-vpc
 
-### This access point is explicitly for manual editing. Automation should be done through lambda. ###
+### This access point (EC2) is explicitly for manual editing. Automation should be done through lambda. ###
 
 EC2 Access point Info
 SSH User: ec2-user
 Security Group: CPSC4910-Team22-EC2-RDS-SG
-Elastic IP: 34.198.218.93
-
-No password, just key
-Uses key-pair: Team22-tpetit
+Elastic IP: 34.198.218.93 (Or whatever your instance IP is...)
+No password, just key-pair
 
 
 Credentials for RDS
 Database Name: cpsc4910-team22-db
-Master Username: admin
+Master User: admin
 Master pass: ThereWasATeamHere!
 
 ### IF YOU NEED ACCESS, LET ME KNOW AND I'LL MAKE IT HAPPEN ###
 
-Either that or you should be able to hook up an EC2 instance similar to the one I made. I can
+you should be able to clone up an EC2 instance similar to the one I made. I can
 write up a step-by-step process for setting it up if requested.
 
 
