@@ -1,7 +1,8 @@
 This is documentation for our Database and Tables
 
-VPC Setup
-Name: CPSC4910-Team22-vpc
+
+VPC: CPSC4910-Team22-vpc
+RDS Database: cpsc4910-team22-db
 
 ### This access point (EC2) is explicitly for manual editing. Automation should be done through lambda. ###
 
