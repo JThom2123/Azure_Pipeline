@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Application</title>
+    <title>Sponsor Application</title>
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
@@ -28,6 +30,20 @@
             width: 100%;
             margin-bottom: 10px;
         }
+        button[type="button"] {
+            padding: 10px;
+            width: 200px;
+            height: 30px;
+            background-color: #ffbf00; /* Yellow */
+            color: rgb(14, 14, 14);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button[type="button"]:hover {
+            background-color: #e6a800;
+        }
+
         /* Style for the Submit button */
         button[type="submit"] {
             padding: 10px;
@@ -40,32 +56,6 @@
         button[type="submit"]:hover {
             background-color: #0056b3;
         }
+        
     </style>
 </head>
-<body>
-    <form action="pending.html" method="get">
-        <h2 style="text-align: center;">Driver Application</h2>
-        <label for="first-name">First Name:</label>
-        <input type="text" id="first-name" name="first-name" required>
-
-        <label for="last-name">Last Name:</label>
-        <input type="text" id="last-name" name="last-name" required>
-
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-
-        <label for="phone">Phone Number:</label>
-        <input type="tel" id="phone" name="phone" required>
-
-        <label for="dropdown">Select an Option:</label>
-        <select id="dropdown" name="dropdown" required>
-            <option value="">--Please choose a sponsor--</option>
-            <option value="option1">Option 1</option>
-            <option value="option2">Option 2</option>
-            <option value="option3">Option 3</option>
-        </select>
-
-        <button type="submit">Submit</button>
-    </form>
-</body>
-</html>
