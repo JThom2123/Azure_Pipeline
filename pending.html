@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset = "UTF-8">
+    <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status</title>
+    <style>
+        body{
+            font-family: 'Times New Roman', Times, serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: white;
+            margin: 0;
+            text-align: center;
+        }
+        #status{
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .accepted { color: green; }
+        .denied { color: red; }
+        .pending { color: orange; }
+        button{
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button.hover{
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Application Status</h1>
+    <p id="status" class="pending">Checking status...</p>
+    <button onclick="window.location.href='index.html'">Return to Home</button>
+
+    <script>
+        // Simulating an application status fetch
+        function getApplicationStatus() {
+            // This would normally be retrieved from a database or API
+            const statuses = ["Accepted", "Denied", "Pending"];
+            const status = statuses[Math.floor(Math.random() * statuses.length)]; // Random selection for demo
+
+            const statusElement = document.getElementById("status");
+            statusElement.textContent = status;
+
+            if (status === "Accepted") {
+                statusElement.classList.add("accepted");
+            } else if (status === "Denied") {
+                statusElement.classList.add("denied");
+            } else {
+                statusElement.classList.add("pending");
+            }
+        }
+
+        // Simulate fetching status after 2 seconds (like a real database query)
+        setTimeout(getApplicationStatus, 2000);
+    </script>
+</body>
+</html>
