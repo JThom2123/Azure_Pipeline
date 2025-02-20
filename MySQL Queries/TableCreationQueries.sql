@@ -1,7 +1,8 @@
 
 create table Team22DB.audit_logs (logID INT primary key);
 create table Team22DB.users(userID int primary key, 
-	userType enum('admin', 'driver', 'sponsor') NOT NULL);
+	userType enum('admin', 'driver', 'sponsor') NOT NULL,
+    username varchar(20) not null);
 create table Team22DB.admin_users (userID int primary key);
 create table Team22DB.sponsor_users (userID int primary key);
 
