@@ -1,4 +1,4 @@
-"use client"; // Ensures the script runs in the browser
+"use client";
 import { useState } from "react";
 
 export default function Home() {
@@ -57,17 +57,18 @@ export default function Home() {
 
           <div id="description-container">
             {descriptions.map((desc, index) => (
-              <div
-                key={index}
-                className={`product-description ${isEditing ? "editable" : ""}`}
-                contentEditable={isEditing}
-                suppressContentEditableWarning={true}
-                onInput={(e) => updateDescription(index, e.currentTarget.textContent || "")}
-              >
-                {desc}
+              <div key={index} className={`product-description ${isEditing ? "editable" : ""}`}>
                 {isEditing && (
                   <button className="remove-btn" onClick={() => removeTextBox(index)}>X</button>
                 )}
+                <div
+                  contentEditable={isEditing}
+                  suppressContentEditableWarning={true}
+                  className="editable-content"
+                  onInput={(e) => updateDescription(index, e.currentTarget.textContent || "")}
+                >
+                  {desc}
+                </div>
               </div>
             ))}
           </div>
