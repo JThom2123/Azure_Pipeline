@@ -1,21 +1,32 @@
-"use client";
+"use client"; // Ensures the script runs in the browser
 import { useState } from "react";
 
 export default function Home() {
   const [isEditing, setIsEditing] = useState(false);
+  const [descriptions, setDescriptions] = useState([
+    "This is the product description. It provides an overview of the product’s features, benefits, and key details.",
+  ]);
 
-  const handleEditClick = () => {
+  const toggleEditMode = () => {
     setIsEditing(!isEditing);
-    const descriptionElement = document.querySelector(".product-description");
-    if (descriptionElement) {
-      descriptionElement.setAttribute("contentEditable", String(!isEditing));
-    }
+  };
+
+  const addTextBox = () => {
+    setDescriptions([...descriptions, "New description text..."]);
+  };
+
+  const removeTextBox = (index: number) => {
+    setDescriptions(descriptions.filter((_, i) => i !== index));
+  };
+
+  const updateDescription = (index: number, value: string) => {
+    const newDescriptions = [...descriptions];
+    newDescriptions[index] = value;
+    setDescriptions(newDescriptions);
   };
 
   return (
     <div>
-      <meta charSet="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Product Information</title>
 
       {/* Navigation Bar */}
@@ -26,7 +37,7 @@ export default function Home() {
           <button>Points</button>
           <button>More</button>
         </div>
-        <button className="edit-button" onClick={handleEditClick}>
+        <button className="edit-button" onClick={toggleEditMode}>
           {isEditing ? "Save" : "Edit"}
         </button>
       </div>
@@ -35,23 +46,37 @@ export default function Home() {
         {/* Sidebar */}
         <div className="sidebar">
           <h3><u>Project Details</u></h3>
-          <p><b>Team Number:</b> <span id="team-number">22</span></p>
-          <p><b>Sprint Number:</b> <span id="sprint-number">2</span></p>
-          <p><b>Release Date:</b> <span id="release-date">February 6, 2025</span></p>
+          <p><b>Team Number:</b> <span>22</span></p>
+          <p><b>Sprint Number:</b> <span>2</span></p>
+          <p><b>Release Date:</b> <span>February 6, 2025</span></p>
         </div>
 
         {/* Main Content */}
         <div className="main-content">
           <h1 className="product-name">Product Name</h1>
+
           <div id="description-container">
-            <div
-              className={`product-description ${isEditing ? "editable" : ""}`}
-              contentEditable={isEditing}
-              suppressContentEditableWarning={true}
-            >
-              This is the product description. It provides an overview of the product’s features, benefits, and key details.
-            </div>
+            {descriptions.map((desc, index) => (
+              <div
+                key={index}
+                className={`product-description ${isEditing ? "editable" : ""}`}
+                contentEditable={isEditing}
+                suppressContentEditableWarning={true}
+                onInput={(e) => updateDescription(index, e.currentTarget.textContent || "")}
+              >
+                {desc}
+                {isEditing && (
+                  <button className="remove-btn" onClick={() => removeTextBox(index)}>X</button>
+                )}
+              </div>
+            ))}
           </div>
+
+          {isEditing && (
+            <div className="action-buttons">
+              <button onClick={addTextBox}>Add Text Box</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
