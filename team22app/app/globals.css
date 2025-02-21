@@ -13,7 +13,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Navbar Styles */
+/* Navigation Bar */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -52,7 +52,7 @@ body {
   background: darkred;
 }
 
-/* Layout */
+/* Main Layout */
 .container {
   display: flex;
   flex: 1;
@@ -105,3 +105,38 @@ body {
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9f9ff;
 }
+
+/* Remove Button */
+.remove-btn {
+  background: darkred;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 3px;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.remove-btn:hover {
+  background: red;
+}
+
+/* Action Buttons */
+.action-buttons {
+  margin-top: 10px;
+}
+
+.action-buttons button {
+  background: green;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+
