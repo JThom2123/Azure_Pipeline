@@ -1,92 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Navigation Bar */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #333;
-  padding: 15px 20px;
-  color: white;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 15px;
-}
-
-.nav-buttons button {
-  background: #555;
+/* Position the delete "X" inside the text box at the top right */
+.remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: darkred;
   border: none;
   color: white;
-  padding: 10px 15px;
+  padding: 5px 10px;
   cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
+  font-size: 12px;
+  border-radius: 3px;
+  z-index: 10;
 }
 
-.nav-buttons button:hover {
-  background: #777;
-}
-
-.edit-button {
+.remove-btn:hover {
   background: red;
-  padding: 10px 15px;
-  font-weight: bold;
 }
 
-.edit-button:hover {
-  background: darkred;
-}
-
-/* Main Layout */
-.container {
-  display: flex;
-  flex: 1;
-}
-
-.sidebar {
-  width: 250px;
-  background-color: #f4f4f4;
-  padding: 20px;
-  border-right: 2px solid #ddd;
-}
-
-.sidebar h3 {
-  margin-bottom: 10px;
-}
-
-.sidebar p {
-  margin-bottom: 15px;
-  font-size: 16px;
-}
-
-.main-content {
-  flex-grow: 1;
-  padding: 40px;
-}
-
-.product-name {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 15px;
+/* Ensure text is inside a separate div and not affected by the "X" */
+.editable-content {
+  width: 100%;
+  min-height: 50px;
+  padding: 10px;
+  outline: none;
 }
 
 /* Product Description Box */
 .product-description {
+  position: relative; /* Ensure "X" stays positioned correctly */
   font-size: 18px;
   line-height: 1.5;
   padding: 15px;
@@ -105,38 +46,3 @@ body {
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9f9ff;
 }
-
-/* Remove Button */
-.remove-btn {
-  background: darkred;
-  border: none;
-  color: white;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 3px;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-}
-
-.remove-btn:hover {
-  background: red;
-}
-
-/* Action Buttons */
-.action-buttons {
-  margin-top: 10px;
-}
-
-.action-buttons button {
-  background: green;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
-  margin-right: 5px;
-}
-
