@@ -61,14 +61,15 @@ export default function Home() {
                 {isEditing && (
                   <button className="remove-btn" onClick={() => removeTextBox(index)}>X</button>
                 )}
-                <div
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning={true}
-                  className="editable-content"
-                  onInput={(e) => updateDescription(index, e.currentTarget.textContent || "")}
-                >
-                  {desc}
-                </div>
+                {isEditing ? (
+                  <textarea
+                    value={desc}
+                    onChange={(e) => updateDescription(index, e.target.value)}
+                    className="editable-content"
+                  />
+                ) : (
+                  <p className="editable-content">{desc}</p>
+                )}
               </div>
             ))}
           </div>
