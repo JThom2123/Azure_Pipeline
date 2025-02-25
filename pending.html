@@ -33,7 +33,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        button.hover{
+        button:hover{
             background-color: #0056b3;
         }
     </style>
@@ -44,11 +44,9 @@
     <button onclick="window.location.href='homepage.html'; return false;">Return to Home</button>
 
     <script>
-        // Simulating an application status fetch
         function getApplicationStatus() {
-            // This would normally be retrieved from a database or API
             const statuses = ["Accepted", "Denied", "Pending"];
-            const status = statuses[Math.floor(Math.random() * statuses.length)]; // Random selection for demo
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
 
             const statusElement = document.getElementById("status");
             statusElement.textContent = status;
@@ -62,7 +60,6 @@
             }
         }
 
-        // Simulate fetching status after 2 seconds (like a real database query)
         setTimeout(getApplicationStatus, 2000);
     </script>
 </body>
