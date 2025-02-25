@@ -85,7 +85,7 @@
 </head>
 
 <body>
-    <form id="sponsorForm">
+    <form id="sponsorForm" method="post" action="homepage.html">
         <h2 style="text-align: center;">Sponsor Application</h2>
         <label for="Sponsor-name">Sponsor Name:</label>
         <input type="text" id="Sponsor-name" name="Sponsor-name" required>
@@ -112,8 +112,14 @@
     <script>
         document.getElementById("sponsorForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent actual form submission
+
+            // Show alert to simulate successful submission
             alert("Application submitted successfully! Redirecting to home page...");
-            window.location.href = "homepage.html"; // Redirect to home page
+
+            // Manually redirect after alert
+            setTimeout(function() {
+                window.location.href = "homepage.html"; // Redirect to home page
+            }, 1000); // Wait 1 second before redirecting
         });
 
         function addDriver() {
