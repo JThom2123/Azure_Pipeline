@@ -22,7 +22,6 @@
             height: 100vh;
         }
 
-        /* Navigation Bar */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -51,7 +50,6 @@
             background: #777;
         }
 
-        /* Main Layout */
         .container {
             display: flex;
             flex: 1;
@@ -64,45 +62,36 @@
             border-right: 2px solid #ddd;
         }
 
-        .sidebar h3 {
-            margin-bottom: 10px;
-        }
-
-        .sidebar p {
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
         .main-content {
             flex-grow: 1;
             padding: 40px;
         }
 
-        .welcome-card { /* Welcome, Username */
+        .welcome-card {
             font-size: 54px;
             font-weight: normal;
             margin-bottom: 15px;
         }
         
-        .user-info { /* The Account Type, Sponsor Name, & Current Points */
+        .user-info {
             width: 100%;
-            padding: 15px; /* Small padding in front of text */
+            padding: 15px;
             display: flex;
-            flex-wrap: wrap; /* Used to wrap text with different screen sizes */
+            flex-wrap: wrap;
         }
 
         .item {
-            margin-right: 74px; /* Set the desired space between items */
+            margin-right: 74px;
         }
 
-        @media (max-width: 975px) { /* When the screen is under the given size, these features will apply */
+        @media (max-width: 975px) {
             .item {
-                margin-right: 0%; /* Set the desired space between items */
+                margin-right: 0%;
             }
             .container span {
-                width: 100%; /* Make each item take up the full width */
-                text-align: left; /* Align text to the left */
-                margin-bottom: 10px; /* Add space between items */
+                width: 100%;
+                text-align: left;
+                margin-bottom: 10px;
             }
         }
 
@@ -112,41 +101,29 @@
     </style>
 </head>
 <body>
-
-    <!-- Navigation Bar -->
     <div class="navbar">
         <div class="nav-buttons">
             <button>Home</button>
             <button>Catalog</button>
             <button>Points</button>
             <button>More</button>
+            <button onclick="redirectToApp()">Go to Application</button>
         </div>
     </div>
 
     <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Add info as needed -->
-        </div>
-
-        <!-- Main Content -->
+        <div class="sidebar"></div>
         <div class="main-content">
             <h1 class="welcome-card">Welcome, Username</h1>
-            
-            <!-- Driver Specific Content -->
             <div class="user-info driver">
                 <span class="item">Account Type: Driver</span>
                 <span class="item">Sponsor name: Walmart</span>
                 <span class="item">Current Points: 24</span>
             </div>
-
-            <!-- Sponsor Specific Content -->
             <div class="user-info sponsor">
                 <span class="item">Account Type: Sponsor</span>
                 <span class="item">Sponsored Drivers List: ...</span>
             </div>
-
-            <!-- Admin Specific Content -->
             <div class="user-info admin">
                 <span class="item">Account Type: Admin</span>
                 <span class="item">You are the best programmer in the world! Keep up the great work!!</span>
@@ -155,14 +132,24 @@
     </div>
 
     <script>
-        let userType = 'driver'; // Initial user type
+        let userType = 'driver'; 
+
+        function redirectToApp() {
+            if (userType === 'driver') {
+                window.location.href = 'driver_app.html';
+            } else if (userType === 'sponsor') {
+                window.location.href = 'sponsor_app.html';
+            } else {
+                alert("Invalid user type or no access to an application.");
+            }
+        }
 
         function toggleUserType() {
             if (userType === 'admin') {
                 userType = 'sponsor';
             } else if (userType === 'sponsor') {
                 userType = 'driver';
-            } else if (userType === 'driver'){
+            } else if (userType === 'driver') {
                 userType = 'admin';
             }
             showContent(userType);
@@ -173,13 +160,11 @@
             document.querySelector(`.${type}`).style.display = 'block';
         }
 
-        // Initial content display
         showContent(userType);
 
-        // Listen for the space key press
         document.addEventListener('keydown', function(event) {
             if (event.code === 'Space') {
-                event.preventDefault(); // Prevent default spacebar scrolling
+                event.preventDefault();
                 toggleUserType();
             }
         });
