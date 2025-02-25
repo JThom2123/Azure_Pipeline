@@ -35,7 +35,7 @@
             justify-content: center;
         }
 
-        button[type="button"] {
+        button[type="button"], .return-home {
             padding: 10px;
             width: 200px;
             height: 35px;
@@ -45,7 +45,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        button[type="button"]:hover {
+        button[type="button"]:hover, .return-home:hover {
             background-color: #e6a800;
         }
 
@@ -85,7 +85,7 @@
 </head>
 
 <body>
-    <form>
+    <form id="sponsorForm">
         <h2 style="text-align: center;">Sponsor Application</h2>
         <label for="Sponsor-name">Sponsor Name:</label>
         <input type="text" id="Sponsor-name" name="Sponsor-name" required>
@@ -110,6 +110,12 @@
     </form>
 
     <script>
+        document.getElementById("sponsorForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent actual form submission
+            alert("Application submitted successfully! Redirecting to home page...");
+            window.location.href = "homepage.html"; // Redirect to home page
+        });
+
         function addDriver() {
             const container = document.getElementById("driversContainer");
 
