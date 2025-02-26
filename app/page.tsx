@@ -37,7 +37,7 @@ const AboutPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">About Our Product</h1>
+      <h1 className="text-3xl font-bold mb-4">Welcome to Our About Page</h1>
 
       {loading && <p className="text-gray-600">Loading...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
