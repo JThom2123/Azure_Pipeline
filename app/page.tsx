@@ -1,100 +1,69 @@
-
 "use client";
+import { useEffect, useState } from "react";
 
-import { useState, useEffect } from "react";
-import type { Schema } from '../amplify/data/resource'
-import { generateClient } from 'aws-amplify/data'
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
+interface AboutSection {
+  section_name: string;
+  content: string;
+  last_updated: string;
+}
 
+const AboutPage = () => {
+  const [aboutData, setAboutData] = useState<AboutSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-Amplify.configure(outputs)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          "https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod/about"
+        );
 
-const client = generateClient<Schema>()
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
+        const data: AboutSection[] = await response.json();
+        setAboutData(data);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export default function Home() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [descriptions, setDescriptions] = useState([
-    "This is the product description. It provides an overview of the product’s features, benefits, and key details.",
-  ]);
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const addTextBox = () => {
-    setDescriptions([...descriptions, "New description text..."]);
-  };
-
-  const removeTextBox = (index: number) => {
-    setDescriptions(descriptions.filter((_, i) => i !== index));
-  };
-
-  const updateDescription = (index: number, value: string) => {
-    const newDescriptions = [...descriptions];
-    newDescriptions[index] = value;
-    setDescriptions(newDescriptions);
-  };
-  
+    fetchData();
+  }, []);
 
   return (
-    <div>
-      <title>Product Information</title>
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-4">About Our Product</h1>
 
-      {/* Navigation Bar */}
-      <div className="navbar">
-        <div className="nav-buttons">
-          <button>Home</button>
-          <button>Catalog</button>
-          <button>Points</button>
-          <button>More</button>
-        </div>
-        <button className="edit-button" onClick={toggleEditMode}>
-          {isEditing ? "Save" : "Edit"}
-        </button>
-      </div>
+      {loading && <p className="text-gray-600">Loading...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
 
-      <div className="container">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <h3><u>Project Details</u></h3>
-          <p><b>Team Number:</b> <span>22</span></p>
-          <p><b>Sprint Number:</b> <span>2</span></p>
-          <p><b>Release Date:</b> <span>February 6, 2025</span></p>
-        </div>
-
-        {/* Main Content */}
-        <div className="main-content">
-          <h1 className="product-name">Product Name</h1>
-
-          <div id="description-container">
-            {descriptions.map((desc, index) => (
-              <div key={index} className={`product-description ${isEditing ? "editable" : ""}`}>
-                {isEditing && (
-                  <button className="remove-btn" onClick={() => removeTextBox(index)}>X</button>
-                )}
-                {isEditing ? (
-                  <textarea
-                    value={desc}
-                    onChange={(e) => updateDescription(index, e.target.value)}
-                    className="editable-content"
-                  />
-                ) : (
-                  <p className="editable-content">{desc}</p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {isEditing && (
-            <div className="action-buttons">
-              <button onClick={addTextBox}>Add Text Box</button>
+      {!loading && !error && aboutData.length > 0 ? (
+        <div className="space-y-6">
+          {aboutData.map((section, index) => (
+            <div key={index} className="border-b pb-4">
+              <h2 className="text-xl font-semibold capitalize">
+                {section.section_name.replace(/_/g, " ")}
+              </h2>
+              <p className="text-gray-700">{section.content}</p>
+              <small className="text-gray-500">
+                Last updated:{" "}
+                {new Date(section.last_updated).toLocaleDateString()}
+              </small>
             </div>
-          )}
+          ))}
         </div>
-      </div>
+      ) : (
+        !loading && <p className="text-gray-600">No data available.</p>
+      )}
     </div>
   );
-}
+};
+
+export default AboutPage;
+
 
