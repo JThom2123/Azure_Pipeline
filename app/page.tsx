@@ -1,4 +1,3 @@
-
 "use client";
 import { useEffect, useState } from "react";
 
@@ -8,6 +7,8 @@ interface AboutSection {
   last_updated: string;
 }
 
+const API_URL = "https://3d52pmbo01.execute-api.us-east-1.amazonaws.com/dev/about";
+
 const AboutPage = () => {
   const [aboutData, setAboutData] = useState<AboutSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,9 +17,7 @@ const AboutPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
-          "https://3d52pmbo01.execute-api.us-east-1.amazonaws.com"
-        );
+        const response = await fetch(API_URL);
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -34,7 +33,7 @@ const AboutPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, []); 
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -53,7 +52,11 @@ const AboutPage = () => {
               <p className="text-gray-700">{section.content}</p>
               <small className="text-gray-500">
                 Last updated:{" "}
-                {new Date(section.last_updated).toLocaleDateString()}
+                {new Intl.DateTimeFormat("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }).format(new Date(section.last_updated))}
               </small>
             </div>
           ))}
@@ -66,5 +69,4 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
-
 
