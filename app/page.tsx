@@ -16,7 +16,7 @@ const AboutPage = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          "https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod/about"
+          "https://3d52pmbo01.execute-api.us-east-1.amazonaws.com"
         );
 
         if (!response.ok) {
