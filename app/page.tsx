@@ -7,7 +7,7 @@ interface AboutSection {
   last_updated: string;
 }
 
-const API_URL = "https://3d52pmbo01.execute-api.us-east-1.amazonaws.com/dev/about";
+const API_URL = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/about";
 
 const AboutPage = () => {
   const [aboutData, setAboutData] = useState<AboutSection[]>([]);
