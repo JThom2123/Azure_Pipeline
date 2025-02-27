@@ -111,7 +111,7 @@
             <button type="button" id="removeDriverBtn" class="remove-btn" onclick="removeDriver()">❌ Remove Last Driver</button>
         </div>
 
-        <button type="submit">Submit</button>
+        <button onclick="redirectToHome()">Submit</button>
     </form>
 
     <script>
@@ -175,6 +175,12 @@
                     container.removeChild(lastDriver); // Remove the last driver section
                 }
             }
+
+            function redirectToHome() {
+                window.location.href = 'homepage.html';
+            }
+
+
         });
     </script>
 </body>
