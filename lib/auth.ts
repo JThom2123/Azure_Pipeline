@@ -1,86 +1,33 @@
-import { Amplify } from "aws-amplify";
-import {
-  signIn as amplifySignIn,
-  signUp as amplifySignUp,
-  confirmSignUp as amplifyConfirmSignUp,
-  signOut as amplifySignOut,
-  resendSignUpCode,
-} from "aws-amplify/auth";
-import awsExports from "@/amplify_outputs.json"; // Ensure this file exists
-
-// Configure Amplify
-Amplify.configure(awsExports);
+import { Auth } from "aws-amplify";
 
 /**
- * Sign up a new user with email and password.
+ * Function to handle user sign-up
  */
-export async function signUp(email: string, password: string) {
-  try {
-    const { userId } = await amplifySignUp({
-      username: email,
-      password,
-      options: {
-        userAttributes: {
-          email,
-        },
-      },
-    });
-    return { success: true, userId };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+export async function signUp({ username, password, email }: { username: string; password: string; email: string }) {
+  return Auth.signUp({
+    username,
+    password,
+    attributes: { email },
+  });
 }
 
 /**
- * Confirm sign-up with a verification code.
+ * Function to handle user sign-in
  */
-export async function confirmUserSignUp(email: string, code: string) {
-  try {
-    await amplifyConfirmSignUp({
-      username: email,
-      confirmationCode: code,
-    });
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+export async function signIn({ username, password }: { username: string; password: string }) {
+  return Auth.signIn(username, password);
 }
 
 /**
- * Resend the sign-up confirmation code.
+ * Function to confirm sign-up
  */
-export async function resendConfirmationCode(email: string) {
-  try {
-    await resendSignUpCode({ username: email });
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+export async function confirmSignUp(username: string, code: string) {
+  return Auth.confirmSignUp(username, code);
 }
 
 /**
- * Sign in a user with email and password.
+ * Function to sign out the user
  */
-export async function signIn(email: string, password: string) {
-  try {
-    const user = await amplifySignIn({
-      username: email,
-      password,
-    });
-    return { success: true, user };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Sign out the current user.
- */
-export async function signOutUser() {
-  try {
-    await amplifySignOut();
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+export async function signOut() {
+  return Auth.signOut();
 }
