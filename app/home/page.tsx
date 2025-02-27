@@ -1,17 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAuthSession, signIn, signOut, getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, signIn, signOut, getCurrentUser, AuthUser } from "aws-amplify/auth";
 
 
 export default function HomePage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const currentUser = await getCurrentUser();
+        const currentUser: AuthUser = await getCurrentUser(); 
         setUser(currentUser);
       } catch (error) {
         router.push("/login"); // Redirect to login if not authenticated
