@@ -1,11 +1,20 @@
-"use client"
+"use client";
 import { Inter } from "next/font/google";
 import React from "react";
 import { Amplify } from "aws-amplify";
+import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "./globals.css"
 
+Amplify.configure({
+  Auth: {
+    region: "us-east-1", 
+    userPoolId: "us-east-1_SBC9pg6ag", 
+    userPoolWebClientId: "107720oslv197r2qvlb4h1ptcs", 
+    mandatorySignIn: true, 
+  },
+});
 
 const inter = Inter({ subsets: ["latin"] });
 
