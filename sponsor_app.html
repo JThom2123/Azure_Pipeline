@@ -123,8 +123,13 @@
             form.addEventListener("submit", function(event) {
                 event.preventDefault(); // Prevent the form from submitting normally
 
-                // Redirect to homepage after form submission
-                window.location.href = "homepage.html"; // Redirect to homepage
+                // Simulate form submission success and show a message
+                alert("Application submitted successfully! Redirecting to home page...");
+
+                // After a short delay, redirect to homepage.html
+                setTimeout(function() {
+                    window.location.href = "homepage.html"; // Redirect to homepage
+                }, 1000); // Wait 1 second before redirecting
             });
 
             // Function to add more driver fields
