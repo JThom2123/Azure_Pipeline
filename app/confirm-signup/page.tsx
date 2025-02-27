@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { confirmSignUp } from "../../lib/auth";
+import { userConfirmSignUp } from "../../lib/auth";
 
 export default function ConfirmSignUpPage() {
     const router = useRouter();
