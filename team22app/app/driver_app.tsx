@@ -8,7 +8,7 @@
         '\n        body {\n            font-family: \'Times New Roman\', Times, serif;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            background-color: white;\n            margin: 0;\n        }\n        form {\n            background: white;\n            padding: 20px;\n            border-radius: 10px;\n            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);\n            width: 60%;\n            max-width: 800px;\n            min-width: 400px;\n        }\n        label, input, select, button {\n            display: block;\n            width: 100%;\n            margin-bottom: 10px;\n        }\n        /* Style for the Submit button */\n        button[type="submit"] {\n            padding: 10px;\n            background-color: #007bff; /* Blue */\n            color: white;\n            border: none;\n            border-radius: 5px;\n            cursor: pointer;\n        }\n        button[type="submit"]:hover {\n            background-color: #0056b3;\n        }\n    '
     }}
   />
-  <form action="pending.html" method="get">
+  <form action="pending.tsx" method="get">
     <h2 style={{ textAlign: "center" }}>Driver Application</h2>
     <label htmlFor="first-name">First Name:</label>
     <input type="text" id="first-name" name="first-name" required="" />
