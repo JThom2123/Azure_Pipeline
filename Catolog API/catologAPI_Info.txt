@@ -1,1 +1,7 @@
-shdf
+This is the catolog api information:
+
+-The api will be using the etsy api. Currently these are the api details: 
+Keystring:  u2oo5f5zdr7lxwkoxfrjxspm
+Shared secret:  i4g118uzzx
+
+-
