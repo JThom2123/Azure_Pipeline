@@ -1,38 +1,16 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-
-const ApplicationStatus = () => {
-  const [status, setStatus] = useState("Checking status...");
-  const [statusClass, setStatusClass] = useState("pending");
-  const router = useRouter();
-
-  useEffect(() => {
-    const statuses = ["Accepted", "Denied", "Pending"];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-    setStatus(randomStatus);
-
-    if (randomStatus === "Accepted") {
-      setStatusClass("accepted");
-    } else if (randomStatus === "Denied") {
-      setStatusClass("denied");
-    } else {
-      setStatusClass("pending");
-    }
-  }, []);
-
-  return (
-    <div className="flex flex-col justify-center items-center h-screen bg-white text-center">
-      <h1 className="text-2xl font-bold">Application Status</h1>
-      <p className={`text-xl font-bold my-5 ${statusClass}`}>{status}</p>
-      <button 
-        className="mt-5 px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-        onClick={() => router.push("homepage.tsx")}
-      >
-        Return to Home
-      </button>
-    </div>
-  );
-};
-
-export default ApplicationStatus;
+<>
+  <meta charSet="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Application Status</title>
+  <style
+    dangerouslySetInnerHTML={{
+      __html:
+        "\n        body {\n            font-family: 'Times New Roman', Times, serif;\n            display: flex;\n            flex-direction: column;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            background-color: white;\n            margin: 0;\n            text-align: center;\n        }\n        #status {\n            font-size: 24px;\n            font-weight: bold;\n            margin: 20px 0;\n        }\n        .accepted { color: green; }\n        .denied { color: red; }\n        .pending { color: orange; }\n        button {\n            margin-top: 20px;\n            padding: 10px 20px;\n            background-color: #007bff;\n            color: white;\n            border: none;\n            border-radius: 5px;\n            cursor: pointer;\n        }\n        button:hover {\n            background-color: #0056b3;\n        }\n    "
+    }}
+  />
+  <h1>Application Status</h1>
+  <p id="status" className="pending">
+    Checking status...
+  </p>
+  <button id="homeBtn">Return to Home</button>
+</>
