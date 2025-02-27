@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth";
+import { signOut } from "@/amplify/auth/resource";
 
 export default function AdminHomePage() {
     const router = useRouter();
