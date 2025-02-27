@@ -112,11 +112,16 @@
             <button type="button" id="removeDriverBtn" class="remove-btn" onclick="removeDriver()">❌ Remove Last Driver</button>
         </div>
 
-        <a href="homepage.html" class="button">submit</a>
+        <button id="mybutton">submit</button>
         
     </form>
 
     <script>
+
+        document.getElementById("mybutton").onclick = function () {
+            window.location.href = "homepage.html";
+        };
+
         // ✅ Fixed JavaScript to allow form submission
         window.addEventListener('load', function() {
             const form = document.getElementById("sponsorForm");
