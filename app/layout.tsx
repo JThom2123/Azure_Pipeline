@@ -4,12 +4,6 @@ import { Inter } from "next/font/google";
 import React from "react";
 import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
-/*
-this gives a sign in/account creation screen. To be added later.
-        <Authenticator>
-          {children}
-        </Authenticator>
-*/
 import "@aws-amplify/ui-react/styles.css";
 import outputs from "@/amplify_outputs.json";
 
