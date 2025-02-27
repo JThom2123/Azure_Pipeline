@@ -1,37 +1,59 @@
-import { Amplify, signIn, signUp, confirmSignUp, signOut } from "aws-amplify";
-import awsExports from "../aws-exports"; 
+import { Amplify } from "aws-amplify";
+import {
+  signIn,
+  signUp,
+  confirmSignUp,
+  signOut,
+} from "@aws-amplify/auth";
+import awsExports from "@/aws-exports";
 
-// Configure Amplify
+// Configure Amplify Auth
 Amplify.configure(awsExports);
 
-/**
- * Function to handle user sign-up
- */
-export async function userSignUp(username: string, password: string, email: string) {
-  return signUp({
-    username,
-    password,
-    attributes: { email },
-  });
-}
+// Sign In User
+export const userSignIn = async (username: string, password: string) => {
+  try {
+    const user = await signIn({ username, password });
+    return user;
+  } catch (error) {
+    console.error("Sign-in error:", error);
+    throw error;
+  }
+};
 
-/**
- * Function to handle user sign-in
- */
-export async function userSignIn(username: string, password: string) {
-  return signIn({ username, password });
-}
+// Sign Up User
+export const userSignUp = async (username: string, password: string, email: string) => {
+  try {
+    const user = await signUp({
+      username,
+      password,
+      options: {
+        userAttributes: { email },
+      },
+    });
+    return user;
+  } catch (error) {
+    console.error("Sign-up error:", error);
+    throw error;
+  }
+};
 
-/**
- * Function to confirm sign-up
- */
-export async function userConfirmSignUp(username: string, code: string) {
-  return confirmSignUp({ username, code });
-}
+// Confirm Sign Up
+export const userConfirmSignUp = async (username: string, code: string) => {
+  try {
+    await confirmSignUp({ username, confirmationCode: code });
+  } catch (error) {
+    console.error("Confirmation error:", error);
+    throw error;
+  }
+};
 
-/**
- * Function to sign out the user
- */
-export async function userSignOut() {
-  return signOut();
-}
+// Sign Out User
+export const userSignOut = async () => {
+  try {
+    await signOut();
+  } catch (error) {
+    console.error("Sign-out error:", error);
+    throw error;
+  }
+};
