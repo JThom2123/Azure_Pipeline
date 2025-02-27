@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { signOut } from "../../lib/auth";
+import { userSignOut } from "../../lib/auth";
 
 export default function AdminHomePage() {
     const router = useRouter();
