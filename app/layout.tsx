@@ -1,24 +1,12 @@
 "use client"
 import { Inter } from "next/font/google";
-
 import React from "react";
 import { Amplify } from "aws-amplify";
-import { Authenticator } from "@aws-amplify/ui-react";
-/*
-this gives a sign in/account creation screen. To be added later.
-        <Authenticator>
-          {children}
-        </Authenticator>
-*/
 import "@aws-amplify/ui-react/styles.css";
-import outputs from "@/amplify_outputs.json";
-
-
-
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-Amplify.configure(outputs);
+
 const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
@@ -30,18 +18,18 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-/*
-export const metadata: Metadata = {
-  title: "Product Information",
-  description: "Product details and editing page",
-};
-*/
+
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="welcome-container">
+          <h1 className="text-4xl font-bold text-center mt-10">Welcome to the Application</h1>
+          <p className="text-center text-lg mt-4">Please log in to continue.</p>
+        </div>
         {children}
       </body>
     </html>
