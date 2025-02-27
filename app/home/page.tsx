@@ -6,12 +6,19 @@ import { fetchAuthSession, signIn, signOut, getCurrentUser } from "aws-amplify/a
 
 export default function HomePage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const user = await getCurrentUser();
-      .then(setUser)
-      .catch(() => router.push("/login")); // Redirect to login if not authenticated
+    const checkUser = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        router.push("/login"); // Redirect to login if not authenticated
+      }
+    };
+
+    checkUser();
   }, []);
 
   const handleLogout = async () => {
