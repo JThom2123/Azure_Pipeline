@@ -9,7 +9,7 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    Auth.currentAuthenticatedUser()
+    const user = await getCurrentUser();
       .then(setUser)
       .catch(() => router.push("/login")); // Redirect to login if not authenticated
   }, []);
