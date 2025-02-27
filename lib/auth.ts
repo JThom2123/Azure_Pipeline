@@ -1,10 +1,14 @@
-import { Auth } from "aws-amplify";
+import { Amplify, signIn, signUp, confirmSignUp, signOut } from "aws-amplify";
+import awsExports from "../aws-exports"; 
+
+// Configure Amplify
+Amplify.configure(awsExports);
 
 /**
  * Function to handle user sign-up
  */
-export async function signUp({ username, password, email }: { username: string; password: string; email: string }) {
-  return Auth.signUp({
+export async function userSignUp(username: string, password: string, email: string) {
+  return signUp({
     username,
     password,
     attributes: { email },
@@ -14,20 +18,20 @@ export async function signUp({ username, password, email }: { username: string; 
 /**
  * Function to handle user sign-in
  */
-export async function signIn({ username, password }: { username: string; password: string }) {
-  return Auth.signIn(username, password);
+export async function userSignIn(username: string, password: string) {
+  return signIn({ username, password });
 }
 
 /**
  * Function to confirm sign-up
  */
-export async function confirmSignUp(username: string, code: string) {
-  return Auth.confirmSignUp(username, code);
+export async function userConfirmSignUp(username: string, code: string) {
+  return confirmSignUp({ username, code });
 }
 
 /**
  * Function to sign out the user
  */
-export async function signOut() {
-  return Auth.signOut();
+export async function userSignOut() {
+  return signOut();
 }
