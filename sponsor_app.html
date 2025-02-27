@@ -90,7 +90,7 @@
 </head>
 
 <body>
-    <!-- ✅ Added id="sponsorForm" to match JavaScript -->
+    
     <form action="homepage.html" method="get" id="sponsorForm">
         <h2 style="text-align: center;">Sponsor Application</h2>
         <label for="Sponsor-name">Sponsor Name:</label>
@@ -112,16 +112,10 @@
             <button type="button" id="removeDriverBtn" class="remove-btn" onclick="removeDriver()">❌ Remove Last Driver</button>
         </div>
 
-        <button id="mybutton">submit</button>
-        
+        <button type="submit">Submit</button>
     </form>
 
     <script>
-
-        document.getElementById("mybutton").onclick = function () {
-            window.location.href = "homepage.html";
-        };
-
         // ✅ Fixed JavaScript to allow form submission
         window.addEventListener('load', function() {
             const form = document.getElementById("sponsorForm");
