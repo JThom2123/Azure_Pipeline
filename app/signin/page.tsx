@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Auth } from "aws-amplify";
+import { userSignIn } from "@/lib/auth"; 
+
 
 export default function SignInPage() {
   const router = useRouter();
