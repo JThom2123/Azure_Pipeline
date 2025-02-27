@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      await Auth.signIn(email, password);
+      await signIn({email, password});
       router.push("/home"); // Redirect to home after login
     } catch (err: any) {
       setError(err.message);
