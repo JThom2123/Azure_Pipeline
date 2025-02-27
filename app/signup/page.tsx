@@ -1,21 +1,23 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAuthSession, signIn, signOut, getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, signIn, signOut, getCurrentUser, signUp } from "aws-amplify/auth";
 
 
 export default function SignUpPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
   const [error, setError] = useState("");
-  const [isConfirming, setIsConfirming] = useState(false);
 
   const handleSignUp = async () => {
     try {
-      await Auth.signUp({ username: email, password, attributes: { email } });
-      setIsConfirming(true);
+      await signUp({
+        username: email, // Cognito requires "username" for email sign-up
+        password,
+        attributes: { email },
+      });
+      router.push("/confirm-signup"); // Redirect to confirm sign-up page
     } catch (err: any) {
       setError(err.message);
     }
