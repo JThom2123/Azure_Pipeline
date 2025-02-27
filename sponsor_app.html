@@ -90,7 +90,8 @@
 </head>
 
 <body>
-    <form action="homepage.html" method="get">
+    <!-- ✅ Added id="sponsorForm" to match JavaScript -->
+    <form action="homepage.html" method="get" id="sponsorForm">
         <h2 style="text-align: center;">Sponsor Application</h2>
         <label for="Sponsor-name">Sponsor Name:</label>
         <input type="text" id="Sponsor-name" name="Sponsor-name" required>
@@ -115,21 +116,17 @@
     </form>
 
     <script>
-        // Wait until the page is fully loaded
+        // ✅ Fixed JavaScript to allow form submission
         window.addEventListener('load', function() {
             const form = document.getElementById("sponsorForm");
 
-            // Add event listener to intercept the submit button
-            form.addEventListener("submit", function(event) {
-                 event.preventDefault(); // ❌ This stops the form from redirecting!
+            // ✅ No more event.preventDefault(), so form submits properly
+            form.addEventListener("submit", function() {
                 alert("Application submitted successfully! Redirecting to home page...");
-                setTimeout(function() {
-                    window.location.href = "homepage.html";
-                }, 1000);
             });
 
             // Function to add more driver fields
-            function addDriver() {
+            window.addDriver = function() {
                 const container = document.getElementById("driversContainer");
 
                 // Create new driver fields
@@ -160,21 +157,17 @@
 
                 // Append the new driver section to the container
                 container.appendChild(newDriver);
-            }
+            };
 
             // Function to remove last driver fields
-            function removeDriver() {
+            window.removeDriver = function() {
                 const container = document.getElementById("driversContainer");
                 const drivers = container.querySelectorAll('.driver');
                 if (drivers.length > 1) {  // Don't remove the first driver
                     const lastDriver = drivers[drivers.length - 1];
                     container.removeChild(lastDriver); // Remove the last driver section
                 }
-            }
-
-            
-
-
+            };
         });
     </script>
 </body>
