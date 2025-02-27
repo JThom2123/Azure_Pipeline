@@ -1,39 +1,31 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAuthSession, signOut } from "aws-amplify/auth";
+import { fetchAuthSession, signIn, signOut, getCurrentUser } from "aws-amplify/auth";
 
 export default function HomePage() {
   const router = useRouter();
-  const [user, setUser] = useState<string | null>(null); // Storing username as string
+  const [username, setUsername] = useState<string | null>(null); // Storing username as string
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const session = await fetchAuthSession(); // Fetch session instead of getCurrentUser
-        const idToken = session.tokens?.idToken; // Get ID token
+  const checkUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setUsername(currentUser.username || "Unknown User");
+    } catch (error) {
+      router.push("/login"); // Redirect to login if not authenticated
+    }
+  };
 
-        if (idToken) {
-          setUser(idToken.payload["cognito:username"]); // Extract username
-        } else {
-          throw new Error("User not authenticated");
-        }
-      } catch (error) {
-        if (typeof window !== "undefined") {
-          router.push("/login"); // Redirect to login if not authenticated
-        }
-      }
-    };
-
-    checkUser();
-  }, [router]);
+  checkUser();
+}, []);
 
   const handleLogout = async () => {
     await signOut();
     router.push("/");
   };
 
-  if (!user) return <p className="text-center">Loading...</p>;
+  if (!username) return <p className="text-center">Loading...</p>;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
