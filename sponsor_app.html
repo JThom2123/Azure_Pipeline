@@ -15,6 +15,7 @@
             background-color: white;
             margin: 0;
         }
+
         form {
             background: white;
             padding: 20px;
@@ -24,11 +25,13 @@
             max-width: 800px;
             min-width: 400px;
         }
+
         label, input, select, button {
             display: block;
             width: 100%;
             margin-bottom: 10px;
         }
+
         .button-container {
             display: flex;
             gap: 10px;
@@ -45,6 +48,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
         button[type="button"]:hover, .return-home:hover {
             background-color: #e6a800;
         }
@@ -58,6 +62,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
         button[type="submit"]:hover {
             background-color: #0056b3;
         }
@@ -85,7 +90,8 @@
 </head>
 
 <body>
-    <form id="sponsorForm" method="post" action="homepage.html">
+    
+    <form action="homepage.html" method="get" id="sponsorForm">
         <h2 style="text-align: center;">Sponsor Application</h2>
         <label for="Sponsor-name">Sponsor Name:</label>
         <input type="text" id="Sponsor-name" name="Sponsor-name" required>
@@ -110,66 +116,59 @@
     </form>
 
     <script>
-        document.getElementById("sponsorForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent actual form submission
+        // ✅ Fixed JavaScript to allow form submission
+        window.addEventListener('load', function() {
+            const form = document.getElementById("sponsorForm");
 
-            // Show alert to simulate successful submission
-            alert("Application submitted successfully! Redirecting to home page...");
+            // ✅ No more event.preventDefault(), so form submits properly
+            form.addEventListener("submit", function() {
+                alert("Application submitted successfully! Redirecting to home page...");
+            });
 
-            // Manually redirect after alert
-            setTimeout(function() {
-                window.location.href = "homepage.html"; // Redirect to home page
-            }, 1000); // Wait 1 second before redirecting
+            // Function to add more driver fields
+            window.addDriver = function() {
+                const container = document.getElementById("driversContainer");
+
+                // Create new driver fields
+                const newDriver = document.createElement("div");
+                newDriver.classList.add("driver");
+
+                // First Name Input
+                const firstNameLabel = document.createElement("label");
+                firstNameLabel.textContent = "Driver First Name:";
+                const firstNameInput = document.createElement("input");
+                firstNameInput.type = "text";
+                firstNameInput.name = "Driver-first-name";
+                firstNameInput.required = true;
+
+                // Last Name Input
+                const lastNameLabel = document.createElement("label");
+                lastNameLabel.textContent = "Driver Last Name:";
+                const lastNameInput = document.createElement("input");
+                lastNameInput.type = "text";
+                lastNameInput.name = "Driver-last-name";
+                lastNameInput.required = true;
+
+                // Append new driver fields
+                newDriver.appendChild(firstNameLabel);
+                newDriver.appendChild(firstNameInput);
+                newDriver.appendChild(lastNameLabel);
+                newDriver.appendChild(lastNameInput);
+
+                // Append the new driver section to the container
+                container.appendChild(newDriver);
+            };
+
+            // Function to remove last driver fields
+            window.removeDriver = function() {
+                const container = document.getElementById("driversContainer");
+                const drivers = container.querySelectorAll('.driver');
+                if (drivers.length > 1) {  // Don't remove the first driver
+                    const lastDriver = drivers[drivers.length - 1];
+                    container.removeChild(lastDriver); // Remove the last driver section
+                }
+            };
         });
-
-        function addDriver() {
-            const container = document.getElementById("driversContainer");
-
-            // Divider (Horizontal line)
-            const divider = document.createElement("hr");
-
-            // Create a new driver div
-            const newDriver = document.createElement("div");
-            newDriver.classList.add("driver");
-
-            // First Name
-            const firstNameLabel = document.createElement("label");
-            firstNameLabel.textContent = "Driver First Name:";
-            const firstNameInput = document.createElement("input");
-            firstNameInput.type = "text";
-            firstNameInput.name = "Driver-first-name";
-            firstNameInput.required = true;
-
-            // Last Name
-            const lastNameLabel = document.createElement("label");
-            lastNameLabel.textContent = "Driver Last Name:";
-            const lastNameInput = document.createElement("input");
-            lastNameInput.type = "text";
-            lastNameInput.name = "Driver-last-name";
-            lastNameInput.required = true;
-
-            // Append the divider to the container first
-            container.appendChild(divider);
-
-            // Append elements to newDriver div
-            newDriver.appendChild(firstNameLabel);
-            newDriver.appendChild(firstNameInput);
-            newDriver.appendChild(lastNameLabel);
-            newDriver.appendChild(lastNameInput);
-
-            // Append the new driver fields to the container
-            container.appendChild(newDriver);
-        }
-
-        function removeDriver() {
-            const container = document.getElementById("driversContainer");
-            const drivers = container.querySelectorAll('.driver');
-            if (drivers.length > 1) {  // We don't want to remove the initial driver fields
-                const lastDriver = drivers[drivers.length - 1];
-                container.removeChild(lastDriver.previousElementSibling); // Remove the divider
-                container.removeChild(lastDriver);  // Remove the last driver section
-            }
-        }
     </script>
 </body>
 

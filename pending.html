@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset = "UTF-8">
-    <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application Status</title>
     <style>
-        body{
+        body {
             font-family: 'Times New Roman', Times, serif;
             display: flex;
             flex-direction: column;
@@ -16,7 +16,7 @@
             margin: 0;
             text-align: center;
         }
-        #status{
+        #status {
             font-size: 24px;
             font-weight: bold;
             margin: 20px 0;
@@ -24,7 +24,7 @@
         .accepted { color: green; }
         .denied { color: red; }
         .pending { color: orange; }
-        button{
+        button {
             margin-top: 20px;
             padding: 10px 20px;
             background-color: #007bff;
@@ -33,7 +33,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        button:hover{
+        button:hover {
             background-color: #0056b3;
         }
     </style>
@@ -41,7 +41,7 @@
 <body>
     <h1>Application Status</h1>
     <p id="status" class="pending">Checking status...</p>
-    <button onclick="window.location.href='homepage.html'">Return to Home</button>
+    <button id="homeBtn">Return to Home</button>
 
     <script>
         function getApplicationStatus() {
@@ -61,6 +61,12 @@
         }
 
         setTimeout(getApplicationStatus, 2000);
+
+        // Button click event
+        document.getElementById("homeBtn").onclick = function() {
+            console.log("Redirecting to homepage...");
+            window.location.href = 'homepage.html'; // Adjust path if necessary
+        }
     </script>
 </body>
 </html>
