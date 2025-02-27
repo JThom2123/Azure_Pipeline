@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signUp } from "@/lib/auth";
+import { signUp } from "@/amplify/auth/resource";
 
 export default function SignUpPage() {
     const router = useRouter();
