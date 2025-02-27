@@ -1,24 +1,24 @@
-"use client";
-
+"use client"
 import { Inter } from "next/font/google";
+
 import React from "react";
 import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
+/*
+this gives a sign in/account creation screen. To be added later.
+        <Authenticator>
+          {children}
+        </Authenticator>
+*/
 import "@aws-amplify/ui-react/styles.css";
+import outputs from "@/amplify_outputs.json";
+
+
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-/** ✅ Manually configure AWS Cognito */
-Amplify.configure({
-  Auth: {
-    region: "us-east-1", 
-    userPoolId: "us-east-1_SBC9pg6ag", 
-    userPoolWebClientId: "107720oslv197r2qvlb4h1ptcs", 
-    mandatorySignIn: true,
-  }
-});
-
+Amplify.configure(outputs);
 const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
@@ -30,7 +30,12 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
+/*
+export const metadata: Metadata = {
+  title: "Product Information",
+  description: "Product details and editing page",
+};
+*/
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
