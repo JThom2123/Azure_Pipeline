@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Auth } from "@aws-amplify/auth";
+import { fetchAuthSession, signIn, signOut, getCurrentUser } from "aws-amplify/auth";
+
 
 export default function SignUpPage() {
   const router = useRouter();
