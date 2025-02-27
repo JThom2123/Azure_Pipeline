@@ -121,13 +121,11 @@
 
             // Add event listener to intercept the submit button
             form.addEventListener("submit", function(event) {
-                 event.preventDefault(); // Prevent the default form submission
-
-    // Show confirmation alert
-    alert("Application submitted successfully! Redirecting to home page...");
-
-    // Redirect immediately (HARD REDIRECT)
-    window.location.replace("homepage.html");
+                 event.preventDefault(); // ❌ This stops the form from redirecting!
+                alert("Application submitted successfully! Redirecting to home page...");
+                setTimeout(function() {
+                    window.location.href = "homepage.html";
+                }, 1000);
             });
 
             // Function to add more driver fields
