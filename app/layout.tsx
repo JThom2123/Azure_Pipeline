@@ -12,11 +12,11 @@ import "./globals.css";
 /** ✅ Manually configure AWS Cognito */
 Amplify.configure({
   Auth: {
-    region: "us-east-1", // 🔹 Replace with your AWS Region
-    userPoolId: "us-east-1_ABC123", // 🔹 Replace with your Cognito User Pool ID
-    userPoolWebClientId: "abcdefghij1234567890", // 🔹 Replace with your Cognito App Client ID
-    mandatorySignIn: true, // 🔹 Require sign-in before accessing resources
-  },
+    region: "us-east-1", 
+    userPoolId: "us-east-1_SBC9pg6ag", 
+    userPoolWebClientId: "107720oslv197r2qvlb4h1ptcs", 
+    mandatorySignIn: true,
+  }
 });
 
 const inter = Inter({ subsets: ["latin"] });
