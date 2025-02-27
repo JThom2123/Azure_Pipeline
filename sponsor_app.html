@@ -110,66 +110,74 @@
     </form>
 
     <script>
-        document.getElementById("sponsorForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent actual form submission
+        // Ensure DOM is loaded before executing JS
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById("sponsorForm");
 
-            // Show alert to simulate successful submission
-            alert("Application submitted successfully! Redirecting to home page...");
+            // Attach submit event listener
+            form.addEventListener("submit", function(event) {
+                event.preventDefault(); // Prevent actual form submission
 
-            // Manually redirect after alert
-            setTimeout(function() {
-                window.location.href = "homepage.html"; // Redirect to home page
-            }, 1000); // Wait 1 second before redirecting
-        });
+                // Show alert to simulate successful submission
+                alert("Application submitted successfully! Redirecting to home page...");
 
-        function addDriver() {
-            const container = document.getElementById("driversContainer");
+                // Manually redirect after alert
+                setTimeout(function() {
+                    window.location.href = "homepage.html"; // Redirect to home page
+                }, 1000); // Wait 1 second before redirecting
+            });
 
-            // Divider (Horizontal line)
-            const divider = document.createElement("hr");
+            // Add driver function
+            function addDriver() {
+                const container = document.getElementById("driversContainer");
 
-            // Create a new driver div
-            const newDriver = document.createElement("div");
-            newDriver.classList.add("driver");
+                // Divider (Horizontal line)
+                const divider = document.createElement("hr");
 
-            // First Name
-            const firstNameLabel = document.createElement("label");
-            firstNameLabel.textContent = "Driver First Name:";
-            const firstNameInput = document.createElement("input");
-            firstNameInput.type = "text";
-            firstNameInput.name = "Driver-first-name";
-            firstNameInput.required = true;
+                // Create a new driver div
+                const newDriver = document.createElement("div");
+                newDriver.classList.add("driver");
 
-            // Last Name
-            const lastNameLabel = document.createElement("label");
-            lastNameLabel.textContent = "Driver Last Name:";
-            const lastNameInput = document.createElement("input");
-            lastNameInput.type = "text";
-            lastNameInput.name = "Driver-last-name";
-            lastNameInput.required = true;
+                // First Name
+                const firstNameLabel = document.createElement("label");
+                firstNameLabel.textContent = "Driver First Name:";
+                const firstNameInput = document.createElement("input");
+                firstNameInput.type = "text";
+                firstNameInput.name = "Driver-first-name";
+                firstNameInput.required = true;
 
-            // Append the divider to the container first
-            container.appendChild(divider);
+                // Last Name
+                const lastNameLabel = document.createElement("label");
+                lastNameLabel.textContent = "Driver Last Name:";
+                const lastNameInput = document.createElement("input");
+                lastNameInput.type = "text";
+                lastNameInput.name = "Driver-last-name";
+                lastNameInput.required = true;
 
-            // Append elements to newDriver div
-            newDriver.appendChild(firstNameLabel);
-            newDriver.appendChild(firstNameInput);
-            newDriver.appendChild(lastNameLabel);
-            newDriver.appendChild(lastNameInput);
+                // Append the divider to the container first
+                container.appendChild(divider);
 
-            // Append the new driver fields to the container
-            container.appendChild(newDriver);
-        }
+                // Append elements to newDriver div
+                newDriver.appendChild(firstNameLabel);
+                newDriver.appendChild(firstNameInput);
+                newDriver.appendChild(lastNameLabel);
+                newDriver.appendChild(lastNameInput);
 
-        function removeDriver() {
-            const container = document.getElementById("driversContainer");
-            const drivers = container.querySelectorAll('.driver');
-            if (drivers.length > 1) {  // We don't want to remove the initial driver fields
-                const lastDriver = drivers[drivers.length - 1];
-                container.removeChild(lastDriver.previousElementSibling); // Remove the divider
-                container.removeChild(lastDriver);  // Remove the last driver section
+                // Append the new driver fields to the container
+                container.appendChild(newDriver);
             }
-        }
+
+            // Remove driver function
+            function removeDriver() {
+                const container = document.getElementById("driversContainer");
+                const drivers = container.querySelectorAll('.driver');
+                if (drivers.length > 1) {  // We don't want to remove the initial driver fields
+                    const lastDriver = drivers[drivers.length - 1];
+                    container.removeChild(lastDriver.previousElementSibling); // Remove the divider
+                    container.removeChild(lastDriver);  // Remove the last driver section
+                }
+            }
+        });
     </script>
 </body>
 
