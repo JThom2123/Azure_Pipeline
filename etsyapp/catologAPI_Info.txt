@@ -4,4 +4,4 @@ This is the catolog api information:
 Keystring:  u2oo5f5zdr7lxwkoxfrjxspm
 Shared secret:  i4g118uzzx
 
--
+-package.json and server.js come directly from the quick start tutorial on etsy
