@@ -8,8 +8,6 @@ import Link from 'next/link';
 
 Amplify.configure(outputs);
 
-
-
 export default function App() {
   return (
     <Authenticator
