@@ -49,7 +49,7 @@ const AboutPage = () => {
       left: 0, 
       padding: '10px' 
     }}>
-      <Link href="/">
+      <Link href="/home">
                 <button>Go to Home Page</button><br />
       </Link>
     </div>
