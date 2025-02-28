@@ -29,6 +29,30 @@ export default function App() {
             label = "Address"
             placeholder = "Enter your Home Address"
             />
+
+            <TextField
+                  name="password"
+                  label="Password"
+                  type="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+            <div style={{ marginTop: "10px" }}>
+                  <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                    {passwordCriteria.map(({ label, regex }) => (
+                      <li
+                        key={label}
+                        style={{
+                          color: isCriteriaMet(regex) ? "green" : "red",
+                          textDecoration: isCriteriaMet(regex)
+                            ? "line-through"
+                            : "none",
+                        }}
+                      >
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
             </>
             );
         },
