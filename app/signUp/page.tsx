@@ -35,12 +35,32 @@ export default function App() {
     },
     }}>
       {({ signOut, user }) => (
-        <main>
-            <Link href="/aboutpage">
-                <button>Go to About Page</button><br />
+        <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <h1 className="text-4xl font-bold mb-6">Welcome Mother Trucker! You are Signed In :P</h1>
+        
+        
+        <div className="flex space-x-4">
+        <Link href="/home">
+              <button className="px-6 py-3 border border-gray-500 rounded-md hover:bg-gray-200">
+                Home Page
+              </button>
             </Link>
-            <button onClick={signOut}>Sign out</button>
-        </main>
+
+            <Link href="/aboutpage">
+              <button className="px-6 py-3 border border-gray-500 rounded-md hover:bg-gray-200">
+                About Page
+              </button>
+            </Link>
+
+          <button
+            onClick={signOut}
+            className="px-6 py-3 border border-gray-500 rounded-md hover:bg-gray-200"
+          >
+            Log Out
+          </button>
+        </div>
+      </div>
+        
       )}
     </Authenticator>
   );
