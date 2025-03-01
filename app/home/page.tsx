@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
+import Link from 'next/link';
 
 export default function HomePage() {
   const router = useRouter();
@@ -21,9 +22,6 @@ export default function HomePage() {
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  Home
-                </button>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Catalog
                 </button>
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
@@ -34,9 +32,9 @@ export default function HomePage() {
                 </button>
                 <Link href="/aboutpage">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                About Page
-              </button>
-            </Link>
+                    About Page
+                  </button>
+                </Link>
               </div>
               <button
                 onClick={handleSignOut}
