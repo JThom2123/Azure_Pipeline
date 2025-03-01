@@ -32,6 +32,11 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   More
                 </button>
+                <Link href="/aboutpage">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                About Page
+              </button>
+            </Link>
               </div>
               <button
                 onClick={handleSignOut}
