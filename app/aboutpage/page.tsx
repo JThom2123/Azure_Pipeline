@@ -4,7 +4,6 @@ import { Amplify } from 'aws-amplify';
 import '@aws-amplify/ui-react/styles.css';
 import Link from 'next/link';
 
-
 interface AboutSection {
   section_name: string;
   content: string;
