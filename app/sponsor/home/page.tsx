@@ -35,6 +35,9 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
+                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                  Application
+                </button>
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   More
                 </button>
