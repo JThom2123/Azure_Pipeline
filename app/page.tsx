@@ -21,7 +21,7 @@ export default function WelcomePage() {
 
         <div className="flex space-x-4">
           <button
-            onClick={() => router.push("/signIn")}
+            onClick={() => router.push("/signUp")}
             className="px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-all duration-300 shadow-md"
           >
             Sign In
