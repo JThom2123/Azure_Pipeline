@@ -17,6 +17,7 @@ interface AboutSection {
 const API_URL =
   "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/about";
 
+
 const AboutPage = () => {
   const router = useRouter();
   const [aboutData, setAboutData] = useState<AboutSection[]>([]);

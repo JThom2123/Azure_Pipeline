@@ -58,7 +58,7 @@ export default function HomePage() {
                 </h1>
                 <p>
                   You are the best programmer in the world! Keep up the great
-                  work!! & you are an admin
+                  work!! & you are a sponsor
                 </p>
               </main>
             </div>
