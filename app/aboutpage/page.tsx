@@ -116,6 +116,7 @@ const AboutPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
+                //this will need to be handled based on user
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Application
                 </button>
