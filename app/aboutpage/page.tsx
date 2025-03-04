@@ -17,7 +17,6 @@ interface AboutSection {
 const API_URL =
   "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/about";
 
-
 const AboutPage = () => {
   const router = useRouter();
   const [aboutData, setAboutData] = useState<AboutSection[]>([]);
@@ -46,6 +45,7 @@ const AboutPage = () => {
 
     fetchData();
   }, []);
+
   // Fetch User Role on Page Load
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -90,6 +90,15 @@ const AboutPage = () => {
           }
         };
 
+        // Handle Application Button Click for Sponsor role
+        const handleApplicationClick = () => {
+          if (userRole === "Sponsor") {
+            router.push("/sponsor_app");
+          } else {
+            console.error("User is not a Sponsor, cannot navigate to application.");
+          }
+        };
+
         return (
           <div className="flex flex-col h-screen">
             {/* Navigation Bar */}
@@ -116,7 +125,10 @@ const AboutPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                <button
+                  onClick={handleApplicationClick}
+                  className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                >
                   Application
                 </button>
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
