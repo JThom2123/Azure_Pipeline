@@ -33,9 +33,11 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
+                <Link href="/driver_app">
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Application
                 </button>
+                </Link>
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   More
                 </button>
