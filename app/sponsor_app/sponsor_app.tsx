@@ -18,7 +18,7 @@ const SponsorApplication = () => {
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         alert("Application submitted successfully! Redirecting to sponsor page...");
-        router.push("/sponsor");
+        router.push("/sponsor/home");
     };
 
     return (
