@@ -42,7 +42,7 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
-                <Link href="/sponsor_app">
+                <Link href="/sponsor/sponsor_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Application
                   </button>
@@ -69,7 +69,7 @@ export default function HomePage() {
               {/* Main Content */}
               <main className="flex-grow p-10">
                 <h1 className="text-5xl font-light mb-4">
-                  Welcome, {user?.username || "User"}
+                  Welcome, {user?.signInDetails?.loginId || "No email found"}
                 </h1>
                 <p>
                   You are the best programmer in the world! Keep up the great

@@ -47,7 +47,7 @@ export default function HomePage() {
 
             {/* Main Content */}
             <main className="flex-grow p-10">
-              <h1 className="text-5xl font-light mb-4">Welcome, {user?.username || "User"}</h1>
+              <h1 className="text-5xl font-light mb-4">Welcome, {user?.signInDetails?.loginId || "No email found"}</h1>
               <p>You are the best programmer in the world! Keep up the great work!! & you are an admin</p>
             </main>
           </div>

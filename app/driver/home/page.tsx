@@ -98,7 +98,7 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
-                <Link href="/driver_app">
+                <Link href="/driver/driver_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Application
                   </button>
@@ -119,7 +119,7 @@ export default function HomePage() {
             <main className="flex-grow p-10">
               {/* Welcome message */}
               <h1 className="text-5xl font-normal mb-4">
-                Welcome, {user?.username || "Username"}
+                Welcome, {user?.signInDetails?.loginId || "No email found"}
               </h1>
 
               {/* Sponsor info displayed below the welcome message */}
