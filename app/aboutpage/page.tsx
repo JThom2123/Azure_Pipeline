@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-react/styles.css";
-import Link from "next/link";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth"; // Fetch user attributes
 
@@ -72,6 +71,17 @@ const AboutPage = () => {
     return null; // No navigation if role isn't determined
   };
 
+  // Handle Application Button Click
+  const handleApplicationClick = () => {
+    if (userRole === "Driver") {
+      router.push("/driver_app");
+    } else if (userRole === "Sponsor") {
+      router.push("/sponsor_app");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  };
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -87,15 +97,6 @@ const AboutPage = () => {
             router.push(homePage);
           } else {
             console.error("User role is not set, cannot navigate.");
-          }
-        };
-
-        // Handle Application Button Click for Sponsor role
-        const handleApplicationClick = () => {
-          if (userRole === "Sponsor") {
-            router.push("/sponsor_app");
-          } else {
-            console.error("User is not a Sponsor, cannot navigate to application.");
           }
         };
 
@@ -125,12 +126,17 @@ const AboutPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
-                <button
-                  onClick={handleApplicationClick}
-                  className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
-                >
-                  Application
-                </button>
+
+                {/* Show Application button for Drivers and Sponsors */}
+                {(userRole === "Driver" || userRole === "Sponsor") && (
+                  <button
+                    onClick={handleApplicationClick}
+                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Application
+                  </button>
+                )}
+
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   More
                 </button>
