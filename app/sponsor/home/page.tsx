@@ -16,12 +16,21 @@ export default function HomePage() {
           router.replace("/");
         };
 
+        // Dummy driver data for example
+        const drivers = [
+          { name: 'John Doe', points: 120 },
+          { name: 'Jane Smith', points: 85 },
+          { name: 'Mark Johnson', points: 95 },
+        ];
+
         return (
           <div className="flex flex-col h-screen">
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex gap-4">
-               
+                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                  Home
+                </button>
                 <Link href="/aboutpage">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     About Page
@@ -66,6 +75,19 @@ export default function HomePage() {
                   You are the best programmer in the world! Keep up the great
                   work!! & you are a sponsor
                 </p>
+
+                {/* Driver Information Section */}
+                <div className="mt-6">
+                  <div className="space-y-4">
+                    {drivers.map((driver, index) => (
+                      <div key={index} className="flex justify-start gap-4">
+                        <button className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">
+                          {driver.name} - {driver.points} Points
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </main>
             </div>
           </div>
