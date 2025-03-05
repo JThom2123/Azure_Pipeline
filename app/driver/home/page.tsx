@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
@@ -117,10 +117,12 @@ export default function HomePage() {
 
             {/* Main Content */}
             <main className="flex-grow p-10">
-              {/* Dynamic Header */}
+              {/* Welcome message */}
               <h1 className="text-5xl font-normal mb-4">
-                Sponsor: {headerInfo.sponsor}
+                Welcome, {user?.username || "Username"}
               </h1>
+
+              {/* Sponsor info displayed below the welcome message */}
               <div className="w-[627px] p-4 flex justify-between flex-wrap text-lg mb-4">
                 <span className="w-full sm:w-auto">Account Type: Driver</span>
                 <span className="w-full sm:w-auto">Sponsor Name: {headerInfo.sponsor}</span>
