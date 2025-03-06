@@ -42,7 +42,7 @@ export default function HomePage() {
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                <button className="bg-blue-600 px-4 py-2 rounded text-white">
                   Home
                 </button>
                 <Link href="/aboutpage">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
+import { FaUserCircle } from "react-icons/fa";
 
 type SponsorStatusProps = {
   sponsor: string;
@@ -56,6 +57,8 @@ function SponsorStatus({
 
 export default function HomePage() {
   const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // State to manage header information, initially set to approved sponsor (Target)
   const [headerInfo, setHeaderInfo] = useState<{
@@ -71,6 +74,23 @@ export default function HomePage() {
     setHeaderInfo({ sponsor, points });
   };
 
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -83,7 +103,7 @@ export default function HomePage() {
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex gap-4">
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                <button className="bg-blue-600 px-4 py-2 rounded text-white">
                   Home
                 </button>
                 <Link href="/aboutpage">
@@ -106,12 +126,27 @@ export default function HomePage() {
                   More
                 </button>
               </div>
-              <button
-                onClick={handleSignOut}
-                className="bg-red-500 px-4 py-2 rounded hover:bg-red-600"
-              >
-                Sign Out
-              </button>
+              
+              {/* Profile Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <div
+                  className="cursor-pointer text-2xl"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
+                  <FaUserCircle />
+                </div>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </nav>
 
             {/* Main Content */}
