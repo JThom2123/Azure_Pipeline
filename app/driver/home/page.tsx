@@ -71,14 +71,13 @@ export default function HomePage() {
     setHeaderInfo({ sponsor, points });
   };
 
-  const handleSignOut = () => {
-    // Sign out logic
-    router.replace("/");
-  };
-
   return (
     <Authenticator>
       {({ signOut, user }) => {
+        const handleSignOut = () => {
+          signOut?.();
+          router.replace("/");
+        };
         return (
           <div className="flex flex-col h-screen">
             {/* Navigation Bar */}
