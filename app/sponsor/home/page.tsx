@@ -18,9 +18,9 @@ export default function HomePage() {
 
         // Dummy driver data for example
         const drivers = [
-          { name: 'John Doe', points: 120 },
-          { name: 'Jane Smith', points: 85 },
-          { name: 'Mark Johnson', points: 95 },
+          { name: 'George A', points: 120 },
+          { name: 'Georgie B', points: 85 },
+          { name: 'Georgia C', points: 95 },
         ];
 
         return (
