@@ -74,9 +74,9 @@ const AboutPage = () => {
   // Handle Application Button Click
   const handleApplicationClick = () => {
     if (userRole === "Driver") {
-      router.push("/driver_app");
+      router.push("/driver/driver_app");
     } else if (userRole === "Sponsor") {
-      router.push("/sponsor_app");
+      router.push("/sponsor/sponsor_app");
     } else {
       console.error("User role is not eligible for applications.");
     }
