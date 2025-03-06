@@ -59,37 +59,29 @@ export default function HomePage() {
               </button>
             </nav>
 
-            {/* Main Layout */}
-            <div className="flex flex-1">
-              {/* Sidebar */}
-              <aside className="w-64 bg-gray-200 p-5 border-r-2 border-gray-300">
-                {/* Add sidebar info as needed */}
-              </aside>
+            {/* Main Content */}
+            <main className="flex-grow p-10">
+              <h1 className="text-5xl font-light mb-4">
+                Welcome, {user?.signInDetails?.loginId || "No email found"}
+              </h1>
+              <p>
+                You are the best programmer in the world! Keep up the great
+                work!! & you are a sponsor
+              </p>
 
-              {/* Main Content */}
-              <main className="flex-grow p-10">
-                <h1 className="text-5xl font-light mb-4">
-                  Welcome, {user?.signInDetails?.loginId || "No email found"}
-                </h1>
-                <p>
-                  You are the best programmer in the world! Keep up the great
-                  work!! & you are a sponsor
-                </p>
-
-                {/* Driver Information Section */}
-                <div className="mt-6">
-                  <div className="space-y-4">
-                    {drivers.map((driver, index) => (
-                      <div key={index} className="flex justify-start gap-4">
-                        <button className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">
-                          {driver.name} - {driver.points} Points
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+              {/* Driver Information Section */}
+              <div className="mt-6">
+                <div className="space-y-4">
+                  {drivers.map((driver, index) => (
+                    <div key={index} className="flex justify-start gap-4">
+                      <button className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">
+                        {driver.name} - {driver.points} Points
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              </main>
-            </div>
+              </div>
+            </main>
           </div>
         );
       }}
