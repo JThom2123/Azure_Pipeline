@@ -101,6 +101,10 @@ const DriverAppPage = () => {
           }
         };
 
+        const handleProfileClick = () => {
+          router.push("/profile"); // Navigate to the profile page
+        };
+
         return (
           <div className="flex flex-col h-screen">
             {/* Navigation Bar */}
@@ -137,6 +141,7 @@ const DriverAppPage = () => {
                   More
                 </button>
               </div>
+              
               {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
@@ -148,6 +153,12 @@ const DriverAppPage = () => {
 
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+                    <button
+                      onClick={handleProfileClick}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                    >
+                      My Profile
+                    </button>
                     <button
                       onClick={handleSignOut}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-200"

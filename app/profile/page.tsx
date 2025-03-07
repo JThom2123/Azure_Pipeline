@@ -147,6 +147,24 @@ export default function ProfilePage() {
         }
     };
 
+    // Determine Points Page Route Based on Role
+    const getPointsPage = () => {
+        //if (userRole === "Administrator") return "/admin/home";
+        if (userRole === "Driver") return "/driver/points";
+        if (userRole === "Sponsor") return "/sponsor/points";
+        return null; // No navigation if role isn't determined
+    };
+
+    // Handle Home Button Click (Prevent Navigation if Role is Unknown)
+    const handlePointsClick = () => {
+        const pointsPage = getPointsPage();
+        if (pointsPage) {
+            router.push(pointsPage);
+        } else {
+            console.error("User role is not set, cannot navigate.");
+        }
+    };
+
 
     const handleVerifyEmail = async () => {
         try {
@@ -249,11 +267,16 @@ export default function ProfilePage() {
                                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                                     Catalog
                                 </button>
-                                <Link href="/sponsor/points">
-                                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                                        Points
-                                    </button>
-                                </Link>
+                                <button
+                                    onClick={handlePointsClick}
+                                    disabled={roleLoading} // Disable until role is loaded
+                                    className={`px-4 py-2 rounded ${roleLoading
+                                        ? "bg-gray-500 cursor-not-allowed"
+                                        : "bg-gray-700 hover:bg-gray-600"
+                                        }`}
+                                >
+                                    {roleLoading ? "Loading..." : "Points"}
+                                </button>
                                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                                     Application
                                 </button>
@@ -300,7 +323,7 @@ export default function ProfilePage() {
                                         </button>
                                     </div>
                                 )}
-                                
+
                                 {!passwordResetRequested ? (
                                     <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handlePasswordResetRequest}>
                                         Reset Password

@@ -6,11 +6,29 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
+import { fetchUserAttributes } from "aws-amplify/auth";
 
 export default function HomePage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Fetch the updated user email on component mount
+  useEffect(() => {
+    const getUserEmail = async () => {
+      try {
+        const attributes = await fetchUserAttributes();
+        if (attributes.email) {
+          setUserEmail(attributes.email);
+        }
+      } catch (error) {
+        console.error("Error fetching user email:", error);
+      }
+    };
+
+    getUserEmail();
+  }, []);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -43,8 +61,8 @@ export default function HomePage() {
 
         // Dummy driver data for example
         const drivers = [
-          { name: 'George A', points: 120, email:'georgea@example.com' },
-          { name: 'Georgie B', points: 85, email:'georgieb@example.com' },
+          { name: 'George A', points: 120, email: 'georgea@example.com' },
+          { name: 'Georgie B', points: 85, email: 'georgieb@example.com' },
           { name: 'Georgia C', points: 95, email: 'georgiacc@example.com' },
         ];
 
@@ -110,10 +128,10 @@ export default function HomePage() {
             {/* Main Content */}
             <main className="flex-grow flex flex-col items-center justify-center p-10">
               <h1 className="text-5xl font-light mb-4 text-center">
-                Welcome, {user?.signInDetails?.loginId || "No email found"}
+                Welcome, {userEmail || user?.signInDetails?.loginId || "No email found"}
               </h1>
               <p className="text-lg text-center mb-8">
-                You are logged in as a sponsor for BLANK company. You can view your driver rankings below. 
+                You are logged in as a sponsor for BLANK company. You can view your driver rankings below.
               </p>
 
               {/* Driver Information Table */}

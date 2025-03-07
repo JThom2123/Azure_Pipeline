@@ -74,17 +74,6 @@ const SponsorApplication = () => {
         return null; // No navigation if role isn't determined
     };
 
-    // Handle Application Button Click
-    const handleApplicationClick = () => {
-        if (userRole === "Driver") {
-            router.push("/driver/driver_app");
-        } else if (userRole === "Sponsor") {
-            router.push("/sponsor/sponsor_app");
-        } else {
-            console.error("User role is not eligible for applications.");
-        }
-    };
-
     return (
         <Authenticator>
             {({ signOut, user }) => {
@@ -101,6 +90,10 @@ const SponsorApplication = () => {
                     } else {
                         console.error("User role is not set, cannot navigate.");
                     }
+                };
+
+                const handleProfileClick = () => {
+                    router.push("/profile"); // Navigate to the profile page
                 };
 
                 return (
@@ -151,6 +144,12 @@ const SponsorApplication = () => {
 
                                 {dropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+                                        <button
+                                            onClick={handleProfileClick}
+                                            className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                                        >
+                                            My Profile
+                                        </button>
                                         <button
                                             onClick={handleSignOut}
                                             className="block w-full text-left px-4 py-2 hover:bg-gray-200"
