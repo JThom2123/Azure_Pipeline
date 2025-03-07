@@ -66,17 +66,6 @@ const DriverAppPage = () => {
     return null; // No navigation if role isn't determined
   };
 
-  // Handle Application Button Click
-  const handleApplicationClick = () => {
-    if (userRole === "Driver") {
-      router.push("/driver/driver_app");
-    } else if (userRole === "Sponsor") {
-      router.push("/sponsor/sponsor_app");
-    } else {
-      console.error("User role is not eligible for applications.");
-    }
-  };
-
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

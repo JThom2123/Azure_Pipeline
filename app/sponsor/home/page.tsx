@@ -37,11 +37,15 @@ export default function HomePage() {
           router.replace("/");
         };
 
+        const handleProfileClick = () => {
+          router.push("/profile"); // Navigate to the profile page
+        };
+
         // Dummy driver data for example
         const drivers = [
-          { name: 'George A', points: 120 },
-          { name: 'Georgie B', points: 85 },
-          { name: 'Georgia C', points: 95 },
+          { name: 'George A', points: 120, email:'georgea@example.com' },
+          { name: 'Georgie B', points: 85, email:'georgieb@example.com' },
+          { name: 'Georgia C', points: 95, email: 'georgiacc@example.com' },
         ];
 
         return (
@@ -61,10 +65,10 @@ export default function HomePage() {
                   Catalog
                 </button>
                 <Link href="/sponsor/points">
-                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                      Points
-                    </button>
-                  </Link>
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Points
+                  </button>
+                </Link>
                 <Link href="/sponsor/sponsor_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Application
@@ -74,7 +78,7 @@ export default function HomePage() {
                   More
                 </button>
               </div>
-              
+
               {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
@@ -87,6 +91,12 @@ export default function HomePage() {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
                     <button
+                      onClick={handleProfileClick}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                    >
+                      My Profile
+                    </button>
+                    <button
                       onClick={handleSignOut}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-200"
                     >
@@ -98,26 +108,35 @@ export default function HomePage() {
             </nav>
 
             {/* Main Content */}
-            <main className="flex-grow p-10">
-              <h1 className="text-5xl font-light mb-4">
+            <main className="flex-grow flex flex-col items-center justify-center p-10">
+              <h1 className="text-5xl font-light mb-4 text-center">
                 Welcome, {user?.signInDetails?.loginId || "No email found"}
               </h1>
-              <p>
-                You are the best programmer in the world! Keep up the great
-                work!! & you are a sponsor
+              <p className="text-lg text-center mb-8">
+                You are logged in as a sponsor for BLANK company. You can view your driver rankings below. 
               </p>
 
-              {/* Driver Information Section */}
-              <div className="mt-6">
-                <div className="space-y-4">
-                  {drivers.map((driver, index) => (
-                    <div key={index} className="flex justify-start gap-4">
-                      <button className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">
-                        {driver.name} - {driver.points} Points
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              {/* Driver Information Table */}
+              <div className="w-full max-w-lg">
+                <h2 className="text-2xl font-semibold text-center mb-4">Driver Rankings</h2>
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border border-gray-300 px-4 py-2">Driver Name</th>
+                      <th className="border border-gray-300 px-4 py-2">Points</th>
+                      <th className="border border-gray-300 px-4 py-2">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {drivers.map((driver, index) => (
+                      <tr key={index} className="text-center">
+                        <td className="border border-gray-300 px-4 py-2">{driver.name}</td>
+                        <td className="border border-gray-300 px-4 py-2">{driver.points}</td>
+                        <td className="border border-gray-300 px-4 py-2">{driver.email}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </main>
           </div>
