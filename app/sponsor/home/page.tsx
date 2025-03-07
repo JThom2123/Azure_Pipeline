@@ -60,9 +60,11 @@ export default function HomePage() {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Catalog
                 </button>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  Points
-                </button>
+                <Link href="/sponsor/points">
+                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                      Points
+                    </button>
+                  </Link>
                 <Link href="/sponsor/sponsor_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Application

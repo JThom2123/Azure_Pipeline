@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";  // Correct import for useRouter in
 import Link from "next/link";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import { FaUserCircle } from "react-icons/fa"; 
+import { FaUserCircle } from "react-icons/fa";
 
 const DriverAppPage = () => {
   const router = useRouter();
@@ -122,8 +122,8 @@ const DriverAppPage = () => {
                   onClick={handleHomeClick}
                   disabled={roleLoading} // Disable until role is loaded
                   className={`px-4 py-2 rounded ${roleLoading
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-gray-700 hover:bg-gray-600"
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-gray-700 hover:bg-gray-600"
                     }`}
                 >
                   {roleLoading ? "Loading..." : "Home"}
@@ -136,12 +136,14 @@ const DriverAppPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Catalog
                 </button>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  Points
-                </button>
+                <Link href="/driver/points">
+                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                      Points
+                    </button>
+                  </Link>
                 <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
-                    Application
-                  </button>
+                  Application
+                </button>
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   More
                 </button>

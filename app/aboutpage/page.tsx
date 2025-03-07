@@ -84,6 +84,17 @@ const AboutPage = () => {
     }
   };
 
+  // Handle Points Button Click
+  const handlePointsClick = () => {
+    if (userRole === "Driver") {
+      router.push("/driver/points");
+    } else if (userRole === "Sponsor") {
+      router.push("/sponsor/points");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  };
+
   // Close profiledropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -142,9 +153,15 @@ const AboutPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Catalog
                 </button>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  Points
-                </button>
+                {/* Show Application button for Drivers and Sponsors */}
+                {(userRole === "Driver" || userRole === "Sponsor") && (
+                  <button
+                    onClick={handlePointsClick}
+                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Points
+                  </button>
+                )}
 
                 {/* Show Application button for Drivers and Sponsors */}
                 {(userRole === "Driver" || userRole === "Sponsor") && (
