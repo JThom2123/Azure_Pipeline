@@ -9,6 +9,12 @@ import { FaUserCircle } from "react-icons/fa";
 
 const SponsorApplication = () => {
     const [drivers, setDrivers] = useState([{ id: 1 }]);
+    const [applications, setApplications] = useState([
+        { id: 1, name: "John Doe", email: "johndoe@example.com", date: "2025-03-06", status: "Pending" },
+        { id: 2, name: "Jane Smith", email: "janesmith@example.com", date: "2025-03-04", status: "Accepted" },
+        { id: 3, name: "Michael Brown", email: "michaelbrown@example.com", date: "2025-03-02", status: "Rejected" },
+    ]);
+
     const router = useRouter();
     const [userRole, setUserRole] = useState<string | null>(null);
     const [roleLoading, setRoleLoading] = useState(true);
@@ -31,7 +37,11 @@ const SponsorApplication = () => {
         router.push("/sponsor/home");
     };
 
-    // Close profile dropdown when clicking outside
+    // Handle Status Change
+    const handleStatusChange = (id: number, newStatus: string) => {
+        setApplications(applications.map(app => app.id === id ? { ...app, status: newStatus } : app));
+    };
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,30 +58,27 @@ const SponsorApplication = () => {
         };
     }, [dropdownOpen]);
 
-    // Fetch User Role on Page Load
     useEffect(() => {
         const fetchUserRole = async () => {
             try {
                 const attributes = await fetchUserAttributes();
                 const role = attributes?.["custom:role"] || null;
                 setUserRole(role);
-                console.log("User Role:", role);
             } catch (error) {
                 console.error("Error fetching user role:", error);
             } finally {
-                setRoleLoading(false); // Stop role loading
+                setRoleLoading(false);
             }
         };
 
         fetchUserRole();
     }, []);
 
-    // Determine Home Page Route Based on Role
     const getHomePage = () => {
         if (userRole === "Administrator") return "/admin/home";
         if (userRole === "Driver") return "/driver/home";
         if (userRole === "Sponsor") return "/sponsor/home";
-        return null; // No navigation if role isn't determined
+        return null;
     };
 
     return (
@@ -82,7 +89,6 @@ const SponsorApplication = () => {
                     router.replace("/");
                 };
 
-                // Handle Home Button Click (Prevent Navigation if Role is Unknown)
                 const handleHomeClick = () => {
                     const homePage = getHomePage();
                     if (homePage) {
@@ -93,7 +99,7 @@ const SponsorApplication = () => {
                 };
 
                 const handleProfileClick = () => {
-                    router.push("/profile"); // Navigate to the profile page
+                    router.push("/profile");
                 };
 
                 return (
@@ -101,14 +107,10 @@ const SponsorApplication = () => {
                         {/* Navigation Bar */}
                         <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
                             <div className="flex space-x-4">
-                                {/* Home button now waits for role to load */}
                                 <button
                                     onClick={handleHomeClick}
-                                    disabled={roleLoading} // Disable until role is loaded
-                                    className={`px-4 py-2 rounded ${roleLoading
-                                        ? "bg-gray-500 cursor-not-allowed"
-                                        : "bg-gray-700 hover:bg-gray-600"
-                                        }`}
+                                    disabled={roleLoading}
+                                    className={`px-4 py-2 rounded ${roleLoading ? "bg-gray-500 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-600"}`}
                                 >
                                     {roleLoading ? "Loading..." : "Home"}
                                 </button>
@@ -135,25 +137,16 @@ const SponsorApplication = () => {
 
                             {/* Profile Dropdown */}
                             <div className="relative" ref={dropdownRef}>
-                                <div
-                                    className="cursor-pointer text-2xl"
-                                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                                >
+                                <div className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)}>
                                     <FaUserCircle />
                                 </div>
 
                                 {dropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-                                        <button
-                                            onClick={handleProfileClick}
-                                            className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-                                        >
+                                        <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
                                             My Profile
                                         </button>
-                                        <button
-                                            onClick={handleSignOut}
-                                            className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-                                        >
+                                        <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
                                             Sign Out
                                         </button>
                                     </div>
@@ -194,12 +187,51 @@ const SponsorApplication = () => {
                                 </button>
                             </form>
                         </div>
+                        {/* Driver Applications Table */}
+                        <div className="flex flex-col items-center justify-center p-10">
+                            <h2 className="text-2xl font-bold mb-4">Driver Applications</h2>
+                            <table className="w-full max-w-3xl border-collapse border border-gray-300">
+                                <thead>
+                                    <tr className="bg-gray-200">
+                                        <th className="border border-gray-300 px-4 py-2">Name</th>
+                                        <th className="border border-gray-300 px-4 py-2">Email</th>
+                                        <th className="border border-gray-300 px-4 py-2">Date of Application</th>
+                                        <th className="border border-gray-300 px-4 py-2">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {applications.map((app) => (
+                                        <tr key={app.id} className="text-center">
+                                            <td className="border border-gray-300 px-4 py-2">{app.name}</td>
+                                            <td className="border border-gray-300 px-4 py-2">{app.email}</td>
+                                            <td className="border border-gray-300 px-4 py-2">{app.date}</td>
+                                            <td className="border border-gray-300 px-4 py-2">
+                                                {app.status === "Pending" ? (
+                                                    <select
+                                                        value={app.status}
+                                                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                                                        className="p-1 border rounded"
+                                                    >
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Accepted">Accepted</option>
+                                                        <option value="Rejected">Rejected</option>
+                                                    </select>
+                                                ) : (
+                                                    <span className={`px-2 py-1 rounded ${app.status === "Accepted" ? "bg-green-400" : "bg-red-400"} text-white`}>
+                                                        {app.status}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 );
             }}
         </Authenticator>
     );
-
 };
 
 export default SponsorApplication;
