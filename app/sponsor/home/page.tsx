@@ -61,9 +61,9 @@ export default function HomePage() {
 
         // Dummy driver data for example
         const drivers = [
-          { name: 'George A', points: 120, email: 'georgea@example.com' },
-          { name: 'Georgie B', points: 85, email: 'georgieb@example.com' },
-          { name: 'Georgia C', points: 95, email: 'georgiacc@example.com' },
+          { name: 'George A', points: 120, email: 'georgea@example.com', status: 'Active' },
+          { name: 'Georgie B', points: 85, email: 'georgieb@example.com', status: 'Inactive' },
+          { name: 'Georgia C', points: 95, email: 'georgiacc@example.com', status: 'Active' },
         ];
 
         return (
@@ -143,6 +143,7 @@ export default function HomePage() {
                       <th className="border border-gray-300 px-4 py-2">Driver Name</th>
                       <th className="border border-gray-300 px-4 py-2">Points</th>
                       <th className="border border-gray-300 px-4 py-2">Email</th>
+                      <th className="border border-gray-300 px-4 py-2">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -151,6 +152,12 @@ export default function HomePage() {
                         <td className="border border-gray-300 px-4 py-2">{driver.name}</td>
                         <td className="border border-gray-300 px-4 py-2">{driver.points}</td>
                         <td className="border border-gray-300 px-4 py-2">{driver.email}</td>
+                        <td className={`border border-gray-300 px-4 py-2 text-white font-bold ${
+                          driver.status === "Active" ? "bg-green-500" : driver.status === "Inactive" ?  "bg-red-500"
+                          : "bg-gray-500"
+                        }`}>
+                        {driver.status}
+                      </td>
                       </tr>
                     ))}
                   </tbody>
