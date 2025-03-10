@@ -157,7 +157,7 @@ const AboutPage = () => {
                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                   Catalog
                 </button>
-                {/* Show Application button for Drivers and Sponsors */}
+                {/* Show Points button for Drivers and Sponsors */}
                 {(userRole === "Driver" || userRole === "Sponsor") && (
                   <button
                     onClick={handlePointsClick}

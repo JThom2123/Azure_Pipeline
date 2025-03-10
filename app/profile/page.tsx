@@ -147,21 +147,14 @@ export default function ProfilePage() {
         }
     };
 
-    // Determine Points Page Route Based on Role
-    const getPointsPage = () => {
-        //if (userRole === "Administrator") return "/admin/home";
-        if (userRole === "Driver") return "/driver/points";
-        if (userRole === "Sponsor") return "/sponsor/points";
-        return null; // No navigation if role isn't determined
-    };
-
-    // Handle Home Button Click (Prevent Navigation if Role is Unknown)
+    // Handle Points Button Click
     const handlePointsClick = () => {
-        const pointsPage = getPointsPage();
-        if (pointsPage) {
-            router.push(pointsPage);
+        if (userRole === "Driver") {
+            router.push("/driver/points");
+        } else if (userRole === "Sponsor") {
+            router.push("/sponsor/points");
         } else {
-            console.error("User role is not set, cannot navigate.");
+            console.error("User role is not eligible for applications.");
         }
     };
 
@@ -188,6 +181,16 @@ export default function ProfilePage() {
         }
     };
 
+    // Handle Application Button Click
+    const handleApplicationClick = () => {
+        if (userRole === "Driver") {
+            router.push("/driver/driver_app");
+        } else if (userRole === "Sponsor") {
+            router.push("/sponsor/sponsor_app");
+        } else {
+            console.error("User role is not eligible for applications.");
+        }
+    };
     const handlePasswordResetRequest = async () => {
         try {
             await resetPassword({ username: userAttributes.email });
@@ -267,19 +270,24 @@ export default function ProfilePage() {
                                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                                     Catalog
                                 </button>
-                                <button
-                                    onClick={handlePointsClick}
-                                    disabled={roleLoading} // Disable until role is loaded
-                                    className={`px-4 py-2 rounded ${roleLoading
-                                        ? "bg-gray-500 cursor-not-allowed"
-                                        : "bg-gray-700 hover:bg-gray-600"
-                                        }`}
-                                >
-                                    {roleLoading ? "Loading..." : "Points"}
-                                </button>
-                                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                                    Application
-                                </button>
+                                {/* Show Points button for Drivers and Sponsors */}
+                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                    <button
+                                        onClick={handlePointsClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Points
+                                    </button>
+                                )}
+                                {/* Show Application button for Drivers and Sponsors */}
+                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                    <button
+                                        onClick={handleApplicationClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Application
+                                    </button>
+                                )}
                                 <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                                     More
                                 </button>
