@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
@@ -11,7 +11,17 @@ export default function ITunesSearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const router = useRouter();
+
+  // Load points from localStorage on component mount
+  useEffect(() => {
+    const storedPoints = localStorage.getItem("songPoints");
+    if (storedPoints) {
+      const parsedPoints = JSON.parse(storedPoints);
+      setResults(parsedPoints);
+    }
+  }, []);
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -31,12 +41,19 @@ export default function ITunesSearchPage() {
       }
 
       const data = await response.json();
-      setResults(
-        data.results.map((item: any) => ({
+
+      // For each song, check if there's a saved point value in localStorage
+      const newResults = data.results.map((item: any) => {
+        const storedPoints = getStoredPoints(item.trackId);
+        return {
           ...item,
-          points: Math.floor(Math.random() * 100) + 1, // Assigning random points for now
-        }))
-      );
+          points: storedPoints !== null ? storedPoints : Math.floor(Math.random() * 100) + 1, // Use stored or random points
+        };
+      });
+
+      // Save the results to localStorage
+      localStorage.setItem("songPoints", JSON.stringify(newResults));
+      setResults(newResults);
     } catch (err) {
       setError("Something went wrong. Please try again.");
       console.error(err);
@@ -50,8 +67,29 @@ export default function ITunesSearchPage() {
   };
 
   const handleSignOut = () => {
-    // Implement sign out functionality here (if needed)
     router.replace("/");
+  };
+
+  // Retrieve stored points for a specific trackId
+  const getStoredPoints = (trackId: number) => {
+    const storedPoints = localStorage.getItem("songPoints");
+    if (storedPoints) {
+      const parsedPoints = JSON.parse(storedPoints);
+      const song = parsedPoints.find((item: any) => item.trackId === trackId);
+      return song ? song.points : null;
+    }
+    return null;
+  };
+
+  // Handle the points editing for a song
+  const handleEditPoints = (trackId: number, newPoints: number) => {
+    const updatedResults = results.map((item) =>
+      item.trackId === trackId ? { ...item, points: newPoints } : item
+    );
+    setResults(updatedResults);
+
+    // Save the updated points back to localStorage
+    localStorage.setItem("songPoints", JSON.stringify(updatedResults));
   };
 
   return (
@@ -59,7 +97,7 @@ export default function ITunesSearchPage() {
       {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
-        <Link href="/driver/home">
+          <Link href="/driver/home">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
               Home
             </button>
@@ -148,7 +186,17 @@ export default function ITunesSearchPage() {
                 <p className="font-bold">
                   {item.trackName || item.collectionName} - {item.artistName}
                 </p>
-                <p className="text-sm text-gray-600">Points: {item.points}</p>
+                <p className="text-sm text-gray-600">
+                  Points:{" "}
+                  <input
+                    type="number"
+                    value={item.points}
+                    onChange={(e) =>
+                      handleEditPoints(item.trackId, Number(e.target.value))
+                    }
+                    className="w-16 p-1 border rounded"
+                  />
+                </p>
               </div>
               {item.previewUrl && (
                 <audio controls className="ml-4">
