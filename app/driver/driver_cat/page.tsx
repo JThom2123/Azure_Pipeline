@@ -59,7 +59,7 @@ export default function ITunesSearchPage() {
       {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
-        <Link href="/driver/home">
+          <Link href="/driver/home">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
               Home
             </button>
@@ -69,6 +69,9 @@ export default function ITunesSearchPage() {
               About Page
             </button>
           </Link>
+          <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
+            Catalog
+          </button>
           <button className="bg-blue-600 px-4 py-2 rounded text-white">Catalog</button>
           <Link href="/driver/points">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
@@ -80,9 +83,6 @@ export default function ITunesSearchPage() {
               Application
             </button>
           </Link>
-          <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-            More
-          </button>
         </div>
 
         {/* Profile Dropdown */}

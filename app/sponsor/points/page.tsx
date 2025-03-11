@@ -5,15 +5,12 @@ import { useState, useEffect, useRef } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
-import { fetchUserAttributes } from "aws-amplify/auth";
 import { FaUserCircle } from "react-icons/fa";
 
 export default function PointsSponsorPage() {
     const router = useRouter();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [roleLoading, setRoleLoading] = useState(true);
   
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -80,9 +77,6 @@ export default function PointsSponsorPage() {
                       Application
                     </button>
                   </Link>
-                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    More
-                  </button>
                 </div>
                 
                 {/* Profile Dropdown */}
