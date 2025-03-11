@@ -12,11 +12,12 @@ Amplify.configure(outputs);
 
 export default function App() {
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string | null>(null); // Track role selection
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
 
+  /**  Fetches user role & email when user is authenticated */
   const fetchUserRole = useCallback(async (user: any) => {
     if (!user) {
       console.error("User is not authenticated, skipping fetchUserAttributes()");
@@ -26,8 +27,17 @@ export default function App() {
       setIsLoading(true);
       const attributes = await fetchUserAttributes();
       const role = attributes?.["custom:role"] || null;
+      const email = attributes?.email || null;
+
       setUserRole(role);
-      console.log("User Role:", role);
+      setUserEmail(email);
+      console.log("User Role:", role, "User Email:", email);
+
+      /** Send user info to API once fetched */
+      if (role && email) {
+        handleNewUserSignup(email, role);
+      }
+      
       return role;
     } catch (error) {
       console.error("Error fetching user attributes:", error);
@@ -37,24 +47,17 @@ export default function App() {
     }
   }, []);
 
-  // Function to send user details to API after sign-up
-  const handleNewUserSignup = async () => {
-    if (!userEmail || !userRole) return;
-
+  /**  Sends user info to the API upon signup */
+  const handleNewUserSignup = async (email: string, userType: string) => {
     try {
       const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user";
 
-      console.log("Sending user data to API:", { email: userEmail, userType: userRole });
+      console.log("Sending user data to API:", { email, userType });
 
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          userType: userRole,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, userType }),
       });
 
       const result = await response.json();
@@ -71,13 +74,6 @@ export default function App() {
       alert("An error occurred while saving your account. Please try again.");
     }
   };
-
-  // Ensure API is only called once when `userRole` is set
-  useEffect(() => {
-    if (userRole && userEmail) {
-      handleNewUserSignup();
-    }
-  }, [userRole, userEmail]);
 
   const getHomePage = (role: string | null) => {
     if (role === "Administrator") return "/admin/home";
