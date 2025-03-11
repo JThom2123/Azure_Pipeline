@@ -77,7 +77,7 @@ export default function App() {
 
 
   const getHomePage = (role: string | null) => {
-    if (role === "Administrator") return "/admin/home";
+    if (role === "Admin") return "/admin/home";
     if (role === "Driver") return "/driver/home";
     if (role === "Sponsor") return "/sponsor/home";
     return null;
