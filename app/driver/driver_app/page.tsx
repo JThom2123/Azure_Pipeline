@@ -121,9 +121,11 @@ const DriverAppPage = () => {
                     About Page
                   </button>
                 </Link>
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  Catalog
-                </button>
+                <Link href="/driver/catalog">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Catalog
+                  </button>
+                </Link>
                 <Link href="/driver/points">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Points
