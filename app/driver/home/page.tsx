@@ -118,6 +118,7 @@ export default function HomePage() {
               </h1>
               <p className="text-lg text-center mb-8">
                 You are logged in as a driver, a true Mother Trucker! You can view your sponsor(s) below.
+                Don't have a sponsor yet? Click the 'Application' tab to fill out your application.
               </p>
 
               {/* Sponsor Company Information Table */}
