@@ -72,22 +72,64 @@ export default function ProfilePage() {
 
     // Delete Account Function
     const handleDeleteAccount = async () => {
-        const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
-
-        if (!confirmDelete) {
-            return;
-        }
-
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete your account? This action cannot be undone."
+        );
+    
+        if (!confirmDelete) return;
+    
         try {
+            if (!userAttributes.email) {
+                alert("No user email found. Please log in again.");
+                return;
+            }
+    
+            const apiUrl = `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${userAttributes.email}`;
+    
+            console.log("Attempting to DELETE user:", apiUrl);
+    
+            const response = await fetch(apiUrl, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    // If your API requires authentication, uncomment and replace `YOUR_AUTH_TOKEN`
+                    // "Authorization": `Bearer YOUR_AUTH_TOKEN`
+                }
+            });
+    
+            console.log("API Response Status:", response.status);
+    
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("API Error:", errorText);
+                alert(`Error deleting account: ${errorText}`);
+    
+                // If user is not found (404), don't proceed with Cognito deletion
+                if (response.status === 404) {
+                    alert("User not found in database. No changes made.");
+                    return;
+                }
+    
+                return;
+            }
+    
+            const result = await response.json();
+            console.log("API Response Body:", result);
+            alert("Your account has been deleted successfully from the system.");
+    
+            // Now delete from AWS Cognito
             await deleteUser();
-            alert("Your account has been deleted successfully.");
+            alert("Your AWS Cognito account has been deleted.");
+    
             await signOut();
-            router.replace("/"); // Redirect to home page
+            router.replace("/");
+    
         } catch (error) {
             console.error("Error deleting account:", error);
-            alert("Error deleting account. Please try again.");
+            alert("Failed to delete the account. Please try again later.");
         }
     };
+    
 
     const handleUpdate = async () => {
         if (!userAttributes) {

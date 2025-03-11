@@ -14,6 +14,7 @@ export default function App() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string | null>(null); // Track role selection
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchUserRole = useCallback(async (user: any) => {
@@ -35,6 +36,48 @@ export default function App() {
       setIsLoading(false);
     }
   }, []);
+
+  // Function to send user details to API after sign-up
+  const handleNewUserSignup = async () => {
+    if (!userEmail || !userRole) return;
+
+    try {
+      const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user";
+
+      console.log("Sending user data to API:", { email: userEmail, userType: userRole });
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          userType: userRole,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log("API Response:", result);
+        alert("Your account has been successfully added to the database.");
+      } else {
+        console.error("API Error:", result);
+        alert("Error saving your account to the database. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error calling the API:", error);
+      alert("An error occurred while saving your account. Please try again.");
+    }
+  };
+
+  // Ensure API is only called once when `userRole` is set
+  useEffect(() => {
+    if (userRole && userEmail) {
+      handleNewUserSignup();
+    }
+  }, [userRole, userEmail]);
 
   const getHomePage = (role: string | null) => {
     if (role === "Administrator") return "/admin/home";
