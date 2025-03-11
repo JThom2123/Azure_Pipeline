@@ -50,30 +50,31 @@ export default function App() {
   /**  Sends user info to the API upon signup */
   const handleNewUserSignup = async (email: string, userType: string) => {
     try {
-      const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user";
+        const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user";
 
-      console.log("Sending user data to API:", { email, userType });
+        console.log("Sending user data to API:", { email, userType });
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, userType }),
-      });
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, userType }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok) {
-        console.log("API Response:", result);
-        alert("Your account has been successfully added to the database.");
-      } else {
-        console.error("API Error:", result);
-        alert("Error saving your account to the database. Please try again.");
-      }
+        if (response.status === 201) {
+            console.log("API Response:", result);
+            alert("Your account has been successfully added to the database.");
+        } else {
+            console.error("Unexpected response:", response.status, result);
+            alert(`Failed to create account. Server responded with status: ${response.status}`);
+        }
     } catch (error) {
-      console.error("Error calling the API:", error);
-      alert("An error occurred while saving your account. Please try again.");
+        console.error("Error calling the API:", error);
+        alert("An error occurred while saving your account. Please try again.");
     }
-  };
+};
+
 
   const getHomePage = (role: string | null) => {
     if (role === "Administrator") return "/admin/home";
