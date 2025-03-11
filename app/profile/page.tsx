@@ -5,7 +5,7 @@ import { Authenticator, useAuthenticator } from "@aws-amplify/ui-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
-import { fetchUserAttributes, updateUserAttributes, resetPassword, confirmResetPassword, confirmUserAttribute, signOut } from "aws-amplify/auth";
+import { fetchUserAttributes, updateUserAttributes, resetPassword, confirmResetPassword, confirmUserAttribute, signOut, deleteUser } from "aws-amplify/auth";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -69,6 +69,25 @@ export default function ProfilePage() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [dropdownOpen]);
+
+    // Delete Account Function
+    const handleDeleteAccount = async () => {
+        const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        try {
+            await deleteUser();
+            alert("Your account has been deleted successfully.");
+            await signOut();
+            router.replace("/"); // Redirect to home page
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            alert("Error deleting account. Please try again.");
+        }
+    };
 
     const handleUpdate = async () => {
         if (!userAttributes) {
@@ -148,15 +167,24 @@ export default function ProfilePage() {
     };
 
     // Handle Points Button Click
-    const handlePointsClick = () => {
-        if (userRole === "Driver") {
-            router.push("/driver/points");
-        } else if (userRole === "Sponsor") {
-            router.push("/sponsor/points");
-        } else {
-            console.error("User role is not eligible for applications.");
-        }
-    };
+  const handlePointsClick = () => {
+    if (userRole === "Driver") {
+      router.push("/driver/points");
+    } else if (userRole === "Sponsor") {
+      router.push("/sponsor/points");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  };
+
+  // Handle Catalog Button Click
+  const handleCatalogClick = () => {
+    if (userRole === "Driver") {
+      router.push("/driver/catalog");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  };
 
 
     const handleVerifyEmail = async () => {
@@ -267,16 +295,21 @@ export default function ProfilePage() {
                                         About Page
                                     </button>
                                 </Link>
-                                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                                    Catalog
-                                </button>
-                                {/* Show Points button for Drivers and Sponsors */}
-                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                {(userRole === "Driver") && (
                                     <button
                                         onClick={handlePointsClick}
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                                     >
                                         Points
+                                    </button>
+                                )}
+                                {/* Show Points button for Drivers and Sponsors */}
+                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                    <button
+                                        onClick={handleCatalogClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Catalog
                                     </button>
                                 )}
                                 {/* Show Application button for Drivers and Sponsors */}
@@ -333,7 +366,7 @@ export default function ProfilePage() {
                                 )}
 
                                 {!passwordResetRequested ? (
-                                    <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handlePasswordResetRequest}>
+                                    <button className="bg-yellow-600 text-white px-4 py-2 rounded" onClick={handlePasswordResetRequest}>
                                         Reset Password
                                     </button>
                                 ) : (
@@ -346,6 +379,9 @@ export default function ProfilePage() {
                                         </button>
                                     </div>
                                 )}
+                                <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteAccount}>
+                                    Delete Account
+                                </button>
                             </div>
                         </div>
                     </div>
