@@ -107,9 +107,6 @@ export default function ITunesSearchPage() {
               About Page
             </button>
           </Link>
-          <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
-            Catalog
-          </button>
           <button className="bg-blue-600 px-4 py-2 rounded text-white">Catalog</button>
           <Link href="/driver/points">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">

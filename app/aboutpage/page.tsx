@@ -100,7 +100,7 @@ const AboutPage = () => {
     if (userRole === "Driver") {
       router.push("/driver/driver_cat");
     } else if (userRole === "Sponsor") {
-      router.push("/sponsor/driver_cat");
+      router.push("/sponsor/sponsor_cat");
     } else {
       console.error("User role is not eligible for applications.");
     }
@@ -171,7 +171,7 @@ const AboutPage = () => {
                     onClick={handleCatalogClick}
                     className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                   >
-                    Points
+                    Catalog
                   </button>
                 )}
                 {/* Show Points button for Drivers and Sponsors */}
@@ -193,10 +193,6 @@ const AboutPage = () => {
                     Application
                   </button>
                 )}
-
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  More
-                </button>
               </div>
               
               {/* Profile Dropdown */}
