@@ -106,14 +106,7 @@ export default function App() {
             FormFields() {
               return (
                 <>
-                  <Authenticator.SignUp.FormFields />
-                  <TextField
-                    name="address"
-                    label="Address"
-                    placeholder="Enter your home address"
-                    required
-                  />
-                  <SelectField
+                <SelectField
                     name="custom:role"
                     label="Select Your Role"
                     options={["Driver", "Sponsor", "Admin"]}
@@ -128,6 +121,13 @@ export default function App() {
                       required
                     />
                   )}
+                  <Authenticator.SignUp.FormFields />
+                  <TextField
+                    name="address"
+                    label="Address"
+                    placeholder="Enter your home address"
+                    required
+                  />
                 </>
               );
             },
