@@ -172,7 +172,7 @@ ABOUT PAGE
     POST:
         Description: Uses a request body to post a point adjustment to a user. The adjustment can be positive or negative.
         PATH: /dev1/user/points
-        Usage: XXX.com//dev1/user/points
+        Usage: XXX.com/dev1/user/points
 
         Request:
             {
@@ -190,3 +190,27 @@ ABOUT PAGE
             "statusCode": 200,
             "body": "{\"message\":\"points created successfully\"}"
             }
+
+/user/relation
+
+    POST: 
+        Description: Uses a request body to add a relationship between to users
+        PATH: /dev1/user/relation
+        Usage: XXX.com/dev1/user/relation
+
+        Request: 
+            {
+            "requestContext": {
+            "http": {
+            "method": "POST",
+            "path": "/dev1/user/relation"
+            }
+            },
+            "body": "{\"email1\": \"sponsor@email.com\", \"email2\": \"driver@email.com\", \"relationType\": \"sponsor-driver\"}"
+            }
+
+        Expected Response:
+        {
+        "statusCode": 201,
+        "body": "{\"message\":\"Relationship created successfully\"}"
+        }
