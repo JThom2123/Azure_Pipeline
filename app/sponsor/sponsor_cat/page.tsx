@@ -107,17 +107,17 @@ export default function ITunesSearchPage() {
     <div className="flex flex-col h-screen">
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
-          <Link href="/driver/home">
+          <Link href="/sponsor/home">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button>
           </Link>
           <Link href="/aboutpage">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button>
           </Link>
           <button className="bg-blue-600 px-4 py-2 rounded text-white">Catalog</button>
-          <Link href="/driver/points">
+          <Link href="/sponsor/points">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button>
           </Link>
-          <Link href="/driver/driver_app">
+          <Link href="/sponsor/sponsor_app">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
           </Link>
           <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">More</button>
