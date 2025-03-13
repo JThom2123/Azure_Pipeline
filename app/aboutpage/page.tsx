@@ -191,10 +191,6 @@ const AboutPage = () => {
                     Application
                   </button>
                 )}
-
-                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                  More
-                </button>
               </div>
               
               {/* Profile Dropdown */}
