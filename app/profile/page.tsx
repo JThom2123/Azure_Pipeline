@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Authenticator, useAuthenticator } from "@aws-amplify/ui-react";
+import { Authenticator } from "@aws-amplify/ui-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
@@ -16,6 +16,7 @@ export default function ProfilePage() {
         address: "",
     });
 
+    const [sponsorCompany, setSponsorCompany] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [passwordResetRequested, setPasswordResetRequested] = useState(false);
     const [newPassword, setNewPassword] = useState("");
@@ -39,6 +40,12 @@ export default function ProfilePage() {
                         phone_number: attributes.phone_number || "",
                         address: attributes.address || "",
                     });
+
+                    setUserRole(attributes["custom:role"] || null);
+
+                    if (attributes["custom:sponsorCompany"]) {
+                        setSponsorCompany(attributes["custom:sponsorCompany"]);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching user attributes:", error);
@@ -47,11 +54,28 @@ export default function ProfilePage() {
                 router.push("/"); // Redirect to login
             } finally {
                 setLoading(false);
+                setRoleLoading(false);
             }
         };
 
         getUserAttributes();
     }, []);
+
+    // Update Sponsor Company in Cognito
+    const handleSponsorCompanyUpdate = async () => {
+        if (!sponsorCompany.trim()) {
+            alert("Sponsor company name cannot be empty.");
+            return;
+        }
+
+        try {
+            await updateUserAttributes({ userAttributes: { "custom:sponsorCompany": sponsorCompany } });
+            alert("Sponsor company updated successfully!");
+        } catch (error) {
+            console.error("Error updating sponsor company:", error);
+            alert("Failed to update sponsor company. Please try again.");
+        }
+    };
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -421,6 +445,25 @@ export default function ProfilePage() {
                                 <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteAccount}>
                                     Delete Account
                                 </button>
+                                {/* Sponsor Company Section - Visible Only for Sponsors */}
+                                {userRole === "Sponsor" && (
+                                    <div className="space-y-4 border-t pt-4">
+                                        <h2 className="text-lg font-semibold">Sponsor Information</h2>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2 border rounded"
+                                            value={sponsorCompany}
+                                            onChange={(e) => setSponsorCompany(e.target.value)}
+                                            placeholder="Enter or update sponsor company name"
+                                        />
+                                        <button
+                                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                            onClick={handleSponsorCompanyUpdate}
+                                        >
+                                            Update Sponsor Company
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
