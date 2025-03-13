@@ -28,3 +28,9 @@ FROM user_Relationships r
 JOIN users u ON r.email_1 = u.email
 WHERE r.email_2 = 'driver@email.com' AND r.relationship_type = 'sponsor-driver';
 
+-- Delete relationship --
+
+DELETE FROM user_Relationships
+WHERE email_1 = 'sponsor@email.com'
+  AND email_2 = 'driver@email.com'
+  AND relationship_type = 'sponsor-driver';
