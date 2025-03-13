@@ -95,8 +95,7 @@ const AboutPage = () => {
     }
   };
 
-  // Handle Points Button Click
-  const handleCatalogClick = () => {
+  const handleCatClick = () => {
     if (userRole === "Driver") {
       router.push("/driver/driver_cat");
     } else if (userRole === "Sponsor") {
@@ -104,7 +103,7 @@ const AboutPage = () => {
     } else {
       console.error("User role is not eligible for applications.");
     }
-  };
+  }
 
   // Close profiledropdown when clicking outside
   useEffect(() => {
@@ -165,10 +164,9 @@ const AboutPage = () => {
                 <button className="bg-blue-600 px-4 py-2 rounded text-white">
                   About Page
                 </button>
-                {/* Show Catalog button for Drivers and Sponsors */}
                 {(userRole === "Driver" || userRole === "Sponsor") && (
                   <button
-                    onClick={handleCatalogClick}
+                    onClick={handleCatClick}
                     className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                   >
                     Catalog
@@ -193,6 +191,10 @@ const AboutPage = () => {
                     Application
                   </button>
                 )}
+
+                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                  More
+                </button>
               </div>
               
               {/* Profile Dropdown */}
