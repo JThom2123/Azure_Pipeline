@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
@@ -17,6 +17,7 @@ export default function ITunesSearchPage() {
   const [duration, setDuration] = useState<number>(0); // State for total duration of the audio
   const [showCatalog, setShowCatalog] = useState(true); // State to toggle between catalog and my songs view
   const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -49,6 +50,23 @@ export default function ITunesSearchPage() {
       setLoading(false);
     }
   }
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const handleProfileClick = () => {
     router.push("/profile");
@@ -104,9 +122,8 @@ export default function ITunesSearchPage() {
           </Link>
           <button
             onClick={() => setShowCatalog(true)}
-            className={`${
-              showCatalog ? "bg-blue-600" : "bg-gray-700"
-            } px-4 py-2 rounded text-white`}
+            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
+              } px-4 py-2 rounded text-white`}
           >
             Catalog
           </button>
@@ -130,7 +147,7 @@ export default function ITunesSearchPage() {
           </button>
 
           {/* Profile Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <div
               className="cursor-pointer text-2xl"
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -166,17 +183,15 @@ export default function ITunesSearchPage() {
         <div className="flex justify-center gap-4 mb-4">
           <button
             onClick={() => setShowCatalog(true)}
-            className={`${
-              showCatalog ? "bg-blue-600" : "bg-gray-700"
-            } px-4 py-2 rounded text-white`}
+            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
+              } px-4 py-2 rounded text-white`}
           >
             Catalog
           </button>
           <button
             onClick={() => setShowCatalog(false)}
-            className={`${
-              !showCatalog ? "bg-blue-600" : "bg-gray-700"
-            } px-4 py-2 rounded text-white`}
+            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
+              } px-4 py-2 rounded text-white`}
           >
             My Songs
           </button>
