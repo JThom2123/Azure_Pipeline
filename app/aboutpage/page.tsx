@@ -22,10 +22,14 @@ const AboutPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true); // Track role loading
+  const [roleLoading, setRoleLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedData, setEditedData] = useState<AboutSection[]>([]);
+  const [saving, setSaving] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Fetch about page content
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -37,6 +41,7 @@ const AboutPage = () => {
 
         const data: AboutSection[] = await response.json();
         setAboutData(data);
+        setEditedData(data); // Initialize editedData with existing content
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -58,12 +63,48 @@ const AboutPage = () => {
       } catch (error) {
         console.error("Error fetching user role:", error);
       } finally {
-        setRoleLoading(false); // Stop role loading
+        setRoleLoading(false);
       }
     };
 
     fetchUserRole();
   }, []);
+
+  // Handle content change in edit mode
+  const handleContentChange = (index: number, newContent: string) => {
+    const updatedData = [...editedData];
+    updatedData[index].content = newContent;
+    setEditedData(updatedData);
+  };
+
+  // Save changes to the database
+  const handleSaveChanges = async () => {
+    setSaving(true);
+    console.log("🚀 Sending data to API:", editedData); // Log data before sending
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editedData),  // Make sure this is valid JSON
+      });
+
+      console.log("API Response Status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to save changes. Status: ${response.status}, Error: ${errorText}`);
+      }
+
+      setAboutData(editedData);
+      setEditMode(false);
+      console.log("Changes saved successfully!");
+    } catch (error) {
+      console.error("Error saving changes:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Determine Home Page Route Based on Role
   const getHomePage = () => {
@@ -116,7 +157,7 @@ const AboutPage = () => {
 
   const handleAddSponsorsClick = () => {
     if (userRole === "Sponsor") {
-      router.push("/sponsor/addSponsors");
+      router.push("/sponsor/addUsers");
     } else {
       console.error("User role is not eligible for applications.");
     }
@@ -170,11 +211,10 @@ const AboutPage = () => {
                 <button
                   onClick={handleHomeClick}
                   disabled={roleLoading} // Disable until role is loaded
-                  className={`px-4 py-2 rounded ${
-                    roleLoading
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-gray-700 hover:bg-gray-600"
-                  }`}
+                  className={`px-4 py-2 rounded ${roleLoading
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-gray-700 hover:bg-gray-600"
+                    }`}
                 >
                   {roleLoading ? "Loading..." : "Home"}
                 </button>
@@ -228,8 +268,17 @@ const AboutPage = () => {
                     Add Sponsors
                   </button>
                 )}
+
+                {userRole === "Admin" && (
+                  <button
+                    onClick={() => setEditMode(!editMode)}
+                    className="bg-red-500 px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    {editMode ? "Cancel Edit" : "Edit Page"}
+                  </button>
+                )}
               </div>
-              
+
               {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
@@ -238,7 +287,6 @@ const AboutPage = () => {
                 >
                   <FaUserCircle />
                 </div>
-
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
                     <button
@@ -259,35 +307,66 @@ const AboutPage = () => {
             </nav>
 
             {/* Main Content */}
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <h1 className="text-3xl font-bold mb-4">
-                Welcome to Our About Page
-              </h1>
+            <div className="flex flex-col items-center justify-start min-h-screen text-center p-6 w-full max-w-3xl mx-auto">
+              <h1 className="text-3xl font-bold mb-4 text-center w-full">Welcome to Our About Page</h1>
 
-              {loading && <p className="text-gray-600">Loading...</p>}
-              {error && <p className="text-red-500">Error: {error}</p>}
+              {loading && <p className="text-gray-600 text-center">Loading...</p>}
+              {error && <p className="text-red-500 text-center">Error: {error}</p>}
 
               {!loading && !error && aboutData.length > 0 ? (
-                <div className="space-y-6 max-w-2xl">
-                  {aboutData.map((section, index) => (
-                    <div key={index} className="border-b pb-4">
-                      <h2 className="text-xl font-semibold capitalize">
-                        {section.section_name.replace(/_/g, " ")}
-                      </h2>
-                      <p className="text-gray-700">{section.content}</p>
-                      <small className="text-gray-500">
+                <div className="space-y-6 w-full">
+                  {editedData.map((section, index) => (
+                    <div key={index} className="border-b pb-4 w-full text-center">
+                      <h2 className="text-xl font-semibold capitalize text-center w-full">{section.section_name.replace(/_/g, " ")}</h2>
+
+                      {/* Centering all text and inputs */}
+                      <div className="relative w-full flex flex-col items-center">
+                        {editMode ? (
+                          <textarea
+                            className="w-full max-w-xl p-2 border rounded resize-none bg-white text-center"
+                            value={section.content}
+                            onChange={(e) => handleContentChange(index, e.target.value)}
+                            style={{ minHeight: "120px", maxHeight: "300px" }}
+                          />
+                        ) : (
+                          <p className="text-gray-700 text-center w-full">{section.content || "No content available"}</p>
+                        )}
+                      </div>
+
+                      <small className="text-gray-500 text-center w-full block">
                         Last updated:{" "}
-                        {new Intl.DateTimeFormat("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }).format(new Date(section.last_updated))}
+                        {section.last_updated
+                          ? new Intl.DateTimeFormat("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }).format(new Date(section.last_updated))
+                          : "No update available"}
                       </small>
                     </div>
                   ))}
+
+                  {/* Centered Buttons for Edit Mode */}
+                  {editMode && (
+                    <div className="flex justify-center space-x-4 mt-4">
+                      <button
+                        onClick={handleSaveChanges}
+                        className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        disabled={saving}
+                      >
+                        {saving ? "Saving..." : "Save Changes"}
+                      </button>
+                      <button
+                        onClick={() => setEditMode(false)}
+                        className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Cancel Edit
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
-                !loading && <p className="text-gray-600">No data available.</p>
+                !loading && <p className="text-gray-600 text-center w-full">No data available.</p>
               )}
             </div>
           </div>
