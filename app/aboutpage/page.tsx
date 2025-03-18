@@ -105,6 +105,23 @@ const AboutPage = () => {
     }
   }
 
+  const handleAddUsersClick = () => {
+    if (userRole === "Admin") {
+      router.push("/admin/addUsers");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  }
+
+
+  const handleAddSponsorsClick = () => {
+    if (userRole === "Sponsor") {
+      router.push("/sponsor/addSponsors");
+    } else {
+      console.error("User role is not eligible for applications.");
+    }
+  }
+
   // Close profiledropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,6 +206,26 @@ const AboutPage = () => {
                     className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                   >
                     Application
+                  </button>
+                )}
+
+                {/* Show Add Users button for Admin */}
+                {(userRole === "Admin") && (
+                  <button
+                    onClick={handleAddUsersClick}
+                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Add Users
+                  </button>
+                )}
+
+                {/* Show Add Sponsors button for Sponsors */}
+                {(userRole === "Sponsor") && (
+                  <button
+                    onClick={handleAddSponsorsClick}
+                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Add Sponsors
                   </button>
                 )}
               </div>

@@ -88,6 +88,9 @@ export default function HomePage() {
                 <Link href="/sponsor/sponsor_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
                 </Link>
+                <Link href="/sponsor/addSponsors">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Sponsors</button>
+                </Link>
               </div>
 
               {/* Profile Dropdown */}

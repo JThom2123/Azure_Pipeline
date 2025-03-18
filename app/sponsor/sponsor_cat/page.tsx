@@ -120,7 +120,9 @@ export default function ITunesSearchPage() {
           <Link href="/sponsor/sponsor_app">
             <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
           </Link>
-          <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">More</button>
+          <Link href="/sponsor/addSponsors">
+            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Sponsors</button>
+          </Link>
         </div>
 
         <div className="relative">

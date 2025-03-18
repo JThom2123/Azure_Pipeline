@@ -237,7 +237,7 @@ export default function ProfilePage() {
     } else if (userRole === "Sponsor") {
       router.push("/sponsor/points");
     } else {
-      console.error("User role is not eligible for applications.");
+      console.error("User role is not eligible for points.");
     }
   };
 
@@ -246,7 +246,25 @@ export default function ProfilePage() {
     if (userRole === "Driver") {
       router.push("/driver/catalog");
     } else {
-      console.error("User role is not eligible for applications.");
+      console.error("User role is not eligible for catalog access.");
+    }
+  };
+
+  // Handle Add Users Button Click
+  const handleAddUsersClick = () => {
+    if (userRole === "Admin") {
+      router.push("/admin/addUsers");
+    } else {
+      console.error("User role is not eligible for adding users.");
+    }
+  };
+
+  // Handle Add Sponsors Button Click
+  const handleAddSponsorsClick = () => {
+    if (userRole === "Sponsor") {
+      router.push("/sponsor/addSponsors");
+    } else {
+      console.error("User role is not eligible for adding users.");
     }
   };
 
@@ -359,7 +377,7 @@ export default function ProfilePage() {
                                         About Page
                                     </button>
                                 </Link>
-                                {(userRole === "Driver") && (
+                                {(userRole === "Driver" || userRole === "Sponsor") && (
                                     <button
                                         onClick={handlePointsClick}
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
@@ -383,6 +401,25 @@ export default function ProfilePage() {
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                                     >
                                         Application
+                                    </button>
+                                )}
+                                {/* Show Add User button for Admin */}
+                                {(userRole === "Admin") && (
+                                    <button
+                                        onClick={handleAddUsersClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Add Users
+                                    </button>
+                                )}
+
+                                {/* Show Add Sponsors button for Sponsors */}
+                                {(userRole === "Sponsor") && (
+                                    <button
+                                        onClick={handleAddSponsorsClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Add Sponsors
                                     </button>
                                 )}
                             </div>
