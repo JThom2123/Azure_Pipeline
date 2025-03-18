@@ -1,6 +1,6 @@
-"use client"; // <-- This marks the file as a client-side component
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
@@ -13,6 +13,7 @@ export default function ITunesSearchPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]); // Track selected songs for the catalog
   const [showCatalog, setShowCatalog] = useState(false); // State to control visibility of selected songs
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
 
@@ -29,6 +30,23 @@ export default function ITunesSearchPage() {
       setSelectedSongs(JSON.parse(storedSelectedSongs));
     }
   }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -125,17 +143,29 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        <div className="relative">
+        {/* Profile Dropdown */}
+        <div className="relative" ref={dropdownRef}>
           <div
             className="cursor-pointer text-2xl"
             onClick={() => setDropdownOpen(!dropdownOpen)}
           >
             <FaUserCircle />
           </div>
+
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-              <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">My Profile</button>
-              <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">Sign Out</button>
+              <button
+                onClick={handleProfileClick}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+              >
+                My Profile
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+              >
+                Sign Out
+              </button>
             </div>
           )}
         </div>

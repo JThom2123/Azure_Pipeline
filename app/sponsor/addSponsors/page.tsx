@@ -41,6 +41,23 @@ export default function SponsorAddPage() {
         checkUserRole();
     }, [router]);
 
+    // Close profile dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+
+        if (dropdownOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [dropdownOpen]);
+
     /** Create the new Sponsor user in Cognito */
     const createUserInCognito = async (name: string, email: string, sponsorCompany: string) => {
         try {
