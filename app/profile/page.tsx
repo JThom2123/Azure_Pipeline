@@ -116,8 +116,6 @@ export default function ProfilePage() {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    // If your API requires authentication, uncomment and replace `YOUR_AUTH_TOKEN`
-                    // "Authorization": `Bearer YOUR_AUTH_TOKEN`
                 }
             });
     
@@ -216,7 +214,7 @@ export default function ProfilePage() {
 
     // Determine Home Page Route Based on Role
     const getHomePage = () => {
-        if (userRole === "Administrator") return "/admin/home";
+        if (userRole === "Admin") return "/admin/home";
         if (userRole === "Driver") return "/driver/home";
         if (userRole === "Sponsor") return "/sponsor/home";
         return null; // No navigation if role isn't determined
