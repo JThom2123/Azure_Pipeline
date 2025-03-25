@@ -167,9 +167,6 @@ const DriverAppPage = () => {
                 <label htmlFor="email">Email:</label>
                 <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
 
-                <label htmlFor="phone">Phone Number:</label>
-                <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
-
                 <label htmlFor="sponsor">Select a Sponsor:</label>
                 <select id="sponsorDropdown" name="sponsor" value={formData.sponsor} onChange={handleInputChange} className="border p-2 w-full mb-2">
                   <option value="">--Please choose a sponsor--</option>

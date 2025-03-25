@@ -40,7 +40,7 @@ export default function App() {
         console.log("User successfully added to database:", data);
       } else {
         const errorText = await response.text();
-        console.error("API Response Error:", response.status, errorText);
+        console.log("API Response Error:", response.status, errorText);
       }
     } catch (error) {
       console.error("API Request Failed:", error);
