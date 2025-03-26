@@ -89,7 +89,7 @@ export default function AdminPage() {
         try {
             const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies";
 
-            console.log("🚀 Adding New Sponsor Company:", newSponsorCompany);
+            console.log("Adding New Sponsor Company:", newSponsorCompany);
 
             const response = await fetch(apiUrl, {
                 method: "POST",
@@ -120,7 +120,7 @@ export default function AdminPage() {
     /** Create the user in Cognito */
     const createUserInCognito = async (name: string, email: string, userType: string, sponsorCompany: string) => {
         try {
-            console.log("🚀 Creating user in Cognito:", { name, email, userType, sponsorCompany });
+            console.log("Creating user in Cognito:", { name, email, userType, sponsorCompany });
 
             const userAttributes: Record<string, string> = {
                 email,

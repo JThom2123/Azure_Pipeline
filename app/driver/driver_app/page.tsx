@@ -7,12 +7,17 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import { FaUserCircle } from "react-icons/fa";
 
+interface SponsorCompany {
+  company_name: string;
+}
+
 const DriverAppPage = () => {
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]); // List of sponsor companies
 
   // Form state
   const [formData, setFormData] = useState({
@@ -58,6 +63,26 @@ const DriverAppPage = () => {
     };
 
     fetchUserRole();
+  }, []);
+
+  /** Fetch existing sponsor companies */
+  useEffect(() => {
+    const fetchSponsorCompanies = async () => {
+      try {
+        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
+
+        if (!response.ok) throw new Error("Failed to fetch sponsors");
+
+        const data: SponsorCompany[] = await response.json();
+        console.log("Fetched Sponsor Companies:", data); // Debugging log
+
+        setSponsorCompanies(data);
+      } catch (error) {
+        console.error("Error fetching sponsor companies:", error);
+      }
+    };
+
+    fetchSponsorCompanies();
   }, []);
 
   const getHomePage = () => {
@@ -164,15 +189,12 @@ const DriverAppPage = () => {
                 <label htmlFor="last-name">Last Name:</label>
                 <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
 
-                <label htmlFor="email">Email:</label>
-                <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
-
-                <label htmlFor="sponsor">Select a Sponsor:</label>
+                <label htmlFor="sponsor">Select a Sponsor Company:</label>
                 <select id="sponsorDropdown" name="sponsor" value={formData.sponsor} onChange={handleInputChange} className="border p-2 w-full mb-2">
-                  <option value="">--Please choose a sponsor--</option>
-                  <option value="Company A">Company A</option>
-                  <option value="Company B">Company B</option>
-                  <option value="Company C">Company C</option>
+                  <option value=""> Please Select a Sponsor Company</option>
+                  {sponsorCompanies.map((company, index) => (
+                    <option key={index} value={company.company_name}>{company.company_name}</option>
+                  ))}
                 </select>
 
                 <button type="submit" className="p-2 w-full mt-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">
@@ -195,9 +217,8 @@ const DriverAppPage = () => {
                     <tr key={app.id} className="text-center">
                       <td className="border border-gray-300 px-4 py-2">{app.sponsor}</td>
                       <td className="border border-gray-300 px-4 py-2">{app.date}</td>
-                      <td className={`border border-gray-300 px-4 py-2 text-white font-bold ${
-                        app.status === "Accepted" ? "bg-green-500" : app.status === "Pending" ? "bg-yellow-500" : "bg-red-500"
-                      }`}>
+                      <td className={`border border-gray-300 px-4 py-2 text-white font-bold ${app.status === "Accepted" ? "bg-green-500" : app.status === "Pending" ? "bg-yellow-500" : "bg-red-500"
+                        }`}>
                         {app.status}
                       </td>
                     </tr>
