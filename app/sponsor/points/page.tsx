@@ -6,11 +6,24 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
+import { getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
+
+interface Driver {
+    name: string;
+    email: string;
+    currPoints: number;
+    pointChange: number;
+    reason: string;
+    newTotal: number;
+}
 
 export default function PointsSponsorPage() {
     const router = useRouter();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [sponsorCompanyName, setSponsorCompanyName] = useState<string | null>(null);
+    const [userEmail, setUserEmail] = useState("");
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -29,12 +42,101 @@ export default function PointsSponsorPage() {
         };
     }, [dropdownOpen]);
 
-    // Dummy data for table
-    const [drivers, setDrivers] = useState([
-      { name: 'John Doe', currPoints: 120, pointChange: 0, reason: '', newTotal: 120 },
-      { name: 'Jane Smith', currPoints: 85, pointChange: 0, reason: '', newTotal: 85 },
-      { name: 'Bob Johnson', currPoints: 95, pointChange: 0, reason: '', newTotal: 95 },
-  ]);
+    // Fetch connected drivers and their points
+    const fetchDrivers = async (sponsorCompanyName: string) => {
+        try {
+            const response = await fetch(
+                `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${sponsorCompanyName}`
+            );
+            const data = await response.json();
+
+            if (!Array.isArray(data)) {
+                console.log("Expected an array but got:", data);
+                return;
+            }
+
+            const enrichedDrivers = await Promise.all(
+                data.map(async (driver: any) => {
+                    const pointsRes = await fetch(
+                        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
+                    );
+                    const pointData = await pointsRes.json();
+
+                    return {
+                        name: driver.fullName,
+                        email: driver.driverEmail,
+                        currPoints: pointData.totalPoints ?? 0,
+                        pointChange: 0,
+                        reason: '',
+                        newTotal: pointData.totalPoints ?? 0,
+                    };
+                })
+            );
+
+            setDrivers(enrichedDrivers);
+        } catch (err) {
+            console.error("Error fetching driver info:", err);
+        }
+    };
+
+    // Initialize user info and company
+    useEffect(() => {
+        const fetchInfo = async () => {
+            try {
+                const user = await getCurrentUser();
+                const email = user.signInDetails?.loginId || "";
+                setUserEmail(email);
+
+                const attributes = await fetchUserAttributes();
+                const companyName = attributes["custom:sponsorCompany"];
+                setSponsorCompanyName(companyName || null);
+
+                if (companyName) {
+                    setSponsorCompanyName(companyName);
+                    fetchDrivers(companyName);
+                }
+
+            } catch (err) {
+                console.error("Error loading user or drivers:", err);
+            }
+        };
+
+        fetchInfo();
+    }, []);
+
+
+    const handlePointChange = async (index: number, pointDelta: number, reason: string) => {
+        if (!reason.trim()) {
+            alert("Please provide a reason.");
+            return;
+        }
+
+        const driver = drivers[index];
+
+        try {
+            const res = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: driver.email,
+                    points: pointDelta,
+                    description: reason,
+                    sponsorCompanyID: sponsorCompanyName,
+                }),
+            });
+
+            if (res.ok) {
+                alert("Points updated!");
+                fetchDrivers(sponsorCompanyName!); // Refresh driver info
+            } else {
+                const err = await res.json();
+                console.error("Point update failed:", err);
+                alert("Failed to update points.");
+            }
+        } catch (error) {
+            console.error("Error sending point update:", error);
+        }
+    };
 
     return (
         <Authenticator>
@@ -42,22 +144,6 @@ export default function PointsSponsorPage() {
                 const handleSignOut = () => {
                     signOut?.();
                     router.replace("/");
-                };
-
-                // Handle point change and reason update
-                const handlePointChange = (index: number, newPoints: number, reason: string) => {
-                    if (!reason.trim()) {
-                        alert("Please provide a reason for the point change.");
-                        return;
-                    }
-
-                    setDrivers(prevDrivers => {
-                        const updatedDrivers = [...prevDrivers];
-                        updatedDrivers[index].pointChange = newPoints;
-                        updatedDrivers[index].reason = reason;
-                        updatedDrivers[index].newTotal = updatedDrivers[index].currPoints + newPoints;
-                        return updatedDrivers;
-                    });
                 };
 
                 const handleProfileClick = () => {
@@ -136,58 +222,65 @@ export default function PointsSponsorPage() {
 
                             {/* Sponsor Company Information Table */}
                             <div className="w-full max-w-4xl">
-                                <h2 className="text-2xl font-semibold text-center mb-4">Drivers</h2>
+                                <h2 className="text-2xl font-semibold text-center mb-4">Sponsor Points Dashboard</h2>
                                 <table className="w-full border-collapse border border-gray-300">
                                     <thead>
                                         <tr className="bg-gray-200">
-                                            <th className="border border-gray-300 px-4 py-2">Driver Name</th>
+                                            <th className="border border-gray-300 px-4 py-2">Driver Email</th>
                                             <th className="border border-gray-300 px-4 py-2">Current Points</th>
                                             <th className="border border-gray-300 px-4 py-2">Point Change (+/-)</th>
                                             <th className="border border-gray-300 px-4 py-2">Reason for Change</th>
                                             <th className="border border-gray-300 px-4 py-2">New Total Points</th>
-                                            <th className="border border-gray-300 px-4 py-2">Update</th>
+                                            <th className="border border-gray-300 px-4 py-2">Apply</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {drivers.map((driver, index) => (
                                             <tr key={index} className="text-center">
-                                                <td className="border border-gray-300 px-4 py-2">{driver.name}</td>
-                                                <td className="border border-gray-300 px-4 py-2">{driver.currPoints}</td>
-                                                <td className="border border-gray-300 px-4 py-2">
+                                                <td className="border px-4 py-2">{driver.email}</td>
+                                                <td className="border px-4 py-2">{driver.currPoints}</td>
+                                                <td className="border px-4 py-2">
                                                     <input
                                                         type="number"
-                                                        className="w-16 p-1 border border-gray-400 rounded"
+                                                        step="1"
+                                                        className="w-20 p-1 border rounded text-center"
                                                         value={driver.pointChange}
-                                                        onChange={(e) =>
-                                                            setDrivers(prevDrivers => {
-                                                                const updatedDrivers = [...prevDrivers];
-                                                                updatedDrivers[index].pointChange = Number(e.target.value);
-                                                                return updatedDrivers;
-                                                            })
-                                                        }
+                                                        onChange={(e) => {
+                                                            const newVal = parseInt(e.target.value, 10) || 0;
+                                                            setDrivers((prev) => {
+                                                                const updated = [...prev];
+                                                                updated[index].pointChange = newVal;
+                                                                updated[index].newTotal = updated[index].currPoints + newVal;
+                                                                return updated;
+                                                            });
+                                                        }}
                                                     />
                                                 </td>
-                                                <td className="border border-gray-300 px-4 py-2">
-                                                    <input
-                                                        type="text"
-                                                        className="w-full p-1 border border-gray-400 rounded"
+                                                <td className="border px-4 py-2">
+                                                    <textarea
+                                                        rows={1}
+                                                        className="w-full p-1 border rounded resize-y overflow-hidden"
                                                         value={driver.reason}
-                                                        onChange={(e) =>
-                                                            setDrivers(prevDrivers => {
-                                                                const updatedDrivers = [...prevDrivers];
-                                                                updatedDrivers[index].reason = e.target.value;
-                                                                return updatedDrivers;
-                                                            })
-                                                        }
+                                                        onChange={(e) => {
+                                                            const newVal = e.target.value;
+                                                            setDrivers((prev) => {
+                                                                const updated = [...prev];
+                                                                updated[index].reason = newVal;
+                                                                return updated;
+                                                            });
+
+                                                            // Auto expand textarea height
+                                                            const textarea = e.target as HTMLTextAreaElement;
+                                                            textarea.style.height = 'auto';
+                                                            textarea.style.height = textarea.scrollHeight + 'px';
+                                                        }}
                                                     />
                                                 </td>
-                                                <td className="border border-gray-300 px-4 py-2">{driver.newTotal}</td>
-                                                <td className="border border-gray-300 px-4 py-2">
+                                                <td className="border px-4 py-2">{driver.newTotal}</td>
+                                                <td className="border px-4 py-2">
                                                     <button
-                                                        onClick={() =>
-                                                            handlePointChange(index, driver.pointChange, driver.reason)
-                                                        }
                                                         className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                                                        onClick={() => handlePointChange(index, driver.pointChange, driver.reason)}
                                                     >
                                                         Apply
                                                     </button>
@@ -195,6 +288,7 @@ export default function PointsSponsorPage() {
                                             </tr>
                                         ))}
                                     </tbody>
+
                                 </table>
                             </div>
                         </main>
