@@ -1,9 +1,28 @@
 "use client";
 
+import React, { useEffect } from 'react';
+import { Amplify } from "aws-amplify";
+import {
+  initializeInAppMessaging,
+  syncMessages,
+  dispatchEvent
+} from 'aws-amplify/in-app-messaging';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { withInAppMessaging } from "@aws-amplify/ui-react-notifications";
+import { record } from 'aws-amplify/analytics';
+import '@aws-amplify/ui-react/styles.css';
+import outputs from '../amplify_outputs.json';
 
-export default function WelcomePage() {
+Amplify.configure(outputs);
+initializeInAppMessaging();
+
+const myFirstEvent = { name: 'my_first_event' };
+
+const WelcomePage= () =>{
+  useEffect(() => {
+    syncMessages();
+  }, []);
   const router = useRouter();
 
   return (
@@ -37,3 +56,5 @@ export default function WelcomePage() {
     </div>
   );
 }
+
+export default withInAppMessaging(WelcomePage);
