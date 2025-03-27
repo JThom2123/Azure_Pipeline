@@ -4,27 +4,67 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Authenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes } from "aws-amplify/auth";
+import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
 import { FaUserCircle } from "react-icons/fa";
 
+interface Application {
+    appID: number;
+    fullName: string;
+    driverEmail: string;
+    submitted_at: string;
+    status: string;
+}
+
 const SponsorApplication = () => {
-    const [drivers, setDrivers] = useState([{ id: 1 }]);
-    const [applications, setApplications] = useState([
-        { id: 1, name: "John Doe", email: "johndoe@example.com", date: "2025-03-06", status: "Pending" },
-        { id: 2, name: "Jane Smith", email: "janesmith@example.com", date: "2025-03-04", status: "Accepted" },
-        { id: 3, name: "Michael Brown", email: "michaelbrown@example.com", date: "2025-03-02", status: "Rejected" },
-    ]);
-
     const router = useRouter();
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [roleLoading, setRoleLoading] = useState(true);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [userEmail, setUserEmail] = useState("");
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [sponsorCompanyID, setSponsorCompanyID] = useState<number | null>(null);
+    const [applications, setApplications] = useState<Application[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [roleLoading, setRoleLoading] = useState(true);
 
-    // Handle Status Change
-    const handleStatusChange = (id: number, newStatus: string) => {
-        setApplications(applications.map(app => app.id === id ? { ...app, status: newStatus } : app));
-    };
+    useEffect(() => {
+        const fetchUserInfoAndCompanyID = async () => {
+            try {
+                const user = await getCurrentUser();
+                const email = user.signInDetails?.loginId;
+                setUserEmail(email ?? "");
+
+                const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${email}`);
+                const userData = await res.json();
+
+                if (userData && userData[0]?.userType === "sponsor") {
+                    const sponsorID = userData[0].sponsorCompanyID;
+                    setSponsorCompanyID(sponsorID);
+
+                    // Fetch applications after sponsorCompanyID is confirmed
+                    const appsRes = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${sponsorID}`);
+                    const data = await appsRes.json();
+
+                    // Make sure the response is an array
+                    if (Array.isArray(data)) {
+                        setApplications(data);
+                    } else {
+                        console.error("Expected array of applications but got:", data);
+                        setApplications([]);
+                    }
+                } else {
+                    console.error("Sponsor company ID not found for user");
+                }
+            } catch (err) {
+                console.error("Error fetching user or sponsor data", err);
+                setApplications([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUserInfoAndCompanyID();
+    }, []);
+
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -58,12 +98,78 @@ const SponsorApplication = () => {
         fetchUserRole();
     }, []);
 
-    const getHomePage = () => {
-        if (userRole === "Administrator") return "/admin/home";
-        if (userRole === "Driver") return "/driver/home";
-        if (userRole === "Sponsor") return "/sponsor/home";
-        return null;
+    const fetchApplications = async (companyID: number) => {
+        const res = await fetch(
+            `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${companyID}`
+        );
+        const data: Application[] = await res.json();
+        setApplications(data);
     };
+
+    const handleStatusChange = async (appID: number, newStatus: string) => {
+        try {
+            const res = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/status", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ appID, newStatus }),
+            });
+
+            if (res.ok) {
+                setApplications((prev) =>
+                    prev.map((app) =>
+                        app.appID === appID ? { ...app, status: newStatus } : app
+                    )
+                );
+            }
+        } catch (error) {
+            console.error("Failed to update status", error);
+        }
+    };
+    
+    const fetchSponsorCompanyID = async (email: string) => {
+        const res = await fetch(
+            `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${email}`
+        );
+        const userData = await res.json();
+        if (userData && userData[0]?.userType === "sponsor") {
+            const sponsorID = userData[0].sponsorCompanyID;
+            setSponsorCompanyID(sponsorID);
+        }
+    };
+    
+
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const user = await getCurrentUser();
+                const email = user.signInDetails?.loginId;
+                setUserEmail(email ?? "");
+                await fetchSponsorCompanyID(email ?? "");
+            } catch (err) {
+                console.error("Error fetching user info", err);
+            }
+        };
+        fetchUserInfo();
+    }, []);
+
+    useEffect(() => {
+        if (sponsorCompanyID !== null) {
+            fetchApplications(sponsorCompanyID);
+        }
+    }, [sponsorCompanyID]);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const attributes = await fetchUserAttributes();
+                const role = attributes["custom:role"];
+                setUserRole(role ?? null);
+            } catch (error) {
+                console.error("Error fetching role", error);
+            }
+        };
+        fetchRole();
+    }, []);
 
     return (
         <Authenticator>
@@ -71,15 +177,6 @@ const SponsorApplication = () => {
                 const handleSignOut = () => {
                     signOut?.();
                     router.replace("/");
-                };
-
-                const handleHomeClick = () => {
-                    const homePage = getHomePage();
-                    if (homePage) {
-                        router.push(homePage);
-                    } else {
-                        console.error("User role is not set, cannot navigate.");
-                    }
                 };
 
                 const handleProfileClick = () => {
@@ -91,13 +188,11 @@ const SponsorApplication = () => {
                         {/* Navigation Bar */}
                         <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
                             <div className="flex space-x-4">
-                                <button
-                                    onClick={handleHomeClick}
-                                    disabled={roleLoading}
-                                    className={`px-4 py-2 rounded ${roleLoading ? "bg-gray-500 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-600"}`}
-                                >
-                                    {roleLoading ? "Loading..." : "Home"}
-                                </button>
+                                <Link href="/sponsor/home">
+                                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                                        Home
+                                    </button>
+                                </Link>
                                 <Link href="/aboutpage">
                                     <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                                         About Page
@@ -142,37 +237,49 @@ const SponsorApplication = () => {
                             </div>
                         </nav>
 
-                        {/* Driver Applications Table */}
+                        {/* Application Table */}
                         <div className="flex flex-col items-center justify-center p-10">
                             <h2 className="text-2xl font-bold mb-4">Driver Applications</h2>
                             <table className="w-full max-w-3xl border-collapse border border-gray-300">
                                 <thead>
                                     <tr className="bg-gray-200">
-                                        <th className="border border-gray-300 px-4 py-2">Name</th>
-                                        <th className="border border-gray-300 px-4 py-2">Email</th>
-                                        <th className="border border-gray-300 px-4 py-2">Date of Application</th>
-                                        <th className="border border-gray-300 px-4 py-2">Status</th>
+                                        <th className="border px-4 py-2">Name</th>
+                                        <th className="border px-4 py-2">Email</th>
+                                        <th className="border px-4 py-2">Submitted</th>
+                                        <th className="border px-4 py-2">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {Array.isArray(applications) && applications.length > 0 ? (
+                                        applications.map((app) => (
+                                            <tr key={app.appID}> ... </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={4} className="text-center py-4">No applications found.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+
+                                <tbody>
                                     {applications.map((app) => (
-                                        <tr key={app.id} className="text-center">
-                                            <td className="border border-gray-300 px-4 py-2">{app.name}</td>
-                                            <td className="border border-gray-300 px-4 py-2">{app.email}</td>
-                                            <td className="border border-gray-300 px-4 py-2">{app.date}</td>
-                                            <td className="border border-gray-300 px-4 py-2">
-                                                {app.status === "Pending" ? (
+                                        <tr key={app.appID} className="text-center">
+                                            <td className="border px-4 py-2">{app.fullName}</td>
+                                            <td className="border px-4 py-2">{app.driverEmail}</td>
+                                            <td className="border px-4 py-2">{new Date(app.submitted_at).toLocaleDateString()}</td>
+                                            <td className="border px-4 py-2">
+                                                {app.status === "submitted" || app.status === "pending" ? (
                                                     <select
                                                         value={app.status}
-                                                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                                                        onChange={(e) => handleStatusChange(app.appID, e.target.value)}
                                                         className="p-1 border rounded"
                                                     >
-                                                        <option value="Pending">Pending</option>
-                                                        <option value="Accepted">Accepted</option>
-                                                        <option value="Rejected">Rejected</option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="accepted">Accepted</option>
+                                                        <option value="rejected">Rejected</option>
                                                     </select>
                                                 ) : (
-                                                    <span className={`px-2 py-1 rounded ${app.status === "Accepted" ? "bg-green-400" : "bg-red-400"} text-white`}>
+                                                    <span className={`px-2 py-1 rounded ${app.status === "accepted" ? "bg-green-400" : "bg-red-400"} text-white`}>
                                                         {app.status}
                                                     </span>
                                                 )}

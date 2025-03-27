@@ -6,9 +6,20 @@ import Link from "next/link";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import { FaUserCircle } from "react-icons/fa";
+import { getCurrentUser } from "aws-amplify/auth";
 
 interface SponsorCompany {
+  id: number;
   company_name: string;
+}
+
+interface Application {
+  appID: number;
+  sponsorCompanyID: number;
+  driverEmail: string;
+  submitted_at: string;
+  status: string;
+  sponsor_name: string;
 }
 
 const DriverAppPage = () => {
@@ -17,35 +28,27 @@ const DriverAppPage = () => {
   const [roleLoading, setRoleLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]); // List of sponsor companies
 
-  // Form state
+  const [userEmail, setUserEmail] = useState("");
+  const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]);
+  const [selectedSponsorID, setSelectedSponsorID] = useState<number | null>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
+  const [applications, setApplications] = useState<Application[]>([]);
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    sponsor: ''
+    email: "",
+    first_name: "",
+    last_name: "",
+    sponsor_company_id: "",
   });
-
-  // Driver's past applications
-  const [pastApplications, setPastApplications] = useState([
-    { id: 1, sponsor: "Company A", date: "2025-03-06", status: "Pending" },
-    { id: 2, sponsor: "Company B", date: "2025-03-02", status: "Accepted" },
-    { id: 3, sponsor: "Company C", date: "2025-02-28", status: "Rejected" },
-  ]);
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    console.log('Form submitted', formData);
-    router.replace('/driver/home');
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: name === "sponsor_company_id" ? Number(value) : value,  // ✅ cast to number
     }));
   };
 
@@ -65,6 +68,44 @@ const DriverAppPage = () => {
     fetchUserRole();
   }, []);
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const user = await getCurrentUser();
+        const email = user?.signInDetails?.loginId || '';
+  
+        setUserEmail(email);  
+        setFormData((prev) => ({
+          ...prev,
+          email: email
+        }));
+      } catch (err) {
+        console.error("Failed to get current user email", err);
+      }
+    };
+  
+    fetchUserInfo();
+  }, []);
+  
+
+  useEffect(() => {
+    if (!userEmail) return;
+  
+    const fetchApplications = async () => {
+      try {
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/driver?email=${encodeURIComponent(userEmail)}`
+        );
+        const data: Application[] = await res.json();
+        setApplications(data);
+      } catch (err) {
+        console.error("Failed to fetch driver applications:", err);
+      }
+    };
+  
+    fetchApplications();
+  }, [userEmail]);
+  
   /** Fetch existing sponsor companies */
   useEffect(() => {
     const fetchSponsorCompanies = async () => {
@@ -85,12 +126,74 @@ const DriverAppPage = () => {
     fetchSponsorCompanies();
   }, []);
 
-  const getHomePage = () => {
-    if (userRole === "Administrator") return "/admin/home";
-    if (userRole === "Driver") return "/driver/home";
-    if (userRole === "Sponsor") return "/sponsor/home";
-    return null;
+  // Fetch past applications for logged-in driver
+  useEffect(() => {
+    if (!userEmail) return;
+    const fetchApplications = async () => {
+      try {
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/driver?email=${encodeURIComponent(userEmail)}`
+        );
+        const data: Application[] = await res.json();
+        setApplications(data);
+      } catch (err) {
+        console.error("Failed to fetch driver applications:", err);
+      }
+    };
+    fetchApplications();
+  }, [userEmail]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const { email, first_name, last_name, sponsor_company_id } = formData;
+
+    // Validate fields
+    if (!email || !first_name || !last_name || !sponsor_company_id) {
+      alert("Please complete all fields before submitting.");
+      return;
+    }
+
+    try {
+      // Submit application to the backend
+      const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driverEmail: formData.email,
+          sponsorCompanyID: Number(formData.sponsor_company_id),
+          fullName: `${formData.first_name} ${formData.last_name}`
+        }),           
+      });
+
+      if (response.ok) {
+        alert("Application submitted successfully!");
+
+        // Clear the form
+        setFormData((prev) => ({
+          ...prev,
+          first_name: "",
+          last_name: "",
+          sponsor_company_id: "",
+        }));
+
+        // Re-fetch applications for the user
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/driver?email=${encodeURIComponent(email)}`
+        );
+        const data: Application[] = await res.json();
+        setApplications(data);
+      } else {
+        const error = await response.text();
+        console.log("Application failed:", error);
+        alert("Failed to submit application. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -116,15 +219,6 @@ const DriverAppPage = () => {
           router.replace("/");
         };
 
-        const handleHomeClick = () => {
-          const homePage = getHomePage();
-          if (homePage) {
-            router.push(homePage);
-          } else {
-            console.error("User role is not set, cannot navigate.");
-          }
-        };
-
         const handleProfileClick = () => {
           router.push("/profile");
         };
@@ -134,13 +228,11 @@ const DriverAppPage = () => {
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">
-                <button
-                  onClick={handleHomeClick}
-                  disabled={roleLoading}
-                  className={`px-4 py-2 rounded ${roleLoading ? "bg-gray-500 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-600"}`}
-                >
-                  {roleLoading ? "Loading..." : "Home"}
-                </button>
+                <Link href="/driver/home">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Home
+                  </button>
+                </Link>
                 <Link href="/aboutpage">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     About Page
@@ -184,16 +276,48 @@ const DriverAppPage = () => {
               <h2 className="text-2xl font-bold mb-4">Driver Application</h2>
               <form onSubmit={handleSubmit} className="bg-white p-5 rounded-lg shadow-md w-3/5 max-w-2xl min-w-[400px]">
                 <label htmlFor="first-name">First Name:</label>
-                <input type="text" id="first-name" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
-
+                <input
+                  type="text"
+                  id="first-name"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleInputChange}
+                  required
+                  className="border p-2 w-full mb-2"
+                />
                 <label htmlFor="last-name">Last Name:</label>
-                <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="border p-2 w-full mb-2" />
+                <input
+                  type="text"
+                  id="last-name"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                  required
+                  className="border p-2 w-full mb-2"
+                />
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email:</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  disabled
+                  className="border p-2 w-full bg-gray-100 cursor-not-allowed"
+                />
 
                 <label htmlFor="sponsor">Select a Sponsor Company:</label>
-                <select id="sponsorDropdown" name="sponsor" value={formData.sponsor} onChange={handleInputChange} className="border p-2 w-full mb-2">
-                  <option value=""> Please Select a Sponsor Company</option>
-                  {sponsorCompanies.map((company, index) => (
-                    <option key={index} value={company.company_name}>{company.company_name}</option>
+                <select
+                  id="sponsorDropdown"
+                  name="sponsor_company_id"
+                  value={formData.sponsor_company_id}
+                  onChange={handleInputChange}
+                  className="border p-2 w-full mb-2"
+                >
+                  <option value="">Please Select a Sponsor Company</option>
+                  {sponsorCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.company_name}
+                    </option>
                   ))}
                 </select>
 
@@ -202,23 +326,26 @@ const DriverAppPage = () => {
                 </button>
               </form>
 
-              {/* Past Applications Table */}
-              <h2 className="text-2xl font-bold mt-10">Past Applications</h2>
-              <table className="w-full max-w-2xl border-collapse border border-gray-300 mt-4">
-                <thead>
-                  <tr className="bg-gray-200">
+              {/* Past Applications */}
+              <h2 className="text-2xl font-bold mt-10">Your Submitted Applications</h2>
+              <table className="w-full max-w-2xl border mt-4 border-collapse border-gray-300">
+                <thead className="bg-gray-200">
+                  <tr>
                     <th className="border border-gray-300 px-4 py-2">Sponsor Company</th>
-                    <th className="border border-gray-300 px-4 py-2">Date of Application</th>
+                    <th className="border border-gray-300 px-4 py-2">Date</th>
                     <th className="border border-gray-300 px-4 py-2">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pastApplications.map((app) => (
-                    <tr key={app.id} className="text-center">
-                      <td className="border border-gray-300 px-4 py-2">{app.sponsor}</td>
-                      <td className="border border-gray-300 px-4 py-2">{app.date}</td>
-                      <td className={`border border-gray-300 px-4 py-2 text-white font-bold ${app.status === "Accepted" ? "bg-green-500" : app.status === "Pending" ? "bg-yellow-500" : "bg-red-500"
-                        }`}>
+                  {applications.map((app) => (
+                    <tr key={app.appID} className="text-center">
+                      <td className="border px-4 py-2">{app.sponsor_name}</td>
+                      <td className="border px-4 py-2">{new Date(app.submitted_at).toLocaleDateString()}</td>
+                      <td className={`border px-4 py-2 font-semibold text-white ${app.status === "accepted"
+                        ? "bg-green-500"
+                        : app.status === "submitted"
+                          ? "bg-yellow-500"
+                          : "bg-red-500"}`}>
                         {app.status}
                       </td>
                     </tr>
