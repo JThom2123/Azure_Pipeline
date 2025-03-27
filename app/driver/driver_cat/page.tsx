@@ -13,7 +13,17 @@ export default function ITunesSearchPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cart, setCart] = useState<any[]>([]);
   const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
   const [showCatalog, setShowCatalog] = useState(true);
+  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1");
+
+  // Explicitly typing sponsors
+  const [sponsors, setSponsors] = useState<Record<string, { points: number }>>({
+    Sponsor1: { points: 50 },
+    Sponsor2: { points: 100 },
+  });
+
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +35,9 @@ export default function ITunesSearchPage() {
 
     try {
       const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(
+          searchTerm
+        )}&media=music&limit=10`
       );
 
       if (!response.ok) {
@@ -72,7 +84,12 @@ export default function ITunesSearchPage() {
   };
 
   const handleAddToCart = (song: any) => {
-    setCart((prevCart) => [...prevCart, song]);
+    const sponsorPoints = sponsors[selectedSponsor]?.points || 0;
+    if (song.points <= sponsorPoints) {
+      setCart((prevCart) => [...prevCart, song]);
+    } else {
+      alert("You do not have enough points for this song.");
+    }
   };
 
   const handlePurchase = () => {
@@ -84,7 +101,18 @@ export default function ITunesSearchPage() {
     alert(`Purchased the following songs: ${songTitles}`);
 
     setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
+
     setCart([]);
+  };
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audio = e.target as HTMLAudioElement;
+    setCurrentTime(audio.currentTime);
+  };
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audio = e.target as HTMLAudioElement;
+    setDuration(audio.duration);
   };
 
   return (
@@ -103,28 +131,39 @@ export default function ITunesSearchPage() {
           >
             Catalog
           </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
+          <Link href="/driver/points">
+            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button>
+          </Link>
+          <Link href="/driver/driver_app">
+            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
+          </Link>
         </div>
 
         <div className="flex items-center gap-4">
-          <button onClick={handlePurchase} className="text-xl">🛒 Purchase ({cart.length})</button>
+          <button onClick={handlePurchase} className="text-xl">
+            🛒 Purchase ({cart.length})
+          </button>
 
           <div className="relative" ref={dropdownRef}>
-            <div className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <div
+              className="cursor-pointer text-2xl"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
               <FaUserCircle />
             </div>
 
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-                <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
+                <button
+                  onClick={handleProfileClick}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                >
                   My Profile
                 </button>
-                <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                >
                   Sign Out
                 </button>
               </div>
@@ -136,6 +175,20 @@ export default function ITunesSearchPage() {
       <main className="max-w-xl mx-auto p-4 flex-grow">
         <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
 
+        <div className="mb-4 flex justify-center">
+          <select
+            value={selectedSponsor}
+            onChange={(e) => setSelectedSponsor(e.target.value)}
+            className="px-4 py-2 rounded"
+          >
+            {Object.keys(sponsors).map((sponsor) => (
+              <option key={sponsor} value={sponsor}>
+                {sponsor} (Points: {sponsors[sponsor].points})
+              </option>
+            ))}
+          </select>
+        </div>
+
         {showCatalog ? (
           <>
             <div className="flex gap-2">
@@ -143,7 +196,7 @@ export default function ITunesSearchPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search for songs..."
+                placeholder="Search for songs about TRUCKS..."
                 className="border p-2 rounded w-full"
               />
               <button
@@ -165,40 +218,16 @@ export default function ITunesSearchPage() {
                     <p className="font-bold">{item.trackName}</p>
                     <p className="text-sm text-gray-600">By: {item.artistName}</p>
                     <p className="text-sm text-gray-600">Points: {item.points}</p>
-                    {item.previewUrl && (
-                      <audio controls className="w-full mt-2">
-                        <source src={item.previewUrl} type="audio/mpeg" />
-                      </audio>
-                    )}
-                    <button onClick={() => handleAddToCart(item)} className="bg-green-500 text-white px-4 py-2 rounded mt-2">
-                      Add to Cart
-                    </button>
                   </div>
+                  <button onClick={() => handleAddToCart(item)} className="bg-green-500 text-white px-4 py-2 rounded">
+                    Add to Cart
+                  </button>
                 </li>
               ))}
             </ul>
           </>
         ) : (
-          <ul className="mt-4 space-y-4">
-            {purchasedSongs.length === 0 ? (
-              <p>You don't have any songs in your library.</p>
-            ) : (
-              purchasedSongs.map((song) => (
-                <li key={song.trackId} className="border p-3 rounded shadow flex items-start space-x-4">
-                  <img src={song.artworkUrl100} alt={song.trackName} className="w-24 h-24 rounded" />
-                  <div className="flex-grow">
-                    <p className="font-bold">{song.trackName}</p>
-                    <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                    {song.previewUrl && (
-                      <audio controls className="w-full mt-2">
-                        <source src={song.previewUrl} type="audio/mpeg" />
-                      </audio>
-                    )}
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
+          <p className="text-center text-gray-600">You don't have any songs in your library.</p>
         )}
       </main>
     </div>
