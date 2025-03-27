@@ -6,14 +6,14 @@ import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import outputs from "@/amplify_outputs.json";
-import { initializeInAppMessaging } from 'aws-amplify/in-app-messaging';
+
+
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 Amplify.configure(outputs);
 const inter = Inter({ subsets: ["latin"] });
-
-initializeInAppMessaging();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
