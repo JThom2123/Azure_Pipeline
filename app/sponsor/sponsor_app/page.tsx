@@ -58,7 +58,6 @@ const SponsorApplication = () => {
             console.error("Error fetching sponsor company ID from Cognito", err);
           }
         };
-      
         fetchSponsorCompanyIDFromCognito();
       }, []);   
 
