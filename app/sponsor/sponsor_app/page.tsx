@@ -27,43 +27,40 @@ const SponsorApplication = () => {
     const [roleLoading, setRoleLoading] = useState(true);
 
     useEffect(() => {
-        const fetchUserInfoAndCompanyID = async () => {
-            try {
-                const user = await getCurrentUser();
-                const email = user.signInDetails?.loginId;
-                setUserEmail(email ?? "");
-
-                const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${email}`);
-                const userData = await res.json();
-
-                if (userData && userData[0]?.userType === "sponsor") {
-                    const sponsorID = userData[0].sponsorCompanyID;
-                    setSponsorCompanyID(sponsorID);
-
-                    // Fetch applications after sponsorCompanyID is confirmed
-                    const appsRes = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${sponsorID}`);
-                    const data = await appsRes.json();
-
-                    // Make sure the response is an array
-                    if (Array.isArray(data)) {
-                        setApplications(data);
-                    } else {
-                        console.error("Expected array of applications but got:", data);
-                        setApplications([]);
-                    }
-                } else {
-                    console.error("Sponsor company ID not found for user");
-                }
-            } catch (err) {
-                console.error("Error fetching user or sponsor data", err);
-                setApplications([]);
-            } finally {
-                setIsLoading(false);
+        const fetchSponsorCompanyIDFromCognito = async () => {
+          try {
+            const user = await getCurrentUser();
+            const email = user.signInDetails?.loginId ?? "";
+            setUserEmail(email);
+      
+            const attributes = await fetchUserAttributes();
+            const sponsorCompanyName = attributes["custom:sponsorCompany"] || "";
+      
+            if (sponsorCompanyName) {
+              const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`);
+              const companies = await res.json();
+      
+              const matchedCompany = companies.find(
+                (company: { company_name: string }) =>
+                  company.company_name === sponsorCompanyName
+              );
+      
+              if (matchedCompany?.id) {
+                setSponsorCompanyID(matchedCompany.id);
+                console.log("Matched Sponsor Company ID:", matchedCompany.id);
+              } else {
+                console.error("Sponsor company not found in DB");
+              }
+            } else {
+              console.log("Sponsor company name not found in Cognito attributes");
             }
+          } catch (err) {
+            console.error("Error fetching sponsor company ID from Cognito", err);
+          }
         };
-
-        fetchUserInfoAndCompanyID();
-    }, []);
+      
+        fetchSponsorCompanyIDFromCognito();
+      }, []);   
 
 
     useEffect(() => {
@@ -99,12 +96,24 @@ const SponsorApplication = () => {
     }, []);
 
     const fetchApplications = async (companyID: number) => {
-        const res = await fetch(
-            `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${companyID}`
-        );
-        const data: Application[] = await res.json();
-        setApplications(data);
+        try {
+            const res = await fetch(
+                `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${companyID}`
+            );
+            const data = await res.json();
+    
+            if (Array.isArray(data)) {
+                setApplications(data);
+            } else {
+                console.error("Expected array of applications but got:", data);
+                setApplications([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch applications:", err);
+            setApplications([]);
+        }
     };
+    
 
     const handleStatusChange = async (appID: number, newStatus: string) => {
         try {
@@ -113,6 +122,7 @@ const SponsorApplication = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ appID, newStatus }),
             });
+            console.log("Sending PATCH:", { appID, newStatus });
 
             if (res.ok) {
                 setApplications((prev) =>
@@ -125,7 +135,7 @@ const SponsorApplication = () => {
             console.error("Failed to update status", error);
         }
     };
-    
+
     const fetchSponsorCompanyID = async (email: string) => {
         const res = await fetch(
             `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${email}`
@@ -134,6 +144,7 @@ const SponsorApplication = () => {
         if (userData && userData[0]?.userType === "sponsor") {
             const sponsorID = userData[0].sponsorCompanyID;
             setSponsorCompanyID(sponsorID);
+            console.log("Sponsor Company ID:", sponsorID);
         }
     };
     
@@ -153,10 +164,11 @@ const SponsorApplication = () => {
     }, []);
 
     useEffect(() => {
-        if (sponsorCompanyID !== null) {
+        if (sponsorCompanyID !== null && !isNaN(sponsorCompanyID)) {
             fetchApplications(sponsorCompanyID);
         }
     }, [sponsorCompanyID]);
+    
 
     useEffect(() => {
         const fetchRole = async () => {
@@ -249,17 +261,6 @@ const SponsorApplication = () => {
                                         <th className="border px-4 py-2">Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {Array.isArray(applications) && applications.length > 0 ? (
-                                        applications.map((app) => (
-                                            <tr key={app.appID}> ... </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={4} className="text-center py-4">No applications found.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
 
                                 <tbody>
                                     {applications.map((app) => (
