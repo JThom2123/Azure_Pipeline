@@ -144,8 +144,8 @@ ABOUT PAGE
     GET:
         Description: Uses a path query to get total points from a specific user
         PATH: /dev1/user/points
-        Query Parameters: email=newuser@example.com, organization=ExampleOrg
-        Usage: /dev1/user/points?email=newuser@example.com&organization=ExampleOrg
+        Query Parameters: email=newuser@example.com, sponsorCompanyID=0
+        Usage: /dev1/user/points?email=newuser@example.com&sponsorCompanyID=0
 
         Request:
             {
@@ -157,7 +157,7 @@ ABOUT PAGE
             },
             "queryStringParameters": {
                 "email": "newuser@example.com",
-                "organization": "ExampleOrg"
+                "sponsorCompanyID": "0"
             }
             }
 
@@ -165,7 +165,7 @@ ABOUT PAGE
         Expected Response:
             {
             "statusCode": 200,
-            "body": "{\"email\":\"newuser@example.com\",\"organization\":\"ExampleOrg\",\"totalPoints\":\"30\"}",
+            "body": "{\"email\":\"newuser@example.com\",\"sponsorCompanyID\":\"0\",\"totalPoints\":\"30\"}",
             "headers": {
                 "Content-Type": "application/json"
             }
@@ -187,7 +187,7 @@ ABOUT PAGE
             "body": {
                 "email": "newuser@example.com",
                 "points": "30",
-                "organization": "ExampleOrg",
+                "sponsorCompanyID": "0",
                 "description": "New user registration"
                 }
             }
