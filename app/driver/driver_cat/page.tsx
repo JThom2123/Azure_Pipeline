@@ -11,11 +11,9 @@ export default function ITunesSearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cart, setCart] = useState<any[]>([]); // To store the user's cart
-  const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]); // To store purchased songs
-  const [currentTime, setCurrentTime] = useState<number>(0); // State for current time of the audio
-  const [duration, setDuration] = useState<number>(0); // State for total duration of the audio
-  const [showCatalog, setShowCatalog] = useState(true); // State to toggle between catalog and my songs view
+  const [cart, setCart] = useState<any[]>([]);
+  const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]);
+  const [showCatalog, setShowCatalog] = useState(true);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,9 +25,7 @@ export default function ITunesSearchPage() {
 
     try {
       const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(
-          searchTerm
-        )}&media=music&limit=10`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
       );
 
       if (!response.ok) {
@@ -40,7 +36,7 @@ export default function ITunesSearchPage() {
       setResults(
         data.results.map((item: any) => ({
           ...item,
-          points: Math.floor(Math.random() * 100) + 1, // Assigning random points for now
+          points: Math.floor(Math.random() * 100) + 1,
         }))
       );
     } catch (err) {
@@ -51,7 +47,6 @@ export default function ITunesSearchPage() {
     }
   }
 
-  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -88,85 +83,48 @@ export default function ITunesSearchPage() {
     const songTitles = cart.map((song) => song.trackName || song.collectionName).join(", ");
     alert(`Purchased the following songs: ${songTitles}`);
 
-    // Add purchased songs to purchasedSongs
     setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
-
-    // Clear cart after purchase
     setCart([]);
-  };
-
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audio = e.target as HTMLAudioElement;
-    setCurrentTime(audio.currentTime);
-  };
-
-  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audio = e.target as HTMLAudioElement;
-    setDuration(audio.duration);
   };
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
           <Link href="/driver/home">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Home
-            </button>
+            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button>
           </Link>
           <Link href="/aboutpage">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              About Page
-            </button>
+            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button>
           </Link>
           <button
             onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
+            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
           >
             Catalog
           </button>
-          <Link href="/driver/points">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Points
-            </button>
-          </Link>
-          <Link href="/driver/driver_app">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Application
-            </button>
-          </Link>
+          <button
+            onClick={() => setShowCatalog(false)}
+            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
+          >
+            My Songs
+          </button>
         </div>
 
-        {/* Cart and Profile Dropdown */}
         <div className="flex items-center gap-4">
-          {/* Cart Button */}
-          <button onClick={handlePurchase} className="text-xl">
-            🛒 Purchase ({cart.length})
-          </button>
+          <button onClick={handlePurchase} className="text-xl">🛒 Purchase ({cart.length})</button>
 
-          {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <div
-              className="cursor-pointer text-2xl"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
+            <div className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)}>
               <FaUserCircle />
             </div>
 
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-                <button
-                  onClick={handleProfileClick}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-                >
+                <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
                   My Profile
                 </button>
-                <button
-                  onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-                >
+                <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">
                   Sign Out
                 </button>
               </div>
@@ -175,27 +133,8 @@ export default function ITunesSearchPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-xl mx-auto p-4 flex-grow">
         <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
-
-        {/* Toggle Buttons for Catalog and My Songs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
-        </div>
 
         {showCatalog ? (
           <>
@@ -204,7 +143,7 @@ export default function ITunesSearchPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search for songs about TRUCKS..."
+                placeholder="Search for songs..."
                 className="border p-2 rounded w-full"
               />
               <button
@@ -220,79 +159,46 @@ export default function ITunesSearchPage() {
 
             <ul className="mt-4 space-y-4">
               {results.map((item) => (
-                <li
-                  key={item.trackId || item.collectionId}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={item.artworkUrl100}
-                      alt={item.trackName || item.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
+                <li key={item.trackId} className="border p-3 rounded shadow flex items-start space-x-4">
+                  <img src={item.artworkUrl100} alt={item.trackName} className="w-24 h-24 rounded" />
                   <div className="flex-grow">
-                    <p className="font-bold">{item.trackName || item.collectionName}</p>
+                    <p className="font-bold">{item.trackName}</p>
                     <p className="text-sm text-gray-600">By: {item.artistName}</p>
                     <p className="text-sm text-gray-600">Points: {item.points}</p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2 w-full">
                     {item.previewUrl && (
-                      <div className="w-full">
-                        <audio
-                          controls
-                          className="w-full"
-                          onTimeUpdate={handleTimeUpdate}
-                          onLoadedMetadata={handleLoadedMetadata}
-                        >
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <div className="flex justify-between items-center mt-3 w-full">
-                          <button
-                            onClick={() => handleAddToCart(item)}
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
+                      <audio controls className="w-full mt-2">
+                        <source src={item.previewUrl} type="audio/mpeg" />
+                      </audio>
                     )}
+                    <button onClick={() => handleAddToCart(item)} className="bg-green-500 text-white px-4 py-2 rounded mt-2">
+                      Add to Cart
+                    </button>
                   </div>
                 </li>
               ))}
             </ul>
           </>
         ) : (
-          <div className="space-y-4">
+          <ul className="mt-4 space-y-4">
             {purchasedSongs.length === 0 ? (
               <p>You don't have any songs in your library.</p>
             ) : (
-              <ul>
-                {purchasedSongs.map((song, index) => (
-                  <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <img
-                        src={song.artworkUrl100}
-                        alt={song.trackName || song.collectionName}
-                        className="w-24 h-24 rounded"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-bold">{song.trackName || song.collectionName}</p>
-                      <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                    </div>
+              purchasedSongs.map((song) => (
+                <li key={song.trackId} className="border p-3 rounded shadow flex items-start space-x-4">
+                  <img src={song.artworkUrl100} alt={song.trackName} className="w-24 h-24 rounded" />
+                  <div className="flex-grow">
+                    <p className="font-bold">{song.trackName}</p>
+                    <p className="text-sm text-gray-600">By: {song.artistName}</p>
                     {song.previewUrl && (
                       <audio controls className="w-full mt-2">
                         <source src={song.previewUrl} type="audio/mpeg" />
-                        Your browser does not support the audio element.
                       </audio>
                     )}
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                </li>
+              ))
             )}
-          </div>
+          </ul>
         )}
       </main>
     </div>
