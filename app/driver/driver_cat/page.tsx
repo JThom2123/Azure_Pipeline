@@ -16,11 +16,14 @@ export default function ITunesSearchPage() {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [showCatalog, setShowCatalog] = useState(true);
-  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1"); // Track current sponsor
-  const [sponsors, setSponsors] = useState({
+  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1");
+
+  // Explicitly typing sponsors
+  const [sponsors, setSponsors] = useState<Record<string, { points: number }>>({
     Sponsor1: { points: 50 },
     Sponsor2: { points: 100 },
-  }); // Sponsors and their points
+  });
+
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +48,7 @@ export default function ITunesSearchPage() {
       setResults(
         data.results.map((item: any) => ({
           ...item,
-          points: Math.floor(Math.random() * 100) + 1, // Assigning random points for now
+          points: Math.floor(Math.random() * 100) + 1,
         }))
       );
     } catch (err) {
@@ -56,7 +59,6 @@ export default function ITunesSearchPage() {
     }
   }
 
-  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -98,10 +100,8 @@ export default function ITunesSearchPage() {
     const songTitles = cart.map((song) => song.trackName || song.collectionName).join(", ");
     alert(`Purchased the following songs: ${songTitles}`);
 
-    // Add purchased songs to purchasedSongs
     setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
 
-    // Clear cart after purchase
     setCart([]);
   };
 
@@ -117,7 +117,6 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
           <Link href="/driver/home">
@@ -140,14 +139,11 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        {/* Cart and Profile Dropdown */}
         <div className="flex items-center gap-4">
-          {/* Cart Button */}
           <button onClick={handlePurchase} className="text-xl">
             🛒 Purchase ({cart.length})
           </button>
 
-          {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <div
               className="cursor-pointer text-2xl"
@@ -176,27 +172,9 @@ export default function ITunesSearchPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-xl mx-auto p-4 flex-grow">
         <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
 
-        {/* Toggle Buttons for Catalog and My Songs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
-        </div>
-
-        {/* Sponsor Selector */}
         <div className="mb-4 flex justify-center">
           <select
             value={selectedSponsor}
@@ -234,82 +212,22 @@ export default function ITunesSearchPage() {
 
             <ul className="mt-4 space-y-4">
               {results.map((item) => (
-                <li
-                  key={item.trackId || item.collectionId}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={item.artworkUrl100}
-                      alt={item.trackName || item.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
+                <li key={item.trackId} className="border p-3 rounded shadow flex items-start space-x-4">
+                  <img src={item.artworkUrl100} alt={item.trackName} className="w-24 h-24 rounded" />
                   <div className="flex-grow">
-                    <p className="font-bold">{item.trackName || item.collectionName}</p>
+                    <p className="font-bold">{item.trackName}</p>
                     <p className="text-sm text-gray-600">By: {item.artistName}</p>
                     <p className="text-sm text-gray-600">Points: {item.points}</p>
                   </div>
-                  <div className="flex flex-col items-end space-y-2 w-full">
-                    {item.previewUrl && (
-                      <div className="w-full">
-                        <audio
-                          controls
-                          className="w-full"
-                          onTimeUpdate={handleTimeUpdate}
-                          onLoadedMetadata={handleLoadedMetadata}
-                        >
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <div className="flex justify-between items-center mt-3 w-full">
-                          <button
-                            onClick={() => handleAddToCart(item)}
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <button onClick={() => handleAddToCart(item)} className="bg-green-500 text-white px-4 py-2 rounded">
+                    Add to Cart
+                  </button>
                 </li>
               ))}
             </ul>
           </>
         ) : (
-          <ul className="mt-4 space-y-4">
-            {purchasedSongs.length === 0 ? (
-              <p className="text-center text-gray-600">You don't have any songs in your library.</p>
-            ) : (
-              purchasedSongs.map((song, index) => (
-                <li
-                  key={index}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={song.artworkUrl100}
-                      alt={song.trackName || song.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <p className="font-bold">{song.trackName || song.collectionName}</p>
-                    <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                  </div>
-                  {song.previewUrl && (
-                    <div className="w-full">
-                      <audio controls className="w-full">
-                        <source src={song.previewUrl} type="audio/mpeg" />
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
+          <p className="text-center text-gray-600">You don't have any songs in your library.</p>
         )}
       </main>
     </div>
