@@ -1,12 +1,13 @@
 CURRENT DEPLOYED STAGE:
 
-https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1
+https://API.com/dev1
 
-Note: Ignore the requestContext field, that's not relevant when making the request. You just need what's inside the field.
+Note: Ignore the requestContext field for front-end usage, that's not relevant when making the request. 
+You just need what's inside the field.
 
 
 
-ABOUT PAGE 
+
 
 /about
 
@@ -31,6 +32,245 @@ ABOUT PAGE
             "Content-Type": "application/json"
         }
         }
+
+    POST:
+        Description: Updates the about page
+        
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                    "method": "POST",
+                    "path": "/dev1/about"
+                }
+            },
+            "body": [
+                {
+                    "section_name": "Introduction",
+                    "content": "Welcome to our platform, where innovation meets excellence."
+                },
+                {
+                    "section_name": "Our Values",
+                    "content": "Integrity, collaboration, and a commitment to making a positive impact."
+                },
+                {
+                    "section_name": "Contact Us",
+                    "content": "Reach out anytime at contact@example.com. We're here to help!"
+                }
+            ]
+            }
+
+            Expected Response:
+                {
+                    "statusCode": 200,
+                    "body": {
+                        "message": "About page updated successfully"
+                    },
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                }
+
+/application
+    POST:
+        Description: Posts a new driver application to the database
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "POST",
+                "path": "/dev1/application",
+                "body": "{\"driverEmail\": \"john.doe@example.com\", \"sponsorCompanyID\": \"12345\", \"fullName\": \"John Doe\"}"
+                }
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "{\"message\": \"Application submitted successfully.\"}",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+
+/application/sponsor
+    GET:
+        Description: Gets a list of applications under a given sponsor
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "GET",
+                "path": "/dev1/application/sponsor"
+                }
+            },
+            "queryStringParameters": {
+                "sponsorCompanyID": "1"
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "[{\"appID\": 1, \"driverEmail\": \"driver1@example.com\", \"fullName\": \"Driver One\", \"status\": \"submitted\", \"submitted_at\": \"2023-09-30T12:00:00Z\"}]",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+/application/driver
+    GET:
+
+        Description: Gets an application submitted by a driver
+
+        Request: 
+            {
+            "requestContext": {
+                "http": {
+                "method": "GET",
+                "path": "/dev1/application/driver"
+                }
+            },
+            "queryStringParameters": {
+                "email": "driver@example.com"
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "[{\"id\":1,\"driverEmail\":\"driver@example.com\",\"sponsorCompanyID\":123,\"fullName\":\"Driver Example\",\"status\":\"submitted\",\"submitted_at\":\"2023-09-30T12:00:00Z\",\"sponsor_name\":\"Sponsor Company Name\"}]",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+/application/status
+    PATCH:
+        Description: Updates the status of a driver's application
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "PATCH",
+                "path": "/dev1/application/status",
+                "body": {
+                    "newStatus": "accepted"
+                }
+                }
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "{\"message\": \"Status updated successfully\"}",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+
+
+/companies
+    GET:
+        Description: Fetches all sponsor companies 
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "PATCH",
+                "path": "/dev1/application/status",
+                "body": {
+                    "appID": 101,
+                    "newStatus": "accepted"
+                }
+                }
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "{\"message\": \"Status updated successfully\"}",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+    POST:
+        Description: Adds a new sponsor company
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "POST",
+                "path": "/dev1/companies",
+                "body": {
+                    "company_name": "Awesome Sponsor Inc."
+                }
+                }
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 201,
+            "body": "{\"message\": \"Sponsor company added successfully\"}",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+
+
+
+
+/drivers
+    GET:
+        Description: Gets all drivers under a given sponsor
+        PATH: /dev1/drivers
+        Query Parameters: sponsorCompanyName=CompanyName
+        Usage: xxx.com/dev1/drivers?sponsorCompanyName=Company
+
+        Request:
+            {
+            "requestContext": {
+                "http": {
+                "method": "GET",
+                "path": "/dev1/drivers"
+                }
+            },
+            "queryStringParameters": {
+                "sponsorCompanyName": "Awesome Sponsor Inc."
+            }
+            }
+
+        Expected Response:
+            {
+            "statusCode": 200,
+            "body": "[{\"driverEmail\": \"driver@example.com\", \"sponsorCompanyID\": 1}]",
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+            }
+
+
 
 /user
 
