@@ -16,7 +16,7 @@ export const handler = async (event) => {
 
     //FUNCTIONS
     //UserExists function returns if a user exists
-    //input: User email and the connection
+    //input: User email and the DB connection
     const userExists = async (email, connection) => {
         const [result] = await connection.execute(`
             SELECT * FROM users
@@ -289,11 +289,11 @@ export const handler = async (event) => {
                         const sponsorCompanyID = companyRows[0].id;
 
                         const [driverRows] = await connection.execute(
-                            `SELECT d.driverEmail, d.sponsorCompanyID
-                 FROM driver_sponsors d
-                 JOIN users u ON d.driverEmail = u.email
-                 WHERE d.sponsorCompanyID = ?`,
-                            [sponsorCompanyID]
+                        `SELECT d.driverEmail, d.sponsorCompanyID
+                        FROM driver_sponsors d
+                        JOIN users u ON d.driverEmail = u.email
+                        WHERE d.sponsorCompanyID = ?`,
+                        [sponsorCompanyID]
                         );
 
                         response = {
@@ -323,12 +323,13 @@ export const handler = async (event) => {
                     await connection.query(`USE ${schema}`);
 
                     const [rows] = await connection.execute(`
-            SELECT p.points, p.description, p.created_at, s.company_name AS sponsorCompanyName
-            FROM points p
-            JOIN sponsor_companies s ON p.sponsorCompanyID = s.id
-            WHERE p.email = ?
-            ORDER BY p.created_at DESC
-        `, [email]);
+                    SELECT p.points, p.description, p.created_at, s.company_name AS sponsorCompanyName
+                    FROM points p
+                    JOIN sponsor_companies s ON p.sponsorCompanyID = s.id
+                    WHERE p.email = ?
+                    ORDER BY p.created_at DESC
+                    `, [email]
+                    );
 
                     response = {
                         statusCode: 200,
@@ -388,8 +389,7 @@ export const handler = async (event) => {
                         };
                     }
                 }
-            }
-            //ENDSHERE          
+            }        
 
             //GET user/{email} get user based on their email
             else if (path.startsWith(`${API_STAGE}/user`) && pathParts.length === 4) {
@@ -432,7 +432,6 @@ export const handler = async (event) => {
 
             //POST /user/relation
             if (path === `${API_STAGE}/user/relation`) {
-                //do something
                 const requestBody = JSON.parse(event.body);
                 const { email1, email2, relationType } = requestBody;
 
@@ -445,7 +444,6 @@ export const handler = async (event) => {
 
                 else {
 
-                    //Connect to DB
                     await connection.query(`USE ${schema}`);
 
                     if (relationType === 'sponsor-driver') {
@@ -509,11 +507,11 @@ export const handler = async (event) => {
                     } else {
                         // Insert new points record
                         await connection.execute(
-                            `
-                INSERT INTO points (email, points, description, sponsorCompanyID)
-                VALUES (?, ?, ?, ?)
-                `,
-                            [email, points, description, sponsorCompanyID]
+                        `
+                        INSERT INTO points (email, points, description, sponsorCompanyID)
+                        VALUES (?, ?, ?, ?)
+                        `,
+                        [email, points, description, sponsorCompanyID]
                         );
 
                         response = {
