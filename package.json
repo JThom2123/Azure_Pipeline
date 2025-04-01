@@ -34,7 +34,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "aws-cdk": "^2.1005.2",
+    "aws-cdk": "^2.1000.2",
     "aws-cdk-lib": "^2.179.0",
     "babel-jest": "^29.7.0",
     "constructs": "^10.4.2",
