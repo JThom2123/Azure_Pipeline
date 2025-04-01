@@ -24,6 +24,7 @@ export default function PointsSponsorPage() {
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [sponsorCompanyName, setSponsorCompanyName] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState("");
+    const [sponsorCompanyID, setSponsorCompanyID] = useState<number | null>(null);
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -44,64 +45,88 @@ export default function PointsSponsorPage() {
 
     // Fetch connected drivers and their points
     const fetchDrivers = async (sponsorCompanyName: string) => {
-        try {
-            const response = await fetch(
-                `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${sponsorCompanyName}`
-            );
-            const data = await response.json();
-
-            if (!Array.isArray(data)) {
-                console.log("Expected an array but got:", data);
-                return;
+            try {
+                const response = await fetch(
+                    `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${sponsorCompanyName}`
+                );
+                const data = await response.json();
+        
+                if (!Array.isArray(data)) {
+                    console.log("Expected an array but got:", data);
+                    return;
+                }
+        
+                const enrichedDrivers = await Promise.all(
+                    data.map(async (driver: any) => {
+                        console.log(driver);
+        
+                        const pointsRes = await fetch(
+                            `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/total?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
+                        );
+                        const pointData = await pointsRes.json();
+        
+                        return {
+                            name: driver.fullName,
+                            email: driver.driverEmail,
+                            currPoints: pointData.totalPoints ?? 0,
+                            pointChange: 0,
+                            reason: '',
+                            newTotal: pointData.totalPoints ?? 0,
+                        };
+                    })
+                );
+        
+                setDrivers(enrichedDrivers);
+            } catch (err) {
+                console.error("Error fetching driver info:", err);
             }
-
-            const enrichedDrivers = await Promise.all(
-
-                data.map(async (driver: any) => {
-                    console.log(driver);
-                    const pointsRes = await fetch(
-                        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/latest?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
-                      );                                           
-                    const pointData = await pointsRes.json();
-
-                    return {
-                        name: driver.fullName,
-                        email: driver.driverEmail,
-                        currPoints: pointData.points ?? 0,
-                        pointChange: 0,
-                        reason: '',
-                        newTotal: pointData.points ?? 0,
-                    };
-                })
-            );
-
-            setDrivers(enrichedDrivers);
-        } catch (err) {
-            console.error("Error fetching driver info:", err);
-        }
-    };
+        };
+            
 
     // Initialize user info and company
     useEffect(() => {
         const fetchInfo = async () => {
             try {
+                // Get Cognito user info
                 const user = await getCurrentUser();
                 const email = user.signInDetails?.loginId || "";
                 setUserEmail(email);
-
+        
+                // Get sponsor company name from Cognito attribute
                 const attributes = await fetchUserAttributes();
                 const companyName = attributes["custom:sponsorCompany"];
                 setSponsorCompanyName(companyName || null);
-
-                if (companyName) {
-                    setSponsorCompanyName(companyName);
-                    fetchDrivers(companyName);
+        
+                if (!companyName) {
+                    throw new Error("Sponsor company name not found in user attributes.");
                 }
-
+        
+                // Fetch all companies to get the ID from name
+                const companyIDRes = await fetch(
+                    `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`
+                );
+                const companies = await companyIDRes.json();
+        
+                const matchedCompany = companies.find(
+                    (company: any) => company.company_name === companyName
+                );
+        
+                const companyID = matchedCompany?.id;
+        
+                if (!companyID) {
+                    throw new Error("Sponsor company ID not found.");
+                }
+        
+                // Store both name and ID in state
+                setSponsorCompanyID(companyID);
+                setSponsorCompanyName(companyName);
+        
+                // Fetch drivers using the sponsor company name (still needed here)
+                fetchDrivers(companyName);
             } catch (err) {
-                console.error("Error loading user or drivers:", err);
+                console.error("Error loading user or sponsor company info:", err);
             }
-        };
+        };        
 
         fetchInfo();
     }, []);
@@ -123,7 +148,7 @@ export default function PointsSponsorPage() {
                     email: driver.email,
                     points: pointDelta,
                     description: reason,
-                    sponsorCompanyID: sponsorCompanyName,
+                    sponsorCompanyID: sponsorCompanyID,
                 }),
             });
 
