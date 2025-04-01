@@ -56,19 +56,21 @@ export default function PointsSponsorPage() {
             }
 
             const enrichedDrivers = await Promise.all(
+
                 data.map(async (driver: any) => {
+                    console.log(driver);
                     const pointsRes = await fetch(
-                        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
-                    );
+                        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/latest?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
+                      );                                           
                     const pointData = await pointsRes.json();
 
                     return {
                         name: driver.fullName,
                         email: driver.driverEmail,
-                        currPoints: pointData.totalPoints ?? 0,
+                        currPoints: pointData.points ?? 0,
                         pointChange: 0,
                         reason: '',
-                        newTotal: pointData.totalPoints ?? 0,
+                        newTotal: pointData.points ?? 0,
                     };
                 })
             );

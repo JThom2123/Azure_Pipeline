@@ -71,14 +71,6 @@ export default function HomePage() {
     getUserEmailAndSponsorData();
   }, []);
 
-
-  // Dummy sponsor company data for example
-  const sponsors = [
-    { name: 'Walmart', points: 120 },
-    { name: 'Target', points: 85 },
-    { name: 'Amazon', points: 95 },
-  ];
-
   return (
     <Authenticator>
       {({ signOut, user }) => {

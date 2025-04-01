@@ -14,6 +14,7 @@ export default function HomePage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
+  const [drivers, setDrivers] = useState<{ email: string; points: number }[]>([]);
 
   // Fetch user email & sponsor company on component mount
   useEffect(() => {
@@ -51,6 +52,48 @@ export default function HomePage() {
     };
   }, [dropdownOpen]);
 
+  useEffect(() => {
+    const fetchSponsorDriverData = async () => {
+      try {
+        const attributes = await fetchUserAttributes();
+        const email = attributes.email || null;
+        const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
+
+        setUserEmail(email);
+        setSponsorCompany(sponsorCompanyName);
+
+        if (!sponsorCompanyName) {
+          throw new Error("Sponsor company not found in user attributes.");
+        }
+
+        // Fetch drivers from the backend using the sponsor company name
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${encodeURIComponent(
+            sponsorCompanyName
+          )}`
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch drivers");
+        }
+
+        const data = await res.json();
+
+        const formatted = data.map((d: any) => ({
+          email: d.driverEmail,
+          points: d.points ?? 0,
+        }));
+
+        setDrivers(formatted);
+      } catch (err) {
+        console.error("Error fetching sponsor driver info:", err);
+      }
+    };
+
+    fetchSponsorDriverData();
+  }, []);
+
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -62,13 +105,6 @@ export default function HomePage() {
         const handleProfileClick = () => {
           router.push("/profile"); // Navigate to the profile page
         };
-
-        // Dummy driver data for example
-        const drivers = [
-          { name: "George A", points: 120, email: "georgea@example.com", status: "Active" },
-          { name: "Georgie B", points: 85, email: "georgieb@example.com", status: "Inactive" },
-          { name: "Georgia C", points: 95, email: "georgiacc@example.com", status: "Active" },
-        ];
 
         return (
           <div className="flex flex-col h-screen">
@@ -131,29 +167,15 @@ export default function HomePage() {
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-200">
-                      <th className="border border-gray-300 px-4 py-2">Driver Name</th>
+                      <th className="border border-gray-300 px-4 py-2">Driver Email</th>
                       <th className="border border-gray-300 px-4 py-2">Points</th>
-                      <th className="border border-gray-300 px-4 py-2">Email</th>
-                      <th className="border border-gray-300 px-4 py-2">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {drivers.map((driver, index) => (
                       <tr key={index} className="text-center">
-                        <td className="border border-gray-300 px-4 py-2">{driver.name}</td>
-                        <td className="border border-gray-300 px-4 py-2">{driver.points}</td>
                         <td className="border border-gray-300 px-4 py-2">{driver.email}</td>
-                        <td
-                          className={`border border-gray-300 px-4 py-2 text-white font-bold ${
-                            driver.status === "Active"
-                              ? "bg-green-500"
-                              : driver.status === "Inactive"
-                              ? "bg-red-500"
-                              : "bg-gray-500"
-                          }`}
-                        >
-                          {driver.status}
-                        </td>
+                        <td className="border border-gray-300 px-4 py-2">{driver.points}</td>
                       </tr>
                     ))}
                   </tbody>
