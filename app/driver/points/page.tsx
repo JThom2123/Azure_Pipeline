@@ -79,13 +79,6 @@ export default function PointsSponsorPage() {
             router.push("/profile"); // Navigate to the profile page
           };
 
-        // Dummy table info  for example
-        const tableInfo = [
-          { sponsor: 'Walmart', pointChange: +10, reason: 'Good Driving!', totalPoints: 130 },
-          { sponsor: 'Target', pointChange: -5, reason: 'Ran over squirrel :(', totalPoints: 70 },
-          { sponsor: 'Amazon', pointChange: -20, reason: 'Hit traffic light :(', totalPoints: 75 },
-        ];
-
           return (
             <div className="flex flex-col h-screen">
               {/* Navigation Bar */}
