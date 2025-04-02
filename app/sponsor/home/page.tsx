@@ -66,7 +66,7 @@ export default function HomePage() {
           throw new Error("Sponsor company not found in user attributes.");
         }
 
-        // Fetch drivers from the backend using the sponsor company name
+        // Get list of connected drivers
         const res = await fetch(
           `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${encodeURIComponent(
             sponsorCompanyName
@@ -77,14 +77,24 @@ export default function HomePage() {
           throw new Error("Failed to fetch drivers");
         }
 
-        const data = await res.json();
+        const driverList = await res.json();
 
-        const formatted = data.map((d: any) => ({
-          email: d.driverEmail,
-          points: d.points ?? 0,
-        }));
+        // For each driver, get total points from the new endpoint
+        const enrichedDrivers = await Promise.all(
+          driverList.map(async (driver: any) => {
+            const pointsRes = await fetch(
+              `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/total?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
+            );
+            const pointData = await pointsRes.json();
 
-        setDrivers(formatted);
+            return {
+              email: driver.driverEmail,
+              points: pointData.totalPoints ?? 0,
+            };
+          })
+        );
+
+        setDrivers(enrichedDrivers);
       } catch (err) {
         console.error("Error fetching sponsor driver info:", err);
       }
@@ -92,7 +102,6 @@ export default function HomePage() {
 
     fetchSponsorDriverData();
   }, []);
-
 
   return (
     <Authenticator>
