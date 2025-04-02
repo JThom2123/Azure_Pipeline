@@ -63,7 +63,7 @@ export default function PointsSponsorPage() {
 
                     const pointsRes = await fetch(
                         `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/total?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
-                      );                                           
+                    );
                     const pointData = await pointsRes.json();
 
                     return {
@@ -303,7 +303,12 @@ export default function PointsSponsorPage() {
                                                         }}
                                                     />
                                                 </td>
-                                                <td className="border px-4 py-2">{driver.newTotal}</td>
+                                                <td className="border px-4 py-2">
+                                                    {driver.pointChange >= 0
+                                                        ? `${driver.currPoints}+${driver.pointChange}`
+                                                        : driver.newTotal}
+                                                </td>
+
                                                 <td className="border px-4 py-2">
                                                     <button
                                                         className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
