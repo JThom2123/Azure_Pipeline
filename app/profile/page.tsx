@@ -12,8 +12,6 @@ export default function ProfilePage() {
     const [userAttributes, setUserAttributes] = useState({
         name: "",
         email: "",
-        phone_number: "",
-        address: "",
     });
 
     const [sponsorCompany, setSponsorCompany] = useState<string>("");
@@ -37,8 +35,6 @@ export default function ProfilePage() {
                     setUserAttributes({
                         name: attributes.name || "",
                         email: attributes.email || "",
-                        phone_number: attributes.phone_number || "",
-                        address: attributes.address || "",
                     });
 
                     setUserRole(attributes["custom:role"] || null);
@@ -163,8 +159,6 @@ export default function ProfilePage() {
             const updatedAttributes: Record<string, string> = {};
 
             if (userAttributes.email) updatedAttributes["email"] = userAttributes.email;
-            if (userAttributes.phone_number) updatedAttributes["phone_number"] = userAttributes.phone_number;
-            if (userAttributes.address) updatedAttributes["address"] = userAttributes.address;
 
             if (Object.keys(updatedAttributes).length === 0) {
                 alert("No valid attributes to update.");
@@ -184,8 +178,6 @@ export default function ProfilePage() {
             setUserAttributes({
                 name: newAttributes?.name || "",
                 email: newAttributes?.email || "",
-                phone_number: newAttributes?.phone_number || "",
-                address: newAttributes?.address || "",
             });
 
         } catch (error) {
@@ -445,10 +437,6 @@ export default function ProfilePage() {
                                 <input type="text" className="w-full p-2 border bg-gray-300 rounded cursor-not-allowed" value={userAttributes.name} readOnly placeholder="Name (Cannot be changed)" />
 
                                 <input type="email" className="w-full p-2 border rounded" value={userAttributes.email} onChange={(e) => setUserAttributes({ ...userAttributes, email: e.target.value })} placeholder="Email" />
-
-                                <input type="text" className="w-full p-2 border rounded" value={userAttributes.phone_number} onChange={(e) => setUserAttributes({ ...userAttributes, phone_number: e.target.value })} placeholder="Phone Number" />
-
-                                <input type="text" className="w-full p-2 border rounded" value={userAttributes.address} onChange={(e) => setUserAttributes({ ...userAttributes, address: e.target.value })} placeholder="Address" />
 
                                 <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleUpdate}>
                                     Update Profile
