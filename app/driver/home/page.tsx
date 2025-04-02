@@ -57,7 +57,7 @@ export default function HomePage() {
           const latest = data[0]; // you only get one row
           setSponsorData({
             sponsorCompanyName: latest.sponsorCompanyName,
-            points: latest.points,
+            points: latest.totalPoints,
           });
         }
       } catch (err) {
