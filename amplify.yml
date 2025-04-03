@@ -9,6 +9,8 @@ frontend:
   phases:
     build:
       commands:
+        - nvm install 18.19.0
+        - nvm use 18.19.0
         - npm run build
   artifacts:
     baseDirectory: .next
