@@ -24,6 +24,7 @@ export default function ITunesSearchPage() {
     Sponsor2: 200,
   });
   const [selectedSong, setSelectedSong] = useState<any | null>(null);
+  const [modalOpen, setModalOpen] = useState(false); // Modal state
 
   const router = useRouter();
   const cartDropdownRef = useRef<HTMLDivElement>(null);
@@ -133,10 +134,12 @@ export default function ITunesSearchPage() {
 
   const handleSongClick = (song: any) => {
     setSelectedSong(song);
+    setModalOpen(true); // Open modal on song click
   };
 
   const handleModalClose = () => {
-    setSelectedSong(null);
+    setModalOpen(false); // Close modal
+    setSelectedSong(null); // Reset selected song
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -292,90 +295,97 @@ export default function ITunesSearchPage() {
         </div>
 
         {/* Sponsor Catalogs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
-        </div>
+<div className="flex justify-center gap-4 mb-4">
+  <button
+    onClick={() => setShowCatalog(true)}
+    className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
+      } px-4 py-2 rounded text-white`}
+  >
+    Catalog
+  </button>
+  <button
+    onClick={() => setShowCatalog(false)}
+    className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
+      } px-4 py-2 rounded text-white`}
+  >
+    My Songs
+  </button>
+</div>
 
-        {showCatalog ? (
-          <>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Search for songs about TRUCKS..."
-                className="border p-2 rounded w-full"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-              >
-                {loading ? "Searching..." : "Search"}
-              </button>
-            </div>
+{showCatalog ? (
+  <>
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Search for songs about TRUCKS..."
+        className="border p-2 rounded w-full"
+      />
+      <button
+        onClick={handleSearch}
+        disabled={loading}
+        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+      >
+        {loading ? "Searching..." : "Search"}
+      </button>
+    </div>
 
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+    {error && <p className="text-red-500 mt-2">{error}</p>}
 
-            <ul className="mt-4 space-y-4">
-              {results.map((item) => (
-                <li
-                  key={item.trackId || item.collectionId}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                  onClick={() => handleSongClick(item)}
+    <ul className="mt-4 space-y-4">
+      {results.map((item) => (
+        <li
+          key={item.trackId || item.collectionId}
+          className="border p-3 rounded shadow flex items-start space-x-4"
+          onClick={(e) => {
+            // Prevent modal opening when clicking on Add to Cart button
+            if ((e.target as HTMLElement).closest('button')) return;
+            handleSongClick(item); // Open modal if it's not the Add to Cart button
+          }}
+        >
+          <div className="flex-shrink-0">
+            <img
+              src={item.artworkUrl100}
+              alt={item.trackName || item.collectionName}
+              className="w-24 h-24 rounded"
+            />
+          </div>
+          <div className="flex-grow">
+            <p className="font-bold">{item.trackName || item.collectionName}</p>
+            <p className="text-sm text-gray-600">By: {item.artistName}</p>
+            <p className="text-sm text-gray-600">Points: {item.points}</p>
+          </div>
+          <div className="flex flex-col items-end space-y-2 w-full">
+            {item.previewUrl && (
+              <div className="w-full">
+                <audio
+                  controls
+                  className="w-full"
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
                 >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={item.artworkUrl100}
-                      alt={item.trackName || item.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <p className="font-bold">{item.trackName || item.collectionName}</p>
-                    <p className="text-sm text-gray-600">By: {item.artistName}</p>
-                    <p className="text-sm text-gray-600">Points: {item.points}</p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2 w-full">
-                    {item.previewUrl && (
-                      <div className="w-full">
-                        <audio
-                          controls
-                          className="w-full"
-                          onTimeUpdate={handleTimeUpdate}
-                          onLoadedMetadata={handleLoadedMetadata}
-                        >
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <div className="flex justify-between items-center mt-3 w-full">
-                          <button
-                            onClick={() => handleAddToCart(item)}
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  <source src={item.previewUrl} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+                <div className="flex justify-between items-center mt-3 w-full">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering modal on button click
+                      handleAddToCart(item); // Add to cart on button click
+                    }}
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
           </>
         ) : (
           <>
@@ -401,22 +411,13 @@ export default function ITunesSearchPage() {
                       <div className="flex-grow">
                         <p className="font-bold">{song.trackName || song.collectionName}</p>
                         <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                        <p className="text-sm text-gray-600">Points: {song.points}</p>
+                        
                       </div>
                       <div className="flex flex-col items-end space-y-2 w-full">
-                        {song.previewUrl && (
-                          <div className="w-full">
-                            <audio
-                              controls
-                              className="w-full"
-                              onTimeUpdate={handleTimeUpdate}
-                              onLoadedMetadata={handleLoadedMetadata}
-                            >
-                              <source src={song.previewUrl} type="audio/mpeg" />
-                              Your browser does not support the audio element.
-                            </audio>
-                          </div>
-                        )}
+                        <audio controls className="w-full">
+                          <source src={song.previewUrl} type="audio/mpeg" />
+                          Your browser does not support the audio element.
+                        </audio>
                       </div>
                     </li>
                   ))
@@ -426,6 +427,32 @@ export default function ITunesSearchPage() {
           </>
         )}
       </main>
+
+      {/* Modal for song details */}
+      {modalOpen && selectedSong && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={handleModalClose}
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()} // Prevents the modal from closing when clicked inside
+          >
+            <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
+            <p className="text-lg">Album: {selectedSong.collectionName}</p>
+            <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
+            <div className="mt-4">
+              <button
+                onClick={handleModalClose}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
