@@ -10,22 +10,25 @@ export default function ITunesSearchPage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cart, setCart] = useState<any[]>([]); // To store the user's cart
-  const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]); // To store purchased songs
-  const [currentTime, setCurrentTime] = useState<number>(0); // State for current time of the audio
-  const [duration, setDuration] = useState<number>(0); // State for total duration of the audio
-  const [showCatalog, setShowCatalog] = useState(true); // State to toggle between catalog and my songs view
-  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1"); // Selected sponsor
+  const [cartDropdownOpen, setCartDropdownOpen] = useState(false); // Cart dropdown state
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false); // Profile dropdown state
+  const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false); // Points dropdown state
+  const [cart, setCart] = useState<any[]>([]);
+  const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]);
+  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1");
   const [sponsorsPoints, setSponsorsPoints] = useState<{ [key: string]: number }>({
-    Sponsor1: 50, // Example sponsor with 100 points
-    Sponsor2: 200, // Example sponsor with 200 points
+    Sponsor1: 50,
+    Sponsor2: 200,
   });
+  const [selectedAlbum, setSelectedAlbum] = useState<{ album: string; genre: string } | null>(null);
+  const [showCatalog, setShowCatalog] = useState(true);
 
   const router = useRouter();
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const cartDropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const pointsDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Function to handle search
+  // Handle search
   async function handleSearch() {
     if (!searchTerm.trim()) return;
 
@@ -34,9 +37,7 @@ export default function ITunesSearchPage() {
 
     try {
       const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(
-          searchTerm
-        )}&media=music&limit=10`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
       );
 
       if (!response.ok) {
@@ -47,33 +48,20 @@ export default function ITunesSearchPage() {
       setResults(
         data.results.map((item: any) => ({
           ...item,
-          points: Math.floor(Math.random() * 100) + 1, // Assigning random points for now
+          points: Math.floor(Math.random() * 100) + 1,
         }))
       );
     } catch (err) {
       setError("Something went wrong. Please try again.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
   }
 
-  // Handle profile dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-
-    if (dropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownOpen]);
+  // Handle song click to show album description
+  const handleSongClick = (song: any) => {
+    setSelectedAlbum({ album: song.collectionName, genre: song.primaryGenreName });
+  };
 
   const handleProfileClick = () => {
     router.push("/profile");
@@ -84,27 +72,31 @@ export default function ITunesSearchPage() {
   };
 
   const handleAddToCart = (song: any) => {
-    // Check if the user has enough points for the selected sponsor
-    const userPoints = sponsorsPoints[selectedSponsor];
-    if (userPoints >= song.points) {
-      setCart((prevCart) => [...prevCart, song]);
-    } else {
-      alert("You do not have enough points to purchase this item.");
-    }
+    setCart((prevCart) => [...prevCart, song]);
+  };
+
+  const handleRemoveFromCart = (songId: number) => {
+    setCart((prevCart) => prevCart.filter((song) => song.trackId !== songId));
   };
 
   const handlePurchase = () => {
+    const userPoints = sponsorsPoints[selectedSponsor];
+    const totalPointsRequired = cart.reduce((total, song) => total + song.points, 0);
+
+    if (totalPointsRequired > userPoints) {
+      alert("You do not have enough points to purchase all items in the cart.");
+      return;
+    }
+
     if (cart.length === 0) {
       alert("Your cart is empty.");
       return;
     }
+
     const songTitles = cart.map((song) => song.trackName || song.collectionName).join(", ");
     alert(`Purchased the following songs: ${songTitles}`);
 
-    // Add purchased songs to purchasedSongs
     setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
-
-    // Clear cart after purchase
     setCart([]);
   };
 
@@ -118,9 +110,35 @@ export default function ITunesSearchPage() {
     setDuration(audio.duration);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Handle dropdown click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        (cartDropdownRef.current && !cartDropdownRef.current.contains(event.target as Node)) &&
+        (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) &&
+        (pointsDropdownRef.current && !pointsDropdownRef.current.contains(event.target as Node))
+      ) {
+        setCartDropdownOpen(false);
+        setProfileDropdownOpen(false);
+        setPointsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen">
-      {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
           <Link href="/driver/home">
@@ -152,188 +170,148 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        {/* Cart and Profile Dropdown */}
-        <div className="flex items-center gap-4">
-          {/* Cart Button */}
-          <button onClick={handlePurchase} className="text-xl">
-            🛒 Purchase ({cart.length})
+        {/* Cart Dropdown */}
+        <div className="relative ml-auto" ref={cartDropdownRef}>
+          <button
+            onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
+            className="text-xl"
+          >
+            🛒 Cart ({cart.length})
           </button>
 
-          {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <div
-              className="cursor-pointer text-2xl"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              <FaUserCircle />
-            </div>
-
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+          {cartDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
+              <ul>
+                {cart.length === 0 ? (
+                  <li className="p-4 text-center text-gray-500">Your cart is empty</li>
+                ) : (
+                  cart.map((item, index) => (
+                    <li
+                      key={index}
+                      className="flex items-center p-3 space-x-2 border-b"
+                    >
+                      <img
+                        src={item.artworkUrl100}
+                        alt={item.trackName || item.collectionName}
+                        className="w-12 h-12 rounded"
+                      />
+                      <div className="flex-grow">
+                        <p className="font-bold">{item.trackName || item.collectionName}</p>
+                        <p className="text-sm text-gray-600">By: {item.artistName}</p>
+                        <p className="text-sm text-gray-600">Points: {item.points}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveFromCart(item.trackId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+              <div className="flex justify-between p-3">
                 <button
-                  onClick={handleProfileClick}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                  onClick={handlePurchase}
+                  className="bg-blue-500 text-white px-4 py-2 rounded w-full"
                 >
-                  My Profile
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-                >
-                  Sign Out
+                  Purchase
                 </button>
               </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-xl mx-auto p-4 flex-grow">
-        <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
-
-        {/* Sponsor Catalogs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <div
-            className="cursor-pointer text-lg flex items-center gap-2 text-black"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <span>{selectedSponsor}</span>
-            <span>({sponsorsPoints[selectedSponsor]} points)</span>
-            <span className="text-xl">&#9660;</span>
-          </div>
-
-          {dropdownOpen && (
-            <div className="absolute mt-2 w-40 bg-white text-black rounded shadow-lg">
-              {Object.keys(sponsorsPoints).map((sponsor) => (
-                <div
-                  key={sponsor}
-                  onClick={() => {
-                    setSelectedSponsor(sponsor);
-                    setDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                >
-                  {sponsor} ({sponsorsPoints[sponsor]} points)
-                </div>
-              ))}
             </div>
           )}
         </div>
 
-        {/* Toggle Buttons for Catalog and My Songs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
+        {/* Profile Dropdown */}
+        <div className="relative" ref={profileDropdownRef}>
+          <div
+            className="cursor-pointer text-2xl"
+            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
           >
-            Catalog
-          </button>
+            <FaUserCircle />
+          </div>
+
+          {profileDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+              <button
+                onClick={handleProfileClick}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+              >
+                My Profile
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <main className="max-w-xl mx-auto p-4 flex-grow">
+        <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
+
+        {/* Catalog search and display */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search for songs..."
+            className="border p-2 rounded w-full"
+          />
           <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
+            onClick={handleSearch}
+            disabled={loading}
+            className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
           >
-            My Songs
+            {loading ? "Searching..." : "Search"}
           </button>
         </div>
 
-        {showCatalog ? (
-          <>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search for songs about TRUCKS..."
-                className="border p-2 rounded w-full"
-              />
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+
+        <ul className="mt-4 space-y-4">
+          {results.map((item) => (
+            <li
+              key={item.trackId || item.collectionId}
+              className="border p-3 rounded shadow flex items-start space-x-4 cursor-pointer"
+              onClick={() => handleSongClick(item)}
+            >
+              <div className="flex-shrink-0">
+                <img
+                  src={item.artworkUrl100}
+                  alt={item.trackName || item.collectionName}
+                  className="w-24 h-24 rounded"
+                />
+              </div>
+              <div className="flex-grow">
+                <p className="font-bold">{item.trackName || item.collectionName}</p>
+                <p className="text-sm text-gray-600">By: {item.artistName}</p>
+                <p className="text-sm text-gray-600">Points: {item.points}</p>
+              </div>
               <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+                onClick={() => handleAddToCart(item)}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
               >
-                {loading ? "Searching..." : "Search"}
+                Add to Cart
               </button>
-            </div>
+            </li>
+          ))}
+        </ul>
 
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-
-            <ul className="mt-4 space-y-4">
-              {results.map((item) => (
-                <li
-                  key={item.trackId || item.collectionId}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={item.artworkUrl100}
-                      alt={item.trackName || item.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <p className="font-bold">{item.trackName || item.collectionName}</p>
-                    <p className="text-sm text-gray-600">By: {item.artistName}</p>
-                    <p className="text-sm text-gray-600">Points: {item.points}</p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2 w-full">
-                    {item.previewUrl && (
-                      <div className="w-full">
-                        <audio
-                          controls
-                          className="w-full"
-                          onTimeUpdate={handleTimeUpdate}
-                          onLoadedMetadata={handleLoadedMetadata}
-                        >
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <div className="flex justify-between items-center mt-3 w-full">
-                          <button
-                            onClick={() => handleAddToCart(item)}
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <div className="space-y-4">
-            {purchasedSongs.length === 0 ? (
-              <p>You don't have any songs in your library.</p>
-            ) : (
-              <ul>
-                {purchasedSongs.map((song, index) => (
-                  <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <img
-                        src={song.artworkUrl100}
-                        alt={song.trackName || song.collectionName}
-                        className="w-24 h-24 rounded"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-bold">{song.trackName || song.collectionName}</p>
-                      <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                    </div>
-                    {song.previewUrl && (
-                      <audio controls className="w-full mt-2">
-                        <source src={song.previewUrl} type="audio/mpeg" />
-                        Your browser does not support the audio element.
-                      </audio>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+        {selectedAlbum && (
+          <div className="fixed bottom-5 left-5 bg-gray-800 text-white p-4 rounded shadow-lg">
+            <p className="font-bold">Album: {selectedAlbum.album}</p>
+            <p>Genre: {selectedAlbum.genre}</p>
+            <button
+              onClick={() => setSelectedAlbum(null)}
+              className="mt-2 bg-red-500 px-3 py-1 rounded text-white"
+            >
+              Close
+            </button>
           </div>
         )}
       </main>
