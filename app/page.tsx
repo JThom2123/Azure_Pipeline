@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import React from "react";
 
 export default function WelcomePage() {
   const router = useRouter();
