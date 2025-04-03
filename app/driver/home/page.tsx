@@ -8,14 +8,15 @@ import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
 
-
 export default function HomePage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [sponsorData, setSponsorData] = useState<{ sponsorCompanyName: string; points: number } | null>(null);
+  const [sponsorData, setSponsorData] = useState<
+    { sponsorCompanyName: string; totalPoints: number }[] | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,21 +45,36 @@ export default function HomePage() {
         const email = attributes.email;
         setUserEmail(email || null);
 
-
         const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${email}`);
         if (!res.ok) {
           throw new Error("Failed to fetch sponsor data");
         }
 
-        const data = await res.json();
+        const data: any[] = await res.json();
+        console.log("Data returned from API:", data);
+
         if (!data || data.length === 0) {
           setSponsorData(null);
         } else {
-          const latest = data[0]; // you only get one row
-          setSponsorData({
-            sponsorCompanyName: latest.sponsorCompanyName,
-            points: latest.totalPoints,
-          });
+          // Group the records by sponsorCompanyName and sum the points
+          const groupedData = data.reduce<Record<string, number>>((acc, record) => {
+            const sponsorName = record.sponsorCompanyName;
+            const points = Number(record.totalPoints ?? record.points);
+            if (acc[sponsorName] !== undefined) {
+              acc[sponsorName] += points;
+            } else {
+              acc[sponsorName] = points;
+            }
+            return acc;
+          }, {});
+
+          // Convert the grouped data into an array of sponsor objects
+          const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
+            sponsorCompanyName,
+            totalPoints: points,
+          }));
+
+          setSponsorData(sponsorArray);
         }
       } catch (err) {
         console.error("Error fetching sponsor info:", err);
@@ -156,21 +172,23 @@ export default function HomePage() {
                 <p className="text-center text-lg">Loading sponsor information...</p>
               ) : error ? (
                 <p className="text-center text-red-600">{error}</p>
-              ) : sponsorData ? (
+              ) : sponsorData && sponsorData.length > 0 ? (
                 <div className="w-full max-w-lg">
                   <h2 className="text-2xl font-semibold text-center mb-4">Sponsor Info</h2>
                   <table className="w-full border-collapse border border-gray-300">
                     <thead>
                       <tr className="bg-gray-200">
                         <th className="border border-gray-300 px-4 py-2">Sponsor Company</th>
-                        <th className="border border-gray-300 px-4 py-2">Points</th>
+                        <th className="border border-gray-300 px-4 py-2">Total Points</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="text-center">
-                        <td className="border border-gray-300 px-4 py-2">{sponsorData.sponsorCompanyName}</td>
-                        <td className="border border-gray-300 px-4 py-2">{sponsorData.points}</td>
-                      </tr>
+                      {sponsorData.map((sponsor, idx) => (
+                        <tr key={idx} className="text-center">
+                          <td className="border border-gray-300 px-4 py-2">{sponsor.sponsorCompanyName}</td>
+                          <td className="border border-gray-300 px-4 py-2">{sponsor.totalPoints}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
