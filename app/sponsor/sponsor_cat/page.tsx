@@ -111,6 +111,29 @@ export default function ITunesSearchPage() {
     localStorage.setItem("songPoints", JSON.stringify(updatedResults));
   };
 
+  // Function to store selected songs in the backend
+  const saveSelectedSongsToBackend = async (updatedSelectedSongs: any[]) => {
+    try {
+      const response = await fetch("/api/saveSongs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ selectedSongs: updatedSelectedSongs }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save songs.");
+      }
+
+      setError("");
+      console.log("Selected songs saved successfully!");
+    } catch (err) {
+      setError("Failed to save songs. Please try again.");
+      console.error(err);
+    }
+  };
+
   const toggleSelectSong = (song: any) => {
     const isSelected = selectedSongs.some((selectedSong) => selectedSong.trackId === song.trackId);
     const updatedSelectedSongs = isSelected
@@ -119,6 +142,9 @@ export default function ITunesSearchPage() {
 
     setSelectedSongs(updatedSelectedSongs);
     localStorage.setItem("selectedSongs", JSON.stringify(updatedSelectedSongs));
+
+    // Automatically save to the backend
+    saveSelectedSongsToBackend(updatedSelectedSongs);
   };
 
   return (
