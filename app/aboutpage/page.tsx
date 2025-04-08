@@ -180,6 +180,10 @@ const AboutPage = () => {
     };
   }, [dropdownOpen]);
 
+  // Check for impersonation: if localStorage has an impersonated driver email
+  const impersonatedEmail =
+    typeof window !== "undefined" ? localStorage.getItem("impersonatedDriverEmail") : null;
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -204,6 +208,16 @@ const AboutPage = () => {
 
         return (
           <div className="flex flex-col h-screen">
+            {/* Impersonation Banner */}
+            {localStorage.getItem("impersonatedDriverEmail") && (
+              <div className="bg-yellow-200 p-4 text-center">
+                <p className="text-lg font-semibold">
+                  You are impersonating{" "}
+                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+                </p>
+              </div>
+            )}
+
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">

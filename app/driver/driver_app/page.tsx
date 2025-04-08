@@ -48,7 +48,7 @@ const DriverAppPage = () => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "sponsor_company_id" ? Number(value) : value,  // ✅ cast to number
+      [name]: name === "sponsor_company_id" ? Number(value) : value,  // cast to number
     }));
   };
 
@@ -91,11 +91,11 @@ const DriverAppPage = () => {
     }
   }, []);
 
-  
+
 
   useEffect(() => {
     if (!userEmail) return;
-  
+
     const fetchApplications = async () => {
       try {
         const res = await fetch(
@@ -107,10 +107,10 @@ const DriverAppPage = () => {
         console.error("Failed to fetch driver applications:", err);
       }
     };
-  
+
     fetchApplications();
   }, [userEmail]);
-  
+
   /** Fetch existing sponsor companies */
   useEffect(() => {
     const fetchSponsorCompanies = async () => {
@@ -168,7 +168,7 @@ const DriverAppPage = () => {
           driverEmail: formData.email,
           sponsorCompanyID: Number(formData.sponsor_company_id),
           fullName: `${formData.first_name} ${formData.last_name}`
-        }),           
+        }),
       });
 
       if (response.ok) {
@@ -231,12 +231,14 @@ const DriverAppPage = () => {
           <div className="flex flex-col h-screen">
             {/* Impersonation Banner */}
             {localStorage.getItem("impersonatedDriverEmail") && (
-              <div className="bg-yellow-200 p-2 text-center mb-4">
-                You are currently impersonating{" "}
-                <span className="font-bold">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go back to Home Page to stop impersonating.
+              <div className="bg-yellow-200 p-4 text-center">
+                <p className="text-lg font-semibold">
+                  You are impersonating{" "}
+                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+                </p>
               </div>
             )}
-            
+
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">

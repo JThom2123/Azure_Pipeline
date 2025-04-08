@@ -97,9 +97,11 @@ export default function PointsSponsorPage() {
           <div className="flex flex-col h-screen">
             {/* Impersonation Banner */}
             {localStorage.getItem("impersonatedDriverEmail") && (
-              <div className="bg-yellow-200 p-2 text-center mb-4">
-                You are currently impersonating{" "}
-                <span className="font-bold">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go back to Home Page to stop impersonating.
+              <div className="bg-yellow-200 p-4 text-center">
+                <p className="text-lg font-semibold">
+                  You are impersonating{" "}
+                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+                </p>
               </div>
             )}
 
