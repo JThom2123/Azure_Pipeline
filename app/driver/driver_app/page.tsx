@@ -68,24 +68,29 @@ const DriverAppPage = () => {
     fetchUserRole();
   }, []);
 
+  // Fetch effective user email on mount.
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const user = await getCurrentUser();
-        const email = user?.signInDetails?.loginId || '';
-  
-        setUserEmail(email);  
-        setFormData((prev) => ({
-          ...prev,
-          email: email
-        }));
-      } catch (err) {
-        console.error("Failed to get current user email", err);
-      }
-    };
-  
-    fetchUserInfo();
+    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
+    if (impersonatedEmail) {
+      setUserEmail(impersonatedEmail);
+      // Also update the form data email so the application form shows the impersonated email.
+      setFormData((prev) => ({ ...prev, email: impersonatedEmail }));
+    } else {
+      // Otherwise, fetch the email from Cognito.
+      const fetchEmail = async () => {
+        try {
+          const user = await getCurrentUser();
+          const email = user?.signInDetails?.loginId || "";
+          setUserEmail(email);
+          setFormData((prev) => ({ ...prev, email }));
+        } catch (err) {
+          console.error("Failed to get current user email", err);
+        }
+      };
+      fetchEmail();
+    }
   }, []);
+
   
 
   useEffect(() => {
@@ -194,7 +199,6 @@ const DriverAppPage = () => {
     }
   };
 
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -225,6 +229,14 @@ const DriverAppPage = () => {
 
         return (
           <div className="flex flex-col h-screen">
+            {/* Impersonation Banner */}
+            {localStorage.getItem("impersonatedDriverEmail") && (
+              <div className="bg-yellow-200 p-2 text-center mb-4">
+                You are currently impersonating{" "}
+                <span className="font-bold">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go back to Home Page to stop impersonating.
+              </div>
+            )}
+            
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex space-x-4">

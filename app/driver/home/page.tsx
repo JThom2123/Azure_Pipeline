@@ -20,6 +20,26 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // When the page mounts, check if impersonation is active via localStorage.
+  useEffect(() => {
+    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
+    if (impersonatedEmail) {
+      setUserEmail(impersonatedEmail);
+    } else {
+      // Otherwise get email from Cognito.
+      const getUserAttributes = async () => {
+        try {
+          const attributes = await fetchUserAttributes();
+          const email = attributes.email;
+          setUserEmail(email || null);
+        } catch (err) {
+          console.error("Error fetching user attributes:", err);
+        }
+      };
+      getUserAttributes();
+    }
+  }, []);
+
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,7 +58,7 @@ export default function HomePage() {
   }, [dropdownOpen]);
 
   // Get user email and fetch sponsor data
-  useEffect(() => {
+  /*useEffect(() => {
     const getUserEmailAndSponsorData = async () => {
       try {
         const attributes = await fetchUserAttributes();
@@ -85,7 +105,76 @@ export default function HomePage() {
     };
 
     getUserEmailAndSponsorData();
+  }, []);*/
+
+  // Fetch sponsor data using userEmail (which might be impersonated)
+  useEffect(() => {
+    const getSponsorData = async () => {
+      try {
+        if (!userEmail) {
+          return;
+        }
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${userEmail}`
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch sponsor data");
+        }
+        const data: any[] = await res.json();
+        console.log("Data returned from API:", data);
+        if (!data || data.length === 0) {
+          setSponsorData(null);
+        } else {
+          const groupedData = data.reduce<Record<string, number>>((acc, record) => {
+            const sponsorName = record.sponsorCompanyName;
+            const points = Number(record.totalPoints ?? record.points);
+            if (acc[sponsorName] !== undefined) {
+              acc[sponsorName] += points;
+            } else {
+              acc[sponsorName] = points;
+            }
+            return acc;
+          }, {});
+          const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
+            sponsorCompanyName,
+            totalPoints: points,
+          }));
+          setSponsorData(sponsorArray);
+        }
+      } catch (err) {
+        console.error("Error fetching sponsor info:", err);
+        setError("Could not load sponsor info.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getSponsorData();
+  }, [userEmail]);
+
+  useEffect(() => {
+    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
+    if (impersonatedEmail) {
+      setUserEmail(impersonatedEmail);
+    } else {
+      // Otherwise, fetch the email from Cognito using fetchUserAttributes.
+      const getUserEmail = async () => {
+        try {
+          const attributes = await fetchUserAttributes();
+          setUserEmail(attributes.email || null);
+        } catch (err) {
+          console.error("Error fetching user attributes:", err);
+        }
+      };
+      getUserEmail();
+    }
   }, []);
+
+  // Handler for "Stop Impersonation" button: clear localStorage and reload page.
+  const handleStopImpersonation = () => {
+    localStorage.removeItem("impersonatedDriverEmail");
+    router.replace("/sponsor/home");
+  };
 
   return (
     <Authenticator>
@@ -101,6 +190,19 @@ export default function HomePage() {
 
         return (
           <div className="flex flex-col h-screen">
+            {/* Impersonation Banner */}
+            {localStorage.getItem("impersonatedDriverEmail") && (
+              <div className="bg-yellow-200 p-4 text-center">
+                <p className="text-lg font-semibold">
+                  You are impersonating{" "}
+                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>.
+                </p>
+                <button onClick={handleStopImpersonation} className="mt-2 bg-red-500 text-white px-4 py-1 rounded">
+                  Stop Impersonation
+                </button>
+              </div>
+            )}
+
             {/* Navigation Bar */}
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex gap-4">

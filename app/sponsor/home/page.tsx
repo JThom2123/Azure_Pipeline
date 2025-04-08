@@ -103,6 +103,15 @@ export default function HomePage() {
     fetchSponsorDriverData();
   }, []);
 
+  // Handler for impersonation button
+  const handleImpersonate = (driverEmail: string) => {
+    // Store impersonation in localStorage.
+    localStorage.setItem("impersonatedDriverEmail", driverEmail);
+    alert(`You are now impersonating ${driverEmail}. You will see the site as that driver.`);
+    // Redirect to the driver home page.
+    router.push("/driver/home");
+  };
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -173,11 +182,16 @@ export default function HomePage() {
               {/* Driver Information Table */}
               <div className="w-full max-w-lg">
                 <h2 className="text-2xl font-semibold text-center mb-4">Driver Rankings</h2>
+                <p className="mb-4 text-center text-sm italic">
+                  Click "Impersonate" to see the site as that driver. The sponsor will assume the driver's view
+                  and be able to perform any operations available to them.
+                </p>
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-200">
                       <th className="border border-gray-300 px-4 py-2">Driver Email</th>
                       <th className="border border-gray-300 px-4 py-2">Points</th>
+                      <th className="border border-gray-300 px-4 py-2">Impersonate</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -185,6 +199,14 @@ export default function HomePage() {
                       <tr key={index} className="text-center">
                         <td className="border border-gray-300 px-4 py-2">{driver.email}</td>
                         <td className="border border-gray-300 px-4 py-2">{driver.points}</td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <button
+                            className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                            onClick={() => handleImpersonate(driver.email)}
+                          >
+                            Impersonate
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
