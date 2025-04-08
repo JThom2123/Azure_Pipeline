@@ -114,7 +114,7 @@ export default function ITunesSearchPage() {
   // Function to store selected songs in the backend
   const saveSelectedSongsToBackend = async (updatedSelectedSongs: any[]) => {
     try {
-      const response = await fetch("/api/saveSongs", {
+      const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
