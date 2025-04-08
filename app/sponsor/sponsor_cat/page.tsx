@@ -11,18 +11,28 @@ export default function ITunesSearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedSongs, setSelectedSongs] = useState<any[]>([]); // Track selected songs for the catalog
-  const [showCatalog, setShowCatalog] = useState(false); // State to control visibility of selected songs
+  const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [companyName, setCompanyName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const router = useRouter();
 
-  // Load points and selected songs from localStorage on component mount
   useEffect(() => {
+    const storedSponsor = localStorage.getItem("sponsor");
+    if (storedSponsor) {
+      try {
+        const parsedSponsor = JSON.parse(storedSponsor);
+        if (parsedSponsor.company_name) {
+          setCompanyName(parsedSponsor.company_name);
+        }
+      } catch (err) {
+        console.error("Error parsing sponsor from localStorage:", err);
+      }
+    }
+
     const storedPoints = localStorage.getItem("songPoints");
     if (storedPoints) {
-      const parsedPoints = JSON.parse(storedPoints);
-      setResults(parsedPoints);
+      setResults(JSON.parse(storedPoints));
     }
 
     const storedSelectedSongs = localStorage.getItem("selectedSongs");
@@ -31,7 +41,6 @@ export default function ITunesSearchPage() {
     }
   }, []);
 
-  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -56,9 +65,7 @@ export default function ITunesSearchPage() {
 
     try {
       const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(
-          searchTerm
-        )}&media=music&limit=10`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
       );
 
       if (!response.ok) {
@@ -111,26 +118,39 @@ export default function ITunesSearchPage() {
     localStorage.setItem("songPoints", JSON.stringify(updatedResults));
   };
 
-  // Function to store selected songs in the backend
-  const saveSelectedSongsToBackend = async (updatedSelectedSongs: any[]) => {
-    try {
-      const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ selectedSongs: updatedSelectedSongs }),
-      });
+  const saveSelectedSongsToBackend = async (songs: any[]) => {
+    for (const song of songs) {
+      const payload = {
+        song_id: song.trackId,
+        title: song.trackName,
+        artist: song.artistName,
+        album: song.collectionName,
+        artwork_url: song.artworkUrl100,
+        preview_url: song.previewUrl,
+        store_url: song.trackViewUrl,
+        release_date: song.releaseDate,
+        genre: song.primaryGenreName,
+        company_name: companyName || "Unknown Company",
+        price: song.trackPrice || 0
+      };
 
-      if (!response.ok) {
-        throw new Error("Failed to save songs.");
+      try {
+        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to save song: ${song.trackName}`);
+        }
+
+        console.log(`Saved: ${song.trackName}`);
+      } catch (err) {
+        console.error("Error saving song:", err);
       }
-
-      setError("");
-      console.log("Selected songs saved successfully!");
-    } catch (err) {
-      setError("Failed to save songs. Please try again.");
-      console.error(err);
     }
   };
 
@@ -143,8 +163,9 @@ export default function ITunesSearchPage() {
     setSelectedSongs(updatedSelectedSongs);
     localStorage.setItem("selectedSongs", JSON.stringify(updatedSelectedSongs));
 
-    // Automatically save to the backend
-    saveSelectedSongsToBackend(updatedSelectedSongs);
+    if (!isSelected) {
+      saveSelectedSongsToBackend([song]);
+    }
   };
 
   return (
@@ -169,7 +190,6 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <div
             className="cursor-pointer text-2xl"
@@ -200,7 +220,6 @@ export default function ITunesSearchPage() {
       <main className="max-w-3xl mx-auto p-6 flex-grow">
         <h1 className="text-3xl font-bold mb-6 text-center">Catalog</h1>
 
-        {/* Conditional rendering based on whether the catalog is shown */}
         {!showCatalog && (
           <div className="flex gap-2 mb-6">
             <input
@@ -240,7 +259,6 @@ export default function ITunesSearchPage() {
 
         {error && <p className="text-red-500 mt-2">{error}</p>}
 
-        {/* Show the list of selected songs if showCatalog is true */}
         {showCatalog && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
@@ -274,7 +292,6 @@ export default function ITunesSearchPage() {
           </div>
         )}
 
-        {/* Song results */}
         {!showCatalog && (
           <ul className="space-y-4">
             {results.map((item) => (
