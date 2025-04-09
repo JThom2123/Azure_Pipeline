@@ -18,24 +18,34 @@ export default function PointsSponsorPage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pointHistory, setPointHistory] = useState<PointHistory[]>([]);
   const [userEmail, setUserEmail] = useState("");
 
-  // Read impersonation flag from localStorage on mount:
+  // New state for impersonated email from localStorage.
+  const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
+
+  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
-    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
-    if (impersonatedEmail) {
-      setUserEmail(impersonatedEmail);
-    } else {
-      const getUserEmail = async () => {
-        try {
-          const attributes = await fetchUserAttributes();
-          setUserEmail(attributes.email || "");
-        } catch (err) {
-          console.error("Error fetching user attributes:", err);
-        }
-      };
-      getUserEmail();
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("impersonatedDriverEmail");
+      if (storedEmail) {
+        setImpersonatedEmail(storedEmail);
+        setUserEmail(storedEmail);
+      } else {
+        // If not impersonating, fetch user email from Cognito.
+        const getUserEmail = async () => {
+          try {
+            const attributes = await fetchUserAttributes();
+            const email = attributes.email;
+            setUserEmail(email || "");
+          } catch (err) {
+            console.error("Error fetching user attributes:", err);
+          }
+        };
+        getUserEmail();
+      }
     }
   }, []);
 
@@ -56,30 +66,31 @@ export default function PointsSponsorPage() {
     };
   }, [dropdownOpen]);
 
-  // Fetch point history using userEmail
+  // Fetch point history based on userEmail
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!userEmail) return;
         const res = await fetch(
-          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/history?email=${userEmail}`
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/history?email=${encodeURIComponent(
+            userEmail
+          )}`
         );
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setPointHistory(data);
-        } else {
-          console.error("Invalid data received:", data);
+        if (!res.ok) {
+          throw new Error("Failed to fetch point history");
         }
+        const data: PointHistory[] = await res.json();
+        setPointHistory(data);
       } catch (err) {
         console.error("Error fetching point history:", err);
+        setError("Could not load point history.");
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchData();
   }, [userEmail]);
-
-  // Determine the target route for "Points" based on impersonation
-  const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
-  const pointsPageRoute = impersonatedEmail ? "/driver/points" : "/sponsor/points";
 
   return (
     <Authenticator>
