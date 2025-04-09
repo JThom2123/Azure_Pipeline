@@ -31,6 +31,14 @@ export default function ITunesSearchPage() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const pointsDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("impersonatedDriverEmail");
+      setImpersonatedEmail(storedEmail);
+    }
+  }, []);
+
   // Handle search
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -151,14 +159,15 @@ export default function ITunesSearchPage() {
   return (
     <div className="flex flex-col h-screen">
       {/* Impersonation Banner */}
-      {localStorage.getItem("impersonatedDriverEmail") && (
-              <div className="bg-yellow-200 p-4 text-center">
-                <p className="text-lg font-semibold">
-                  You are impersonating{" "}
-                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
-                </p>
-              </div>
-            )}
+      {impersonatedEmail && (
+        <div className="bg-yellow-200 p-4 text-center">
+          <p className="text-lg font-semibold">
+            You are impersonating{" "}
+            <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
+          </p>
+        </div>
+      )}
+      
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
           <Link href="/driver/home">
