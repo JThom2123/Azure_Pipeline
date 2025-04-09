@@ -190,8 +190,8 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        {/* Cart Dropdown - slightly moved to the left */}
-        <div className="relative mr-3" ref={cartDropdownRef}>
+        {/* Cart Dropdown - moved to the right */}
+        <div className="relative ml-auto" ref={cartDropdownRef}>
           <button
             onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
             className="text-xl"
@@ -200,7 +200,7 @@ export default function ITunesSearchPage() {
           </button>
 
           {cartDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-scroll z-50 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200">
+            <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
               <ul>
                 {cart.length === 0 ? (
                   <li className="p-4 text-center text-gray-500">Your cart is empty</li>
@@ -304,91 +304,164 @@ export default function ITunesSearchPage() {
         </div>
 
         {/* Sponsor Catalogs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
-        </div>
+<div className="flex justify-center gap-4 mb-4">
+  <button
+    onClick={() => setShowCatalog(true)}
+    className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
+      } px-4 py-2 rounded text-white`}
+  >
+    Catalog
+  </button>
+  <button
+    onClick={() => setShowCatalog(false)}
+    className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
+      } px-4 py-2 rounded text-white`}
+  >
+    My Songs
+  </button>
+</div>
 
-        {showCatalog ? (
-          <>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleKeyPress}
-                className="p-2 w-full border rounded"
-                placeholder="Search for music..."
-              />
-              <button
-                onClick={handleSearch}
-                className="bg-blue-500 text-white p-2 rounded"
-              >
-                Search
-              </button>
-            </div>
+{showCatalog ? (
+  <>
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Search for songs about TRUCKS..."
+        className="border p-2 rounded w-full"
+      />
+      <button
+        onClick={handleSearch}
+        disabled={loading}
+        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+      >
+        {loading ? "Searching..." : "Search"}
+      </button>
+    </div>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>{error}</p>}
+    {error && <p className="text-red-500 mt-2">{error}</p>}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {results.map((result) => (
-                <div
-                  key={result.trackId}
-                  className="border p-4 rounded shadow-md"
-                  onClick={() => handleSongClick(result)}
+    <ul className="mt-4 space-y-4">
+      {results.map((item) => (
+        <li
+          key={item.trackId || item.collectionId}
+          className="border p-3 rounded shadow flex items-start space-x-4"
+          onClick={(e) => {
+            // Prevent modal opening when clicking on Add to Cart button
+            if ((e.target as HTMLElement).closest('button')) return;
+            handleSongClick(item); // Open modal if it's not the Add to Cart button
+          }}
+        >
+          <div className="flex-shrink-0">
+            <img
+              src={item.artworkUrl100}
+              alt={item.trackName || item.collectionName}
+              className="w-24 h-24 rounded"
+            />
+          </div>
+          <div className="flex-grow">
+            <p className="font-bold">{item.trackName || item.collectionName}</p>
+            <p className="text-sm text-gray-600">By: {item.artistName}</p>
+            <p className="text-sm text-gray-600">Points: {item.points}</p>
+          </div>
+          <div className="flex flex-col items-end space-y-2 w-full">
+            {item.previewUrl && (
+              <div className="w-full">
+                <audio
+                  controls
+                  className="w-full"
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
                 >
-                  <img
-                    src={result.artworkUrl100}
-                    alt={result.trackName || result.collectionName}
-                    className="w-full h-48 object-cover mb-4 rounded"
-                  />
-                  <h3 className="text-lg font-semibold">{result.trackName || result.collectionName}</h3>
-                  <p className="text-sm text-gray-500">By {result.artistName}</p>
-                  <p className="text-sm text-gray-500">Points: {result.points}</p>
+                  <source src={item.previewUrl} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+                <div className="flex justify-between items-center mt-3 w-full">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(result);
+                      e.stopPropagation(); // Prevent triggering modal on button click
+                      handleAddToCart(item); // Add to cart on button click
                     }}
-                    className="bg-blue-500 text-white p-2 rounded w-full mt-4"
+                    className="bg-green-500 text-white px-4 py-2 rounded"
                   >
                     Add to Cart
                   </button>
                 </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">My Songs</h2>
-            {/* Purchased songs content */}
-            {purchasedSongs.length === 0 ? (
-              <p>No songs purchased yet.</p>
-            ) : (
-              <ul>
-                {purchasedSongs.map((song, index) => (
-                  <li key={index} className="p-2">
-                    {song.trackName || song.collectionName} by {song.artistName}
-                  </li>
-                ))}
-              </ul>
+              </div>
             )}
           </div>
+        </li>
+      ))}
+    </ul>
+          </>
+        ) : (
+          <>
+            {/* My Songs Section */}
+            <div className="text-center mt-4">
+              <h2 className="font-bold text-lg">Purchased Songs</h2>
+              <ul className="mt-4 space-y-4">
+                {purchasedSongs.length === 0 ? (
+                  <li>No songs purchased yet.</li>
+                ) : (
+                  purchasedSongs.map((song, index) => (
+                    <li
+                      key={index}
+                      className="border p-3 rounded shadow flex items-start space-x-4"
+                    >
+                      <div className="flex-shrink-0">
+                        <img
+                          src={song.artworkUrl100}
+                          alt={song.trackName || song.collectionName}
+                          className="w-24 h-24 rounded"
+                        />
+                      </div>
+                      <div className="flex-grow">
+                        <p className="font-bold">{song.trackName || song.collectionName}</p>
+                        <p className="text-sm text-gray-600">By: {song.artistName}</p>
+                        
+                      </div>
+                      <div className="flex flex-col items-end space-y-2 w-full">
+                        <audio controls className="w-full">
+                          <source src={song.previewUrl} type="audio/mpeg" />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          </>
         )}
       </main>
+
+      {/* Modal for song details */}
+      {modalOpen && selectedSong && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={handleModalClose}
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()} // Prevents the modal from closing when clicked inside
+          >
+            <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
+            <p className="text-lg">Album: {selectedSong.collectionName}</p>
+            <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
+            <div className="mt-4">
+              <button
+                onClick={handleModalClose}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
