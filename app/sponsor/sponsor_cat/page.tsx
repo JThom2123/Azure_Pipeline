@@ -131,7 +131,7 @@ export default function ITunesSearchPage() {
         release_date: song.releaseDate,
         genre: song.primaryGenreName,
         company_name: companyName || "Unknown Company",
-        price: song.trackPrice || 0,
+        price: song.points || 2,  // Set price to points
       };
 
       try {
