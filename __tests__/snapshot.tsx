@@ -18,7 +18,7 @@ jest.mock('next/navigation', () => ({
     })),
   }));
 
-it("renders homepage unchanged", () => {
+it("renders initial page unchanged", () => {
   const { container } = render(<Page />);
   expect(container).toMatchSnapshot();
 });

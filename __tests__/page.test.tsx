@@ -4,7 +4,7 @@
 
 import '@testing-library/jest-dom'
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Page from '../app/page'
  
 jest.mock('next/navigation', () => ({
@@ -20,11 +20,35 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('Page', () => {
-  it('renders a image', () => {
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders the truck image', () => {
     render(<Page />)
- 
-    const image = screen.getByRole('img', { name:'Trucks' })
- 
+    const image = screen.getByRole('img', { name: 'Trucks' })
     expect(image).toBeInTheDocument()
   })
+
+  it('renders the welcome heading', () => {
+    render(<Page />)
+    expect(
+      screen.getByRole('heading', { name: 'Welcome Mother Trucker!' })
+    ).toBeInTheDocument()
+  })
+
+  it('renders the subheading text', () => {
+    render(<Page />)
+    expect(
+      screen.getByText('Please sign in or sign up to continue.')
+    ).toBeInTheDocument()
+  })
+
+  it('renders the Sign In and Sign Up buttons', () => {
+    render(<Page />)
+    expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument()
+  })
+
 })

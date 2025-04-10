@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders homepage unchanged 1`] = `
+exports[`renders initial page unchanged 1`] = `
 <div>
   <div
     class="relative flex flex-col items-center justify-center h-screen bg-gradient-to-br from-red-600 via-orange-500 to-yellow-400 text-white"
