@@ -131,7 +131,7 @@ export default function ITunesSearchPage() {
         release_date: song.releaseDate,
         genre: song.primaryGenreName,
         company_name: companyName || "Unknown Company",
-        price: song.trackPrice || 0
+        price: song.trackPrice || 0,
       };
 
       try {
@@ -144,6 +144,10 @@ export default function ITunesSearchPage() {
         });
 
         if (!response.ok) {
+          if (response.status === 409) {
+            console.warn(`Song already exists, skipping: ${song.trackName}`);
+            continue;
+          }
           throw new Error(`Failed to save song: ${song.trackName}`);
         }
 
@@ -191,10 +195,7 @@ export default function ITunesSearchPage() {
         </div>
 
         <div className="relative" ref={dropdownRef}>
-          <div
-            className="cursor-pointer text-2xl"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
+          <div className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)}>
             <FaUserCircle />
           </div>
 
@@ -259,7 +260,7 @@ export default function ITunesSearchPage() {
 
         {error && <p className="text-red-500 mt-2">{error}</p>}
 
-        {showCatalog && (
+        {showCatalog ? (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
             {selectedSongs.length === 0 ? (
@@ -290,9 +291,7 @@ export default function ITunesSearchPage() {
               </ul>
             )}
           </div>
-        )}
-
-        {!showCatalog && (
+        ) : (
           <ul className="space-y-4">
             {results.map((item) => (
               <li key={item.trackId || item.collectionId} className="border p-3 rounded shadow flex items-center">
