@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
+import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
 
 export default function ITunesSearchPage() {
@@ -10,21 +11,19 @@ export default function ITunesSearchPage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [cartDropdownOpen, setCartDropdownOpen] = useState(false); // Cart dropdown state
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false); // Profile dropdown state
-  const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false); // Points dropdown state
+  const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false);
   const [cart, setCart] = useState<any[]>([]);
   const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [showCatalog, setShowCatalog] = useState(true);
-  const [selectedSponsor, setSelectedSponsor] = useState<string>("Sponsor1");
-  const [sponsorsPoints, setSponsorsPoints] = useState<{ [key: string]: number }>({
-    Sponsor1: 50,
-    Sponsor2: 200,
-  });
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sponsorData, setSponsorData] = useState<{ sponsorCompanyName: string; totalPoints: number }[] | null>(null);
+  const [selectedSponsor, setSelectedSponsor] = useState<string | null>(null);
   const [selectedSong, setSelectedSong] = useState<any | null>(null);
-  const [modalOpen, setModalOpen] = useState(false); // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
 
   const router = useRouter();
   const cartDropdownRef = useRef<HTMLDivElement>(null);
@@ -32,14 +31,64 @@ export default function ITunesSearchPage() {
   const pointsDropdownRef = useRef<HTMLDivElement>(null);
 
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
       setImpersonatedEmail(storedEmail);
     }
+    getUserEmailAndSponsorData();
   }, []);
 
-  // Handle search
+  const getUserEmailAndSponsorData = async () => {
+    setLoading(true);
+    try {
+      const attributes = await fetchUserAttributes();
+      const email = attributes.email;
+      setUserEmail(email || null);
+
+      const res = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${email}`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch sponsor data");
+      }
+
+      const data: any[] = await res.json();
+      console.log("Data returned from API:", data);
+
+      if (!data || data.length === 0) {
+        setSponsorData(null);
+      } else {
+        const groupedData = data.reduce<Record<string, number>>((acc, record) => {
+          const sponsorName = record.sponsorCompanyName;
+          const points = Number(record.totalPoints ?? record.points);
+          if (acc[sponsorName] !== undefined) {
+            acc[sponsorName] += points;
+          } else {
+            acc[sponsorName] = points;
+          }
+          return acc;
+        }, {});
+
+        const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
+          sponsorCompanyName,
+          totalPoints: points,
+        }));
+
+        setSponsorData(sponsorArray);
+        if (sponsorArray.length > 0) {
+          setSelectedSponsor(sponsorArray[0].sponsorCompanyName);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching sponsor info:", err);
+      setError("Could not load sponsor info.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   async function handleSearch() {
     if (!searchTerm.trim()) return;
 
@@ -72,7 +121,6 @@ export default function ITunesSearchPage() {
     }
   }
 
-  // Handle dropdown click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -110,7 +158,19 @@ export default function ITunesSearchPage() {
   };
 
   const handlePurchase = () => {
-    const userPoints = sponsorsPoints[selectedSponsor];
+    if (!selectedSponsor) {
+      alert("Please select a sponsor.");
+      return;
+    }
+
+    const selectedSponsorData = sponsorData?.find(sponsor => sponsor.sponsorCompanyName === selectedSponsor);
+
+    if (!selectedSponsorData) {
+      alert("Sponsor not found.");
+      return;
+    }
+
+    const userPoints = selectedSponsorData.totalPoints;
     const totalPointsRequired = cart.reduce((total, song) => total + song.points, 0);
 
     if (totalPointsRequired > userPoints) {
@@ -142,12 +202,12 @@ export default function ITunesSearchPage() {
 
   const handleSongClick = (song: any) => {
     setSelectedSong(song);
-    setModalOpen(true); // Open modal on song click
+    setModalOpen(true);
   };
 
   const handleModalClose = () => {
-    setModalOpen(false); // Close modal
-    setSelectedSong(null); // Reset selected song
+    setModalOpen(false);
+    setSelectedSong(null);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -158,16 +218,14 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Impersonation Banner */}
       {impersonatedEmail && (
         <div className="bg-yellow-200 p-4 text-center">
           <p className="text-lg font-semibold">
-            You are impersonating{" "}
-            <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
+            You are impersonating <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
           </p>
         </div>
       )}
-      
+
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
           <Link href="/driver/home">
@@ -182,8 +240,7 @@ export default function ITunesSearchPage() {
           </Link>
           <button
             onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-              } px-4 py-2 rounded text-white`}
+            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
           >
             Catalog
           </button>
@@ -199,7 +256,6 @@ export default function ITunesSearchPage() {
           </Link>
         </div>
 
-        {/* Cart Dropdown - moved to the right */}
         <div className="relative ml-auto" ref={cartDropdownRef}>
           <button
             onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
@@ -251,7 +307,6 @@ export default function ITunesSearchPage() {
           )}
         </div>
 
-        {/* Profile Dropdown */}
         <div className="relative" ref={profileDropdownRef}>
           <div
             className="cursor-pointer text-2xl"
@@ -279,135 +334,132 @@ export default function ITunesSearchPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-xl mx-auto p-4 flex-grow">
         <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
 
-        {/* Sponsor Points Dropdown - Centered */}
         <div className="relative flex justify-center mb-4" ref={pointsDropdownRef}>
           <div
             className="cursor-pointer text-lg flex items-center gap-2"
             onClick={() => setPointsDropdownOpen(!pointsDropdownOpen)}
           >
-            <span>{selectedSponsor}</span>
-            <span>({sponsorsPoints[selectedSponsor]} points)</span>
+            <span>{selectedSponsor || "Select Sponsor"}</span>
+            <span>
+              ({sponsorData && selectedSponsor
+                ? sponsorData.find(sponsor => sponsor.sponsorCompanyName === selectedSponsor)?.totalPoints || 0
+                : 0} points)
+            </span>
             <span className="text-xl">&#9660;</span>
           </div>
 
           {pointsDropdownOpen && (
             <div className="absolute mt-2 w-40 bg-white text-black rounded shadow-lg">
-              {Object.keys(sponsorsPoints).map((sponsor) => (
+              {sponsorData?.map((sponsor) => (
                 <div
-                  key={sponsor}
+                  key={sponsor.sponsorCompanyName}
                   onClick={() => {
-                    setSelectedSponsor(sponsor);
+                    setSelectedSponsor(sponsor.sponsorCompanyName);
                     setPointsDropdownOpen(false);
                   }}
                   className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
                 >
-                  {sponsor} ({sponsorsPoints[sponsor]} points)
+                  {sponsor.sponsorCompanyName} ({sponsor.totalPoints} points)
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Sponsor Catalogs */}
-<div className="flex justify-center gap-4 mb-4">
-  <button
-    onClick={() => setShowCatalog(true)}
-    className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"
-      } px-4 py-2 rounded text-white`}
-  >
-    Catalog
-  </button>
-  <button
-    onClick={() => setShowCatalog(false)}
-    className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"
-      } px-4 py-2 rounded text-white`}
-  >
-    My Songs
-  </button>
-</div>
+        <div className="flex justify-center gap-4 mb-4">
+          <button
+            onClick={() => setShowCatalog(true)}
+            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
+          >
+            Catalog
+          </button>
+          <button
+            onClick={() => setShowCatalog(false)}
+            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
+          >
+            My Songs
+          </button>
+        </div>
 
-{showCatalog ? (
-  <>
-    <div className="flex gap-2">
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder="Search for songs about TRUCKS..."
-        className="border p-2 rounded w-full"
-      />
-      <button
-        onClick={handleSearch}
-        disabled={loading}
-        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {loading ? "Searching..." : "Search"}
-      </button>
-    </div>
+        {showCatalog ? (
+          <>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Search for songs about TRUCKS..."
+                className="border p-2 rounded w-full"
+              />
+              <button
+                onClick={handleSearch}
+                disabled={loading}
+                className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+              >
+                {loading ? "Searching..." : "Search"}
+              </button>
+            </div>
 
-    {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
 
-    <ul className="mt-4 space-y-4">
-      {results.map((item) => (
-        <li
-          key={item.trackId || item.collectionId}
-          className="border p-3 rounded shadow flex items-start space-x-4"
-          onClick={(e) => {
-            // Prevent modal opening when clicking on Add to Cart button
-            if ((e.target as HTMLElement).closest('button')) return;
-            handleSongClick(item); // Open modal if it's not the Add to Cart button
-          }}
-        >
-          <div className="flex-shrink-0">
-            <img
-              src={item.artworkUrl100}
-              alt={item.trackName || item.collectionName}
-              className="w-24 h-24 rounded"
-            />
-          </div>
-          <div className="flex-grow">
-            <p className="font-bold">{item.trackName || item.collectionName}</p>
-            <p className="text-sm text-gray-600">By: {item.artistName}</p>
-            <p className="text-sm text-gray-600">Points: {item.points}</p>
-          </div>
-          <div className="flex flex-col items-end space-y-2 w-full">
-            {item.previewUrl && (
-              <div className="w-full">
-                <audio
-                  controls
-                  className="w-full"
-                  onTimeUpdate={handleTimeUpdate}
-                  onLoadedMetadata={handleLoadedMetadata}
+            <ul className="mt-4 space-y-4">
+              {results.map((item) => (
+                <li
+                  key={item.trackId || item.collectionId}
+                  className="border p-3 rounded shadow flex items-start space-x-4"
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    handleSongClick(item);
+                  }}
                 >
-                  <source src={item.previewUrl} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-                <div className="flex justify-between items-center mt-3 w-full">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering modal on button click
-                      handleAddToCart(item); // Add to cart on button click
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
+                  <div className="flex-shrink-0">
+                    <img
+                      src={item.artworkUrl100}
+                      alt={item.trackName || item.collectionName}
+                      className="w-24 h-24 rounded"
+                    />
+                  </div>
+                  <div className="flex-grow">
+                    <p className="font-bold">{item.trackName || item.collectionName}</p>
+                    <p className="text-sm text-gray-600">By: {item.artistName}</p>
+                    <p className="text-sm text-gray-600">Points: {item.points}</p>
+                  </div>
+                  <div className="flex flex-col items-end space-y-2 w-full">
+                    {item.previewUrl && (
+                      <div className="w-full">
+                        <audio
+                          controls
+                          className="w-full"
+                          onTimeUpdate={handleTimeUpdate}
+                          onLoadedMetadata={handleLoadedMetadata}
+                        >
+                          <source src={item.previewUrl} type="audio/mpeg" />
+                          Your browser does not support the audio element.
+                        </audio>
+                        <div className="flex justify-between items-center mt-3 w-full">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(item);
+                            }}
+                            className="bg-green-500 text-white px-4 py-2 rounded"
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </>
         ) : (
           <>
-            {/* My Songs Section */}
             <div className="text-center mt-4">
               <h2 className="font-bold text-lg">Purchased Songs</h2>
               <ul className="mt-4 space-y-4">
@@ -429,7 +481,7 @@ export default function ITunesSearchPage() {
                       <div className="flex-grow">
                         <p className="font-bold">{song.trackName || song.collectionName}</p>
                         <p className="text-sm text-gray-600">By: {song.artistName}</p>
-                        
+
                       </div>
                       <div className="flex flex-col items-end space-y-2 w-full">
                         <audio controls className="w-full">
@@ -446,7 +498,6 @@ export default function ITunesSearchPage() {
         )}
       </main>
 
-      {/* Modal for song details */}
       {modalOpen && selectedSong && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
@@ -454,7 +505,7 @@ export default function ITunesSearchPage() {
         >
           <div
             className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()} // Prevents the modal from closing when clicked inside
+            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
             <p className="text-lg">Album: {selectedSong.collectionName}</p>
@@ -470,7 +521,6 @@ export default function ITunesSearchPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
