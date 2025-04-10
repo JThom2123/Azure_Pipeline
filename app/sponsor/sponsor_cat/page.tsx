@@ -164,7 +164,7 @@ export default function ITunesSearchPage() {
   const removeSelectedSongsFromBackend = async (songs: any[]) => {
     for (const song of songs) {
       const payload = {
-        company_name: companyName || "Unknown Company",
+        catalogue_id: companyName || "Unknown Company",
         song_id: song.trackId,
       };
 
