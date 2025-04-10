@@ -131,17 +131,20 @@ export default function ITunesSearchPage() {
         release_date: song.releaseDate,
         genre: song.primaryGenreName,
         company_name: companyName || "Unknown Company",
-        price: song.points || 2,  // Set price to points
+        price: song.points || 0,
       };
 
       try {
-        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/update", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch(
+          "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/update",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
         if (!response.ok) {
           if (response.status === 409) {
@@ -158,6 +161,40 @@ export default function ITunesSearchPage() {
     }
   };
 
+  const removeSelectedSongsFromBackend = async (songs: any[]) => {
+    for (const song of songs) {
+      const payload = {
+        company_name: companyName || "Unknown Company",
+        song_id: song.trackId,
+      };
+
+      try {
+        const response = await fetch(
+          "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/update",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            console.warn(`Song already exists, skipping: ${song.trackName}`);
+            continue;
+          }
+          throw new Error(`Failed to delete song: ${song.trackName}`);
+        }
+
+        console.log(`Deleted: ${song.trackName}`);
+      } catch (err) {
+        console.error("Error deleting song:", err);
+      }
+    }
+  };
+
   const toggleSelectSong = (song: any) => {
     const isSelected = selectedSongs.some((selectedSong) => selectedSong.trackId === song.trackId);
     const updatedSelectedSongs = isSelected
@@ -167,7 +204,9 @@ export default function ITunesSearchPage() {
     setSelectedSongs(updatedSelectedSongs);
     localStorage.setItem("selectedSongs", JSON.stringify(updatedSelectedSongs));
 
-    if (!isSelected) {
+    if (isSelected) {
+      removeSelectedSongsFromBackend([song]);
+    } else {
       saveSelectedSongsToBackend([song]);
     }
   };
