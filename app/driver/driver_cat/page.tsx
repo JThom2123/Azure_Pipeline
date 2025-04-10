@@ -89,6 +89,36 @@ export default function ITunesSearchPage() {
     }
   };
 
+
+  //get catalog
+  const getCatalog = async () => {
+    try {
+      const safeSponsor = selectedSponsor ?? "Unknown";
+
+      const response = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue?company_name=${encodeURIComponent(safeSponsor)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch catalog");
+      }
+  
+      const data = await response.json();
+      console.log("Catalog fetched:", data);
+      //setCatalogData(data.catalog); // or whatever you use to store the catalog
+    } catch (err) {
+      console.error("Error fetching catalog:", err);
+      setError("Could not load catalog.");
+    }
+  };
+  
+
   async function handleSearch() {
     if (!searchTerm.trim()) return;
 
