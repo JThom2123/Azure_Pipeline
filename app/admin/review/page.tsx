@@ -1,8 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
@@ -147,7 +144,7 @@ export default function ReviewUserPage() {
                     className="border p-2 rounded w-full"
                   />
                 </div>
-                {/* You can add more fields here for additional info */}
+                {/* Add more fields here for additional info */}
                 <div className="flex gap-4">
                   <button
                     onClick={handleUpdate}
