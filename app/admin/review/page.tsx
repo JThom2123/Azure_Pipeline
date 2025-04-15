@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
@@ -16,15 +16,24 @@ interface User {
 
 export default function ReviewUserPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailParam = searchParams.get("email");
 
+  // Instead of useSearchParams, we store the email from the URL in state.
+  const [emailParam, setEmailParam] = useState<string | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [userType, setUserType] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // Fetch user details using the email query parameter.
+  // On client-side mount, parse window.location.search to get the "email" query param.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get("email");
+      setEmailParam(email);
+    }
+  }, []);
+
+  // Fetch user details once we have the email parameter.
   useEffect(() => {
     const fetchUser = async () => {
       if (!emailParam) {
@@ -43,7 +52,7 @@ export default function ReviewUserPage() {
           throw new Error(`Failed to fetch user details (status: ${res.status}).`);
         }
         const data = await res.json();
-        // Assume your API returns an array of user objects; we take the first one.
+        // Assume your API returns an array of user objects; use the first one.
         if (Array.isArray(data) && data.length > 0) {
           setUserData(data[0]);
           setUserType(data[0].userType);
@@ -58,7 +67,9 @@ export default function ReviewUserPage() {
       }
     };
 
-    fetchUser();
+    if (emailParam) {
+      fetchUser();
+    }
   }, [emailParam]);
 
   // Handler to update the user (PATCH request)
@@ -81,7 +92,7 @@ export default function ReviewUserPage() {
         throw new Error(`Update failed: ${errorText}`);
       }
       alert("User updated successfully!");
-      // Optionally, re-fetch user details here.
+      // Optionally, re-fetch the user details here.
     } catch (err: any) {
       console.error(err);
       alert(err.message);
@@ -144,7 +155,7 @@ export default function ReviewUserPage() {
                     className="border p-2 rounded w-full"
                   />
                 </div>
-                {/* Add more fields here for additional info */}
+                {/* Additional user fields can be added here */}
                 <div className="flex gap-4">
                   <button
                     onClick={handleUpdate}
