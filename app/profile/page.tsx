@@ -14,6 +14,9 @@ export default function ProfilePage() {
         email: "",
     });
 
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [zipCode, setZipCode] = useState("");
+
     const [sponsorCompany, setSponsorCompany] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [passwordResetRequested, setPasswordResetRequested] = useState(false);
@@ -57,22 +60,6 @@ export default function ProfilePage() {
         getUserAttributes();
     }, []);
 
-    // Update Sponsor Company in Cognito
-    const handleSponsorCompanyUpdate = async () => {
-        if (!sponsorCompany.trim()) {
-            alert("Sponsor company name cannot be empty.");
-            return;
-        }
-
-        try {
-            await updateUserAttributes({ userAttributes: { "custom:sponsorCompany": sponsorCompany } });
-            alert("Sponsor company updated successfully!");
-        } catch (error) {
-            console.error("Error updating sponsor company:", error);
-            alert("Failed to update sponsor company. Please try again.");
-        }
-    };
-
     // Close profile dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -95,94 +82,110 @@ export default function ProfilePage() {
         const confirmDelete = window.confirm(
             "Are you sure you want to delete your account? This action cannot be undone."
         );
-    
+
         if (!confirmDelete) return;
-    
+
         try {
             if (!userAttributes.email) {
                 alert("No user email found. Please log in again.");
                 return;
             }
-    
+
             const apiUrl = `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${userAttributes.email}`;
-    
+
             console.log("Attempting to DELETE user:", apiUrl);
-    
+
             const response = await fetch(apiUrl, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                 }
             });
-    
+
             console.log("API Response Status:", response.status);
-    
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error("API Error:", errorText);
                 alert(`Error deleting account: ${errorText}`);
-    
+
                 // If user is not found (404), don't proceed with Cognito deletion
                 if (response.status === 404) {
                     alert("User not found in database. No changes made.");
                     return;
                 }
-    
+
                 return;
             }
-    
+
             const result = await response.json();
             console.log("API Response Body:", result);
             alert("Your account has been deleted successfully from the system.");
-    
+
             // Now delete from AWS Cognito
             await deleteUser();
             alert("Your AWS Cognito account has been deleted.");
-    
+
             await signOut();
             router.replace("/");
-    
+
         } catch (error) {
             console.error("Error deleting account:", error);
             alert("Failed to delete the account. Please try again later.");
         }
     };
-    
 
-    const handleUpdate = async () => {
-        if (!userAttributes) {
-            alert("User attributes are not loaded. Please refresh and try again.");
+    // Fetch user attributes from Cognito on mount.
+    useEffect(() => {
+        const getUserAttributes = async () => {
+            try {
+                const attributes = await fetchUserAttributes();
+                if (attributes) {
+                    // Set built-in attributes
+                    setUserAttributes({
+                        name: attributes.name || "",
+                        email: attributes.email || "",
+                    });
+                    // Set custom attributes if available (they might be missing if not set)
+                    setPhoneNumber(attributes["custom:phoneNumber"] || "");
+                    setZipCode(attributes["custom:zipCode"] || "");
+
+                    setUserRole(attributes["custom:role"] || null);
+                    if (attributes["custom:sponsorCompany"]) {
+                        setSponsorCompany(attributes["custom:sponsorCompany"]);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user attributes:", error);
+                alert("Session expired. Please log in again.");
+                await signOut();
+                router.push("/"); // Redirect to login
+            } finally {
+                setLoading(false);
+                setRoleLoading(false);
+            }
+        };
+
+        getUserAttributes();
+    }, [router]);
+
+    // Handler for updating custom attributes (phone number and zip code).
+    const handleCustomAttributesUpdate = async () => {
+        if (!phoneNumber.trim() || !zipCode.trim()) {
+            alert("Phone number and zip code cannot be empty.");
             return;
         }
-
         try {
-            const updatedAttributes: Record<string, string> = {};
-
-            if (userAttributes.email) updatedAttributes["email"] = userAttributes.email;
-
-            if (Object.keys(updatedAttributes).length === 0) {
-                alert("No valid attributes to update.");
-                return;
-            }
-
-            await updateUserAttributes({ userAttributes: updatedAttributes });
-
-            alert("Profile updated successfully!");
-
-            if (updatedAttributes.email) {
-                setEmailChanged(true);
-                alert("A verification code has been sent to your new email. Please verify it.");
-            }
-
-            const newAttributes = await fetchUserAttributes();
-            setUserAttributes({
-                name: newAttributes?.name || "",
-                email: newAttributes?.email || "",
+            await updateUserAttributes({
+                userAttributes: {
+                    "custom:phoneNumber": phoneNumber,
+                    "custom:zipCode": zipCode,
+                },
             });
-
+            alert("Profile updated successfully!");
         } catch (error) {
-            console.error("Error updating profile:", error);
-            alert("Error updating profile. Please try again.");
+            console.error("Error updating custom attributes:", error);
+            alert("Failed to update profile. Please try again.");
         }
     };
 
@@ -223,43 +226,42 @@ export default function ProfilePage() {
     };
 
     // Handle Points Button Click
-  const handlePointsClick = () => {
-    if (userRole === "Driver") {
-      router.push("/driver/points");
-    } else if (userRole === "Sponsor") {
-      router.push("/sponsor/points");
-    } else {
-      console.error("User role is not eligible for points.");
-    }
-  };
+    const handlePointsClick = () => {
+        if (userRole === "Driver") {
+            router.push("/driver/points");
+        } else if (userRole === "Sponsor") {
+            router.push("/sponsor/points");
+        } else {
+            console.error("User role is not eligible for points.");
+        }
+    };
 
-  // Handle Catalog Button Click
-  const handleCatalogClick = () => {
-    if (userRole === "Driver") {
-      router.push("/driver/catalog");
-    } else {
-      console.error("User role is not eligible for catalog access.");
-    }
-  };
+    // Handle Catalog Button Click
+    const handleCatalogClick = () => {
+        if (userRole === "Driver") {
+            router.push("/driver/catalog");
+        } else {
+            console.error("User role is not eligible for catalog access.");
+        }
+    };
 
-  // Handle Add Users Button Click
-  const handleAddUsersClick = () => {
-    if (userRole === "Admin") {
-      router.push("/admin/addUsers");
-    } else {
-      console.error("User role is not eligible for adding users.");
-    }
-  };
+    // Handle Add Users Button Click
+    const handleAddUsersClick = () => {
+        if (userRole === "Admin") {
+            router.push("/admin/addUsers");
+        } else {
+            console.error("User role is not eligible for adding users.");
+        }
+    };
 
-  // Handle Add Sponsors Button Click
-  const handleAddSponsorsClick = () => {
-    if (userRole === "Sponsor") {
-      router.push("/sponsor/addSponsors");
-    } else {
-      console.error("User role is not eligible for adding users.");
-    }
-  };
-
+    // Handle Add Sponsors Button Click
+    const handleAddSponsorsClick = () => {
+        if (userRole === "Sponsor") {
+            router.push("/sponsor/addSponsors");
+        } else {
+            console.error("User role is not eligible for adding users.");
+        }
+    };
 
     const handleVerifyEmail = async () => {
         try {
@@ -435,10 +437,26 @@ export default function ProfilePage() {
                             <h1 className="text-4xl font-semibold mb-6">My Profile</h1>
                             <div className="w-full max-w-md space-y-4">
                                 <input type="text" className="w-full p-2 border bg-gray-300 rounded cursor-not-allowed" value={userAttributes.name} readOnly placeholder="Name (Cannot be changed)" />
+                                <input type="email" className="w-full p-2 border bg-gray-300 rounded cursor-not-allowed" value={userAttributes.email} readOnly placeholder="Email (Cannot be changed)" />
 
-                                <input type="email" className="w-full p-2 border rounded" value={userAttributes.email} onChange={(e) => setUserAttributes({ ...userAttributes, email: e.target.value })} placeholder="Email" />
+                                {/* Custom Attributes: Phone Number */}
+                                <input
+                                    type="text"
+                                    className="w-full p-2 border rounded"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    placeholder="Phone Number"
+                                />
 
-                                <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleUpdate}>
+                                {/* Custom Attributes: Zip Code */}
+                                <input
+                                    type="text"
+                                    className="w-full p-2 border rounded"
+                                    value={zipCode}
+                                    onChange={(e) => setZipCode(e.target.value)}
+                                    placeholder="Zip Code"
+                                />
+                                <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleCustomAttributesUpdate}>
                                     Update Profile
                                 </button>
 
@@ -471,20 +489,13 @@ export default function ProfilePage() {
                                 {/* Sponsor Company Section - Visible Only for Sponsors */}
                                 {userRole === "Sponsor" && (
                                     <div className="space-y-4 border-t pt-4">
-                                        <h2 className="text-lg font-semibold">Sponsor Information</h2>
+                                        <h2 className="text-lg font-semibold">Sponsor Company Information</h2>
                                         <input
                                             type="text"
-                                            className="w-full p-2 border rounded"
+                                            className="w-full p-2 border bg-gray-300 rounded cursor-not-allowed"
+                                            readOnly placeholder="Sponsor Company Name (Cannot be changed)"
                                             value={sponsorCompany}
-                                            onChange={(e) => setSponsorCompany(e.target.value)}
-                                            placeholder="Enter or update sponsor company name"
                                         />
-                                        <button
-                                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                            onClick={handleSponsorCompanyUpdate}
-                                        >
-                                            Update Sponsor Company
-                                        </button>
                                     </div>
                                 )}
                             </div>
