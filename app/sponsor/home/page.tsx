@@ -8,13 +8,19 @@ import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
 
+interface Driver {
+  email: string;
+  points: number;
+  sponsorCompanyID: number;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
-  const [drivers, setDrivers] = useState<{ email: string; points: number }[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
 
   // Fetch user email & sponsor company on component mount
   useEffect(() => {
@@ -90,6 +96,7 @@ export default function HomePage() {
             return {
               email: driver.driverEmail,
               points: pointData.totalPoints ?? 0,
+              sponsorCompanyID: driver.sponsorCompanyID,
             };
           })
         );
@@ -110,6 +117,33 @@ export default function HomePage() {
     alert(`You are now impersonating ${driverEmail}. You will see the site as that driver.`);
     // Redirect to the driver home page.
     router.push("/driver/home");
+  };
+
+  const handleRemoveDriver = async (driverEmail: string, sponsorCompanyID: number) => {
+    if (
+      !confirm(
+        `Remove ${driverEmail} from sponsor "${sponsorCompany}"?`
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/relation?driverEmail=${encodeURIComponent(
+          driverEmail
+        )}&sponsorCompanyID=${sponsorCompanyID}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const err = await res.text();
+        throw Error(err);
+      }
+      // remove from UI
+      setDrivers((ds) => ds.filter((d) => d.email !== driverEmail));
+    } catch (err: any) {
+      console.error("Failed to remove driver:", err);
+      alert(`Error: ${err.message}`);
+    }
   };
 
   return (
@@ -192,6 +226,7 @@ export default function HomePage() {
                       <th className="border border-gray-300 px-4 py-2">Driver Email</th>
                       <th className="border border-gray-300 px-4 py-2">Points</th>
                       <th className="border border-gray-300 px-4 py-2">Impersonate</th>
+                      <th className="border border-gray-300 px-4 py-2">Remove</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -205,6 +240,14 @@ export default function HomePage() {
                             onClick={() => handleImpersonate(driver.email)}
                           >
                             Impersonate
+                          </button>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <button
+                            className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
+                            onClick={() => handleRemoveDriver(driver.email, driver.sponsorCompanyID)}
+                          >
+                            Remove
                           </button>
                         </td>
                       </tr>

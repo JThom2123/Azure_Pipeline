@@ -279,8 +279,14 @@ const SponsorApplication = () => {
                                                         <option value="rejected">Rejected</option>
                                                     </select>
                                                 ) : (
-                                                    <span className={`px-2 py-1 rounded ${app.status === "accepted" ? "bg-green-400" : "bg-red-400"} text-white`}>
-                                                        {app.status}
+                                                    <span className={`px-2 py-1 rounded ${
+                                                        app.status === "accepted"
+                                                          ? "bg-green-400"
+                                                          : app.status === "rejected"
+                                                          ? "bg-red-400"
+                                                          : "bg-gray-400"
+                                                      } text-white`}>
+                                                      {app.status}
                                                     </span>
                                                 )}
                                             </td>
