@@ -24,7 +24,17 @@ export default function ITunesSearchPage() {
   const [selectedSponsor, setSelectedSponsor] = useState<string | null>(null);
   const [selectedSong, setSelectedSong] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [sponsorCat, setSponsorCat] = useState<{ catalogID: number; companyName: string }[] | null>(null);
+  const [sponsorCat, setSponsorCat] = useState<{
+    song_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    artwork_url: string;
+    preview_url: string;
+    store_url: string;
+    release_date: string;
+    genre: string;
+  }[] | null>(null);
   const [song_id, setSong] = useState<string[]>([]);
 
   const router = useRouter();
@@ -110,18 +120,24 @@ export default function ITunesSearchPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch catalog");
       }
-      
       const data = await response.json();
+      // Assuming data.catalogue.songs is the array of songs
+      const songs = data.catalogue?.songs || [];
 
-        const ids: string[] = (data.catalogue?.songs || []).map((song: any) => song.song_id);
-        console.log("Returned song IDs:", ids);
-        setSong(ids);
-      } catch (err: any) {
-        console.error("Error fetching song IDs:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (songs.length > 0) {
+        setSponsorCat(songs); // Update sponsorCat with the list of songs
+      } else {
+        setSponsorCat([]); // Empty array if no songs found
       }
+
+      console.log("Catalog fetched:", songs);
+
+    } catch (err: any) {
+      console.error("Error fetching song IDs:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
   getCatalog();
 
@@ -421,117 +437,95 @@ export default function ITunesSearchPage() {
         </div>
 
         {showCatalog ? (
-          <>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Search for songs about TRUCKS..."
-                className="border p-2 rounded w-full"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-              >
-                {loading ? "Searching..." : "Search"}
-              </button>
-            </div>
-
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-
+          <div className="text-center mt-4">
+            <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
             <ul className="mt-4 space-y-4">
-              {results.map((item) => (
-                <li
-                  key={item.trackId || item.collectionId}
-                  className="border p-3 rounded shadow flex items-start space-x-4"
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).closest('button')) return;
-                    handleSongClick(item);
-                  }}
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      src={item.artworkUrl100}
-                      alt={item.trackName || item.collectionName}
-                      className="w-24 h-24 rounded"
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <p className="font-bold">{item.trackName || item.collectionName}</p>
-                    <p className="text-sm text-gray-600">By: {item.artistName}</p>
-                    <p className="text-sm text-gray-600">Points: {item.points}</p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2 w-full">
-                    {item.previewUrl && (
-                      <div className="w-full">
-                        <audio
-                          controls
-                          className="w-full"
-                          onTimeUpdate={handleTimeUpdate}
-                          onLoadedMetadata={handleLoadedMetadata}
-                        >
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <div className="flex justify-between items-center mt-3 w-full">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(item);
-                            }}
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                          >
-                            Add to Cart
-                          </button>
+              {/* Add a check to ensure sponsorCat is an array before calling .map */}
+              {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
+                <li>No songs found in the catalog.</li>
+              ) : (
+                Array.isArray(sponsorCat) && sponsorCat.map((item) => (
+                  <li
+                    key={item.song_id} // Use unique song ID as the key
+                    className="border p-3 rounded shadow flex items-start space-x-4"
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('button')) return;
+                      handleSongClick(item);
+                    }}
+                  >
+                    <div className="flex-shrink-0">
+                      <img
+                        src={item.artwork_url}
+                        alt={item.title}
+                        className="w-24 h-24 rounded"
+                      />
+                    </div>
+                    <div className="flex-grow">
+                      <p className="font-bold">{item.title}</p>
+                      <p className="text-sm text-gray-600">By: {item.artist}</p>
+                      <p className="text-sm text-gray-600">Album: {item.album}</p>
+                    </div>
+                    <div className="flex flex-col items-end space-y-2 w-full">
+                      {item.preview_url && (
+                        <div className="w-full">
+                          <audio controls className="w-full">
+                            <source src={item.preview_url} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                          <div className="flex justify-between items-center mt-3 w-full">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCart(item);
+                              }}
+                              className="bg-green-500 text-white px-4 py-2 rounded"
+                            >
+                              Add to Cart
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
+                      )}
+                    </div>
+                  </li>
+                ))
+              )}
             </ul>
-          </>
+          </div>
         ) : (
-          <>
-            <div className="text-center mt-4">
-              <h2 className="font-bold text-lg">Purchased Songs</h2>
-              <ul className="mt-4 space-y-4">
-                {purchasedSongs.length === 0 ? (
-                  <li>No songs purchased yet.</li>
-                ) : (
-                  purchasedSongs.map((song, index) => (
-                    <li
-                      key={index}
-                      className="border p-3 rounded shadow flex items-start space-x-4"
-                    >
-                      <div className="flex-shrink-0">
-                        <img
-                          src={song.artworkUrl100}
-                          alt={song.trackName || song.collectionName}
-                          className="w-24 h-24 rounded"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <p className="font-bold">{song.trackName || song.collectionName}</p>
-                        <p className="text-sm text-gray-600">By: {song.artistName}</p>
-
-                      </div>
-                      <div className="flex flex-col items-end space-y-2 w-full">
-                        <audio controls className="w-full">
-                          <source src={song.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          </>
+          <div className="text-center mt-4">
+            <h2 className="font-bold text-lg">Purchased Songs</h2>
+            <ul className="mt-4 space-y-4">
+              {purchasedSongs.length === 0 ? (
+                <li>No songs purchased yet.</li>
+              ) : (
+                purchasedSongs.map((song, index) => (
+                  <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <img
+                        src={song.artwork_url}
+                        alt={song.title || song.album}
+                        className="w-24 h-24 rounded"
+                      />
+                    </div>
+                    <div className="flex-grow">
+                      <p className="font-bold">{song.title || song.album}</p>
+                      <p className="text-sm text-gray-600">By: {song.artist}</p>
+                    </div>
+                    <div className="flex flex-col items-end space-y-2 w-full">
+                      <audio controls className="w-full">
+                        <source src={song.preview_url} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
         )}
+
+
+
       </main>
 
       {modalOpen && selectedSong && (
