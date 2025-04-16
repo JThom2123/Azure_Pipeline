@@ -44,27 +44,12 @@ export default function ITunesSearchPage() {
 
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
 
-  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
-      if (storedEmail) {
-        setImpersonatedEmail(storedEmail);
-        setUserEmail(storedEmail);
-      } else {
-        // If not impersonating, fetch user email from Cognito.
-        const getUserEmail = async () => {
-          try {
-            const attributes = await fetchUserAttributes();
-            const email = attributes.email;
-            setUserEmail(email || "");
-          } catch (err) {
-            console.error("Error fetching user attributes:", err);
-          }
-        };
-        getUserEmail();
-      }
+      setImpersonatedEmail(storedEmail);
     }
+    getUserEmailAndSponsorData();
   }, []);
 
   const getUserEmailAndSponsorData = async () => {
@@ -119,11 +104,11 @@ export default function ITunesSearchPage() {
 
   //get catalog
   const getCatalog = async () => {
+    setLoading(true);
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
-
       const response = await fetch(
-        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue?company_name=${encodeURIComponent(safeSponsor)}?Limit=10&Page=1`,
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue?company_name=${encodeURIComponent(safeSponsor)}`,
         {
           method: "GET",
           headers: {
@@ -135,28 +120,50 @@ export default function ITunesSearchPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch catalog");
       }
+
       const data = await response.json();
-      // Assuming data.catalogue.songs is the array of songs
       const songs = data.catalogue?.songs || [];
 
-      if (songs.length > 0) {
-        setSponsorCat(songs); // Update sponsorCat with the list of songs
-      } else {
-        setSponsorCat([]); // Empty array if no songs found
+      if (songs.length === 0) {
+        setSponsorCat([]);
+        return;
       }
 
-      console.log("Catalog fetched:", songs);
+      // Get all song_ids, batch them in chunks of 10 to query iTunes
+      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      const idChunks = [];
+      for (let i = 0; i < songIds.length; i += 10) {
+        idChunks.push(songIds.slice(i, i + 10));
+      }
 
+      const fetchedSongs = [];
+      for (const chunk of idChunks) {
+        const iTunesResponse = await fetch(
+          `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
+        );
+        const iTunesData = await iTunesResponse.json();
+        fetchedSongs.push(...iTunesData.results);
+      }
+
+      setSponsorCat(fetchedSongs);
+      console.log("Final catalog:", fetchedSongs);
     } catch (err: any) {
-      console.error("Error fetching song IDs:", err);
+      console.error("Error fetching song IDs or iTunes data:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-  getCatalog();
 
-  async function handleSearch() {
+  // Fetch catalog whenever sponsor changes
+  useEffect(() => {
+    if (selectedSponsor) {
+      getCatalog();
+    }
+  }, [selectedSponsor]);
+
+
+  const handleSearch = async () => {
     if (!searchTerm.trim()) return;
 
     setLoading(true);
@@ -164,9 +171,7 @@ export default function ITunesSearchPage() {
 
     try {
       const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(
-          searchTerm
-        )}&media=music&limit=10`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
       );
 
       if (!response.ok) {
@@ -186,7 +191,7 @@ export default function ITunesSearchPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -285,54 +290,29 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Impersonation Banner */}
-      {localStorage.getItem("impersonatedDriverEmail") && (
+      {/* Impersonation banner */}
+      {impersonatedEmail && (
         <div className="bg-yellow-200 p-4 text-center">
           <p className="text-lg font-semibold">
-            You are impersonating{" "}
-            <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+            You are impersonating <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
           </p>
         </div>
       )}
-
+  
+      {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
+        {/* Left side buttons */}
         <div className="flex gap-4">
-          <Link href="/driver/home">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Home
-            </button>
-          </Link>
-          <Link href="/aboutpage">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              About Page
-            </button>
-          </Link>
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <Link href="/driver/points">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Points
-            </button>
-          </Link>
-          <Link href="/driver/driver_app">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-              Application
-            </button>
-          </Link>
+          <Link href="/driver/home"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button></Link>
+          <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button></Link>
+          <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
+          <Link href="/driver/points"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button></Link>
+          <Link href="/driver/driver_app"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button></Link>
         </div>
-
+  
+        {/* Cart dropdown */}
         <div className="relative ml-auto" ref={cartDropdownRef}>
-          <button
-            onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
-            className="text-xl"
-          >
-            🛒 Cart ({cart.length})
-          </button>
-
+          <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
           {cartDropdownOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
               <ul>
@@ -340,89 +320,55 @@ export default function ITunesSearchPage() {
                   <li className="p-4 text-center text-gray-500">Your cart is empty</li>
                 ) : (
                   cart.map((item, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center p-3 space-x-2 border-b"
-                    >
-                      <img
-                        src={item.artworkUrl100}
-                        alt={item.trackName || item.collectionName}
-                        className="w-12 h-12 rounded"
-                      />
+                    <li key={index} className="flex items-center p-3 space-x-2 border-b">
+                      <img src={item.artworkUrl100 || item.artwork_url} alt={item.trackName || item.title} className="w-12 h-12 rounded" />
                       <div className="flex-grow">
-                        <p className="font-bold">{item.trackName || item.collectionName}</p>
-                        <p className="text-sm text-gray-600">By: {item.artistName}</p>
+                        <p className="font-bold">{item.trackName || item.title}</p>
+                        <p className="text-sm text-gray-600">By: {item.artistName || item.artist}</p>
                         <p className="text-sm text-gray-600">Points: {item.points}</p>
                       </div>
-                      <button
-                        onClick={() => handleRemoveFromCart(item.trackId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Remove
-                      </button>
+                      <button onClick={() => handleRemoveFromCart(item.trackId)} className="bg-red-500 text-white px-2 py-1 rounded">Remove</button>
                     </li>
                   ))
                 )}
               </ul>
               <div className="flex justify-between p-3">
-                <button
-                  onClick={handlePurchase}
-                  className="bg-blue-500 text-white px-4 py-2 rounded w-full"
-                >
-                  Purchase
-                </button>
+                <button onClick={handlePurchase} className="bg-blue-500 text-white px-4 py-2 rounded w-full">Purchase</button>
               </div>
             </div>
           )}
         </div>
-
+  
+        {/* Profile dropdown */}
         <div className="relative" ref={profileDropdownRef}>
-          <div
-            className="cursor-pointer text-2xl"
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-          >
+          <div className="cursor-pointer text-2xl" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
             <FaUserCircle />
           </div>
-
           {profileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-              <button
-                onClick={handleProfileClick}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-              >
-                My Profile
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-200"
-              >
-                Sign Out
-              </button>
+              <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">My Profile</button>
+              <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">Sign Out</button>
             </div>
           )}
         </div>
       </nav>
-
+  
+      {/* Main content */}
       <main className="max-w-xl mx-auto p-4 flex-grow">
         <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
-
+  
+        {/* Sponsor dropdown */}
         <div className="relative flex justify-center mb-4" ref={pointsDropdownRef}>
-          <div
-            className="cursor-pointer text-lg flex items-center gap-2"
-            onClick={() => setPointsDropdownOpen(!pointsDropdownOpen)}
-          >
+          <div className="cursor-pointer text-lg flex items-center gap-2" onClick={() => setPointsDropdownOpen(!pointsDropdownOpen)}>
             <span>{selectedSponsor || "Select Sponsor"}</span>
             <span>
-              ({sponsorData && selectedSponsor
-                ? sponsorData.find(sponsor => sponsor.sponsorCompanyName === selectedSponsor)?.totalPoints || 0
-                : 0} points)
+              ({sponsorData && selectedSponsor ? sponsorData.find(s => s.sponsorCompanyName === selectedSponsor)?.totalPoints || 0 : 0} points)
             </span>
             <span className="text-xl">&#9660;</span>
           </div>
-
           {pointsDropdownOpen && (
             <div className="absolute mt-2 w-40 bg-white text-black rounded shadow-lg">
-              {sponsorData?.map((sponsor) => (
+              {sponsorData?.map(sponsor => (
                 <div
                   key={sponsor.sponsorCompanyName}
                   onClick={() => {
@@ -437,33 +383,24 @@ export default function ITunesSearchPage() {
             </div>
           )}
         </div>
-
+  
+        {/* Toggle Catalog/My Songs */}
         <div className="flex justify-center gap-4 mb-4">
-          <button
-            onClick={() => setShowCatalog(true)}
-            className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            Catalog
-          </button>
-          <button
-            onClick={() => setShowCatalog(false)}
-            className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}
-          >
-            My Songs
-          </button>
+          <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
+          <button onClick={() => setShowCatalog(false)} className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>My Songs</button>
         </div>
-
+  
+        {/* Catalog View */}
         {showCatalog ? (
           <div className="text-center mt-4">
             <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
             <ul className="mt-4 space-y-4">
-              {/* Add a check to ensure sponsorCat is an array before calling .map */}
               {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
                 <li>No songs found in the catalog.</li>
               ) : (
-                Array.isArray(sponsorCat) && sponsorCat.map((item) => (
+                Array.isArray(sponsorCat) && sponsorCat.map(item => (
                   <li
-                    key={item.song_id} // Use unique song ID as the key
+                    key={item.song_id}
                     className="border p-3 rounded shadow flex items-start space-x-4"
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest('button')) return;
@@ -471,11 +408,7 @@ export default function ITunesSearchPage() {
                     }}
                   >
                     <div className="flex-shrink-0">
-                      <img
-                        src={item.artwork_url}
-                        alt={item.title}
-                        className="w-24 h-24 rounded"
-                      />
+                      <img src={item.artwork_url} alt={item.title} className="w-24 h-24 rounded" />
                     </div>
                     <div className="flex-grow">
                       <p className="font-bold">{item.title}</p>
@@ -487,7 +420,6 @@ export default function ITunesSearchPage() {
                         <div className="w-full">
                           <audio controls className="w-full">
                             <source src={item.preview_url} type="audio/mpeg" />
-                            Your browser does not support the audio element.
                           </audio>
                           <div className="flex justify-between items-center mt-3 w-full">
                             <button
@@ -509,6 +441,7 @@ export default function ITunesSearchPage() {
             </ul>
           </div>
         ) : (
+          // My Songs View
           <div className="text-center mt-4">
             <h2 className="font-bold text-lg">Purchased Songs</h2>
             <ul className="mt-4 space-y-4">
@@ -518,11 +451,7 @@ export default function ITunesSearchPage() {
                 purchasedSongs.map((song, index) => (
                   <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
                     <div className="flex-shrink-0">
-                      <img
-                        src={song.artwork_url}
-                        alt={song.title || song.album}
-                        className="w-24 h-24 rounded"
-                      />
+                      <img src={song.artwork_url} alt={song.title || song.album} className="w-24 h-24 rounded" />
                     </div>
                     <div className="flex-grow">
                       <p className="font-bold">{song.title || song.album}</p>
@@ -531,7 +460,6 @@ export default function ITunesSearchPage() {
                     <div className="flex flex-col items-end space-y-2 w-full">
                       <audio controls className="w-full">
                         <source src={song.preview_url} type="audio/mpeg" />
-                        Your browser does not support the audio element.
                       </audio>
                     </div>
                   </li>
@@ -540,34 +468,22 @@ export default function ITunesSearchPage() {
             </ul>
           </div>
         )}
-
-
-
       </main>
-
+  
+      {/* Song modal */}
       {modalOpen && selectedSong && (
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={handleModalClose}
-        >
-          <div
-            className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" onClick={handleModalClose}>
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
             <p className="text-lg">Album: {selectedSong.collectionName}</p>
             <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
             <div className="mt-4">
-              <button
-                onClick={handleModalClose}
-                className="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Close
-              </button>
+              <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">Close</button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
+  
 }
