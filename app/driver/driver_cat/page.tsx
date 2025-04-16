@@ -44,27 +44,12 @@ export default function ITunesSearchPage() {
 
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
 
-  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
-      if (storedEmail) {
-        setImpersonatedEmail(storedEmail);
-        setUserEmail(storedEmail);
-      } else {
-        // If not impersonating, fetch user email from Cognito.
-        const getUserEmail = async () => {
-          try {
-            const attributes = await fetchUserAttributes();
-            const email = attributes.email;
-            setUserEmail(email || "");
-          } catch (err) {
-            console.error("Error fetching user attributes:", err);
-          }
-        };
-        getUserEmail();
-      }
+      setImpersonatedEmail(storedEmail);
     }
+    getUserEmailAndSponsorData();
   }, []);
 
   const getUserEmailAndSponsorData = async () => {
@@ -119,11 +104,11 @@ export default function ITunesSearchPage() {
 
   //get catalog
   const getCatalog = async () => {
+    setLoading(true);
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
-
       const response = await fetch(
-        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue?company_name=${encodeURIComponent(safeSponsor)}?Limit=10&Page=1`,
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue?company_name=${encodeURIComponent(safeSponsor)}`,
         {
           method: "GET",
           headers: {
@@ -135,26 +120,40 @@ export default function ITunesSearchPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch catalog");
       }
+
       const data = await response.json();
-      // Assuming data.catalogue.songs is the array of songs
       const songs = data.catalogue?.songs || [];
 
-      if (songs.length > 0) {
-        setSponsorCat(songs); // Update sponsorCat with the list of songs
-      } else {
-        setSponsorCat([]); // Empty array if no songs found
+      if (songs.length === 0) {
+        setSponsorCat([]);
+        return;
       }
 
-      console.log("Catalog fetched:", songs);
+      // Get all song_ids, batch them in chunks of 10 to query iTunes
+      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      const idChunks = [];
+      for (let i = 0; i < songIds.length; i += 10) {
+        idChunks.push(songIds.slice(i, i + 10));
+      }
 
+      const fetchedSongs = [];
+      for (const chunk of idChunks) {
+        const iTunesResponse = await fetch(
+          `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
+        );
+        const iTunesData = await iTunesResponse.json();
+        fetchedSongs.push(...iTunesData.results);
+      }
+
+      setSponsorCat(fetchedSongs);
+      console.log("Final catalog:", fetchedSongs);
     } catch (err: any) {
-      console.error("Error fetching song IDs:", err);
+      console.error("Error fetching song IDs or iTunes data:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-  getCatalog();
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -285,12 +284,10 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Impersonation Banner */}
-      {localStorage.getItem("impersonatedDriverEmail") && (
+      {impersonatedEmail && (
         <div className="bg-yellow-200 p-4 text-center">
           <p className="text-lg font-semibold">
-            You are impersonating{" "}
-            <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+            You are impersonating <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
           </p>
         </div>
       )}
@@ -463,12 +460,16 @@ export default function ITunesSearchPage() {
               ) : (
                 Array.isArray(sponsorCat) && sponsorCat.map((item) => (
                   <li
+                  
                     key={item.song_id} // Use unique song ID as the key
                     className="border p-3 rounded shadow flex items-start space-x-4"
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest('button')) return;
                       handleSongClick(item);
                     }}
+                    //i want to take that key, call handle search and present it and all of them
+
+                    
                   >
                     <div className="flex-shrink-0">
                       <img
