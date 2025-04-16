@@ -6,25 +6,21 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
 
-// Define a User interface – adjust field names as needed.
 interface User {
   userID: number;
   userType: string;
   email: string;
-  // Add additional fields as necessary.
 }
 
 export default function ReviewUserPage() {
   const router = useRouter();
 
-  // Instead of useSearchParams, we store the email from the URL in state.
   const [emailParam, setEmailParam] = useState<string | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [userType, setUserType] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // On client-side mount, parse window.location.search to get the "email" query param.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -33,7 +29,6 @@ export default function ReviewUserPage() {
     }
   }, []);
 
-  // Fetch user details once we have the email parameter.
   useEffect(() => {
     const fetchUser = async () => {
       if (!emailParam) {
@@ -42,7 +37,6 @@ export default function ReviewUserPage() {
         return;
       }
       try {
-        // Adjust this URL to match your GET endpoint that returns a user by email.
         const res = await fetch(
           `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${encodeURIComponent(
             emailParam
@@ -52,7 +46,6 @@ export default function ReviewUserPage() {
           throw new Error(`Failed to fetch user details (status: ${res.status}).`);
         }
         const data = await res.json();
-        // Assume your API returns an array of user objects; use the first one.
         if (Array.isArray(data) && data.length > 0) {
           setUserData(data[0]);
           setUserType(data[0].userType);
@@ -92,7 +85,6 @@ export default function ReviewUserPage() {
         throw new Error(`Update failed: ${errorText}`);
       }
       alert("User updated successfully!");
-      // Optionally, re-fetch the user details here.
     } catch (err: any) {
       console.error(err);
       alert(err.message);

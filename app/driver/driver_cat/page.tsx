@@ -44,12 +44,27 @@ export default function ITunesSearchPage() {
 
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
 
+  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
-      setImpersonatedEmail(storedEmail);
+      if (storedEmail) {
+        setImpersonatedEmail(storedEmail);
+        setUserEmail(storedEmail);
+      } else {
+        // If not impersonating, fetch user email from Cognito.
+        const getUserEmail = async () => {
+          try {
+            const attributes = await fetchUserAttributes();
+            const email = attributes.email;
+            setUserEmail(email || "");
+          } catch (err) {
+            console.error("Error fetching user attributes:", err);
+          }
+        };
+        getUserEmail();
+      }
     }
-    getUserEmailAndSponsorData();
   }, []);
 
   const getUserEmailAndSponsorData = async () => {
@@ -116,7 +131,7 @@ export default function ITunesSearchPage() {
           },
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to fetch catalog");
       }
@@ -270,10 +285,12 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {impersonatedEmail && (
+      {/* Impersonation Banner */}
+      {localStorage.getItem("impersonatedDriverEmail") && (
         <div className="bg-yellow-200 p-4 text-center">
           <p className="text-lg font-semibold">
-            You are impersonating <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
+            You are impersonating{" "}
+            <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
           </p>
         </div>
       )}

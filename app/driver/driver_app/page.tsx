@@ -68,26 +68,28 @@ const DriverAppPage = () => {
     fetchUserRole();
   }, []);
 
-  // Fetch effective user email on mount.
+  const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
+
+  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
-    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
-    if (impersonatedEmail) {
-      setUserEmail(impersonatedEmail);
-      // Also update the form data email so the application form shows the impersonated email.
-      setFormData((prev) => ({ ...prev, email: impersonatedEmail }));
-    } else {
-      // Otherwise, fetch the email from Cognito.
-      const fetchEmail = async () => {
-        try {
-          const user = await getCurrentUser();
-          const email = user?.signInDetails?.loginId || "";
-          setUserEmail(email);
-          setFormData((prev) => ({ ...prev, email }));
-        } catch (err) {
-          console.error("Failed to get current user email", err);
-        }
-      };
-      fetchEmail();
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("impersonatedDriverEmail");
+      if (storedEmail) {
+        setImpersonatedEmail(storedEmail);
+        setUserEmail(storedEmail);
+      } else {
+        // If not impersonating, fetch user email from Cognito.
+        const getUserEmail = async () => {
+          try {
+            const attributes = await fetchUserAttributes();
+            const email = attributes.email;
+            setUserEmail(email || "");
+          } catch (err) {
+            console.error("Error fetching user attributes:", err);
+          }
+        };
+        getUserEmail();
+      }
     }
   }, []);
 

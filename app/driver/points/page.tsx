@@ -120,7 +120,7 @@ export default function PointsSponsorPage() {
             <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
               <div className="flex gap-4">
                 {/* Home button now waits for role to load */}
-                <Link href={impersonatedEmail ? "/driver/home" : "/sponsor/home"}>
+                <Link href="/driver/home">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Home
                   </button>
@@ -130,7 +130,7 @@ export default function PointsSponsorPage() {
                     About Page
                   </button>
                 </Link>
-                <Link href={impersonatedEmail ? "/driver/driver_cat" : "/sponsor/sponsor_cat"}>
+                <Link href = "/driver/driver_cat">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Catalog
                   </button>
@@ -138,7 +138,7 @@ export default function PointsSponsorPage() {
                 <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
                   Points
                 </button>
-                <Link href={impersonatedEmail ? "/driver/driver_app" : "/sponsor/sponsor_app"}>
+                <Link href="/driver/driver_app">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Application
                   </button>
