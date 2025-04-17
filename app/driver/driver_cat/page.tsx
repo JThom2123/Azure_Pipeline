@@ -42,8 +42,11 @@ export default function ITunesSearchPage() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const pointsDropdownRef = useRef<HTMLDivElement>(null);
 
+  // New state for impersonated email from localStorage.
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
-    // Use useEffect to safely access localStorage on the client side.
+
+
+  // Use useEffect to safely access localStorage on the client side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
@@ -63,28 +66,16 @@ export default function ITunesSearchPage() {
         };
         getUserEmail();
       }
-      setImpersonatedEmail(storedEmail);
     }
-    getUserEmailAndSponsorData();
-  }, []);
-  
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedEmail = localStorage.getItem("impersonatedDriverEmail");
-      setImpersonatedEmail(storedEmail);
-    }
-    getUserEmailAndSponsorData();
   }, []);
 
-  const getUserEmailAndSponsorData = async () => {
-    setLoading(true);
+  useEffect(() => {
+    const getUserEmailAndSponsorData = async () => {
     try {
-      const attributes = await fetchUserAttributes();
-      const email = attributes.email;
-      setUserEmail(email || null);
+      if (!userEmail) return;
 
       const res = await fetch(
-        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${email}`
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${userEmail}`
       );
       if (!res.ok) {
         throw new Error("Failed to fetch sponsor data");
@@ -125,6 +116,8 @@ export default function ITunesSearchPage() {
     }
   };
 
+  getUserEmailAndSponsorData();
+  }, [userEmail]);
 
   //get catalog
   const getCatalog = async () => {
