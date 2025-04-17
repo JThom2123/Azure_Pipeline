@@ -58,17 +58,52 @@ exports[`renders sponsor homepage unchanged 1`] = `
       </div>
     </nav>
     <main
-      class="flex-grow p-10"
+      class="flex-grow flex flex-col items-center justify-center p-10"
     >
       <h1
-        class="text-5xl font-light mb-4"
+        class="text-5xl font-light mb-4 text-center"
       >
         Welcome, 
         No email found
       </h1>
-      <p>
+      <p
+        class="text-lg text-center mb-8"
+      >
         You are the best programmer in the world! Keep up the great work!! & you are an admin
       </p>
+      <div
+        class="w-full max-w-4xl mx-auto p-4"
+      >
+        <h2
+          class="text-3xl font-bold mb-4"
+        >
+          All Users Table
+        </h2>
+        <table
+          class="min-w-full border"
+        >
+          <thead>
+            <tr>
+              <th
+                class="px-4 py-2 border"
+              >
+                User Type
+              </th>
+              <th
+                class="px-4 py-2 border"
+              >
+                Email
+              </th>
+              <th
+                class="px-4 py-2 border"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody />
+        </table>
+      </div>
     </main>
   </div>
 </div>

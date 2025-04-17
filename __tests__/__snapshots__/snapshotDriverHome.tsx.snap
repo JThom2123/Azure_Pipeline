@@ -90,9 +90,9 @@ exports[`renders driver homepage unchanged 1`] = `
         You are logged in as a driver, a true Mother Trucker! You can view your sponsor(s) below. Don't have a sponsor yet? Click the 'Application' tab to fill out your application.
       </p>
       <p
-        class="text-center text-red-600"
+        class="text-center text-lg"
       >
-        Could not load sponsor info.
+        You are not currently connected to a sponsor company. Please click the “Application” tab above to apply.
       </p>
     </main>
   </div>

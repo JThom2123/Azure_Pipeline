@@ -113,6 +113,11 @@ exports[`renders sponsor homepage unchanged 1`] = `
         >
           Driver Rankings
         </h2>
+        <p
+          class="mb-4 text-center text-sm italic"
+        >
+          Click "Impersonate" to see the site as that driver. The sponsor will assume the driver's view and be able to perform any operations available to them.
+        </p>
         <table
           class="w-full border-collapse border border-gray-300"
         >
@@ -129,6 +134,11 @@ exports[`renders sponsor homepage unchanged 1`] = `
                 class="border border-gray-300 px-4 py-2"
               >
                 Points
+              </th>
+              <th
+                class="border border-gray-300 px-4 py-2"
+              >
+                Impersonate
               </th>
             </tr>
           </thead>

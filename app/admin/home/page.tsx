@@ -6,6 +6,7 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa"; // Import profile icon
+import React from "react";
 
 interface User {
   userID: string;
