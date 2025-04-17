@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
+import { Authenticator } from "@aws-amplify/ui-react";
 
 export default function ITunesSearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,52 +72,52 @@ export default function ITunesSearchPage() {
 
   useEffect(() => {
     const getUserEmailAndSponsorData = async () => {
-    try {
-      if (!userEmail) return;
+      try {
+        if (!userEmail) return;
 
-      const res = await fetch(
-        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${userEmail}`
-      );
-      if (!res.ok) {
-        throw new Error("Failed to fetch sponsor data");
-      }
-
-      const data: any[] = await res.json();
-      console.log("Data returned from API:", data);
-
-      if (!data || data.length === 0) {
-        setSponsorData(null);
-      } else {
-        const groupedData = data.reduce<Record<string, number>>((acc, record) => {
-          const sponsorName = record.sponsorCompanyName;
-          const points = Number(record.totalPoints ?? record.points);
-          if (acc[sponsorName] !== undefined) {
-            acc[sponsorName] += points;
-          } else {
-            acc[sponsorName] = points;
-          }
-          return acc;
-        }, {});
-
-        const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
-          sponsorCompanyName,
-          totalPoints: points,
-        }));
-
-        setSponsorData(sponsorArray);
-        if (sponsorArray.length > 0) {
-          setSelectedSponsor(sponsorArray[0].sponsorCompanyName);
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${userEmail}`
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch sponsor data");
         }
-      }
-    } catch (err) {
-      console.error("Error fetching sponsor info:", err);
-      setError("Could not load sponsor info.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  getUserEmailAndSponsorData();
+        const data: any[] = await res.json();
+        console.log("Data returned from API:", data);
+
+        if (!data || data.length === 0) {
+          setSponsorData(null);
+        } else {
+          const groupedData = data.reduce<Record<string, number>>((acc, record) => {
+            const sponsorName = record.sponsorCompanyName;
+            const points = Number(record.totalPoints ?? record.points);
+            if (acc[sponsorName] !== undefined) {
+              acc[sponsorName] += points;
+            } else {
+              acc[sponsorName] = points;
+            }
+            return acc;
+          }, {});
+
+          const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
+            sponsorCompanyName,
+            totalPoints: points,
+          }));
+
+          setSponsorData(sponsorArray);
+          if (sponsorArray.length > 0) {
+            setSelectedSponsor(sponsorArray[0].sponsorCompanyName);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching sponsor info:", err);
+        setError("Could not load sponsor info.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserEmailAndSponsorData();
   }, [userEmail]);
 
   //get catalog
@@ -306,9 +307,20 @@ export default function ITunesSearchPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Impersonation Banner */}
-      {localStorage.getItem("impersonatedDriverEmail") && (
+    <Authenticator>
+      {({ signOut, user }) => {
+        const handleSignOut = () => {
+          signOut?.();
+          router.replace("/");
+        };
+
+        const handleProfileClick = () => {
+          router.push("/profile");
+        };
+        return (
+          <div className="flex flex-col h-screen">
+            {/* Impersonation Banner */}
+            {localStorage.getItem("impersonatedDriverEmail") && (
               <div className="bg-yellow-200 p-4 text-center">
                 <p className="text-lg font-semibold">
                   You are impersonating{" "}
@@ -316,192 +328,195 @@ export default function ITunesSearchPage() {
                 </p>
               </div>
             )}
-  
-      {/* Navigation Bar */}
-      <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
-        {/* Left side buttons */}
-        <div className="flex gap-4">
-          <Link href="/driver/home"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button></Link>
-          <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button></Link>
-          <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
-          <Link href="/driver/points"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button></Link>
-          <Link href="/driver/driver_app"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button></Link>
-        </div>
-  
-        {/* Cart dropdown */}
-        <div className="relative ml-auto" ref={cartDropdownRef}>
-          <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
-          {cartDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
-              <ul>
-                {cart.length === 0 ? (
-                  <li className="p-4 text-center text-gray-500">Your cart is empty</li>
-                ) : (
-                  cart.map((item, index) => (
-                    <li key={index} className="flex items-center p-3 space-x-2 border-b">
-                      <img src={item.artworkUrl100 || item.artwork_url} alt={item.trackName || item.title} className="w-12 h-12 rounded" />
-                      <div className="flex-grow">
-                        <p className="font-bold">{item.trackName || item.title}</p>
-                        <p className="text-sm text-gray-600">By: {item.artistName || item.artist}</p>
-                        <p className="text-sm text-gray-600">Points: {item.points}</p>
-                      </div>
-                      <button onClick={() => handleRemoveFromCart(item.trackId)} className="bg-red-500 text-white px-2 py-1 rounded">Remove</button>
-                    </li>
-                  ))
-                )}
-              </ul>
-              <div className="flex justify-between p-3">
-                <button onClick={handlePurchase} className="bg-blue-500 text-white px-4 py-2 rounded w-full">Purchase</button>
+
+            {/* Navigation Bar */}
+            <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
+              {/* Left side buttons */}
+              <div className="flex gap-4">
+                <Link href="/driver/home"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button></Link>
+                <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button></Link>
+                <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
+                <Link href="/driver/points"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button></Link>
+                <Link href="/driver/driver_app"><button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button></Link>
               </div>
-            </div>
-          )}
-        </div>
-  
-        {/* Profile dropdown */}
-        <div className="relative" ref={profileDropdownRef}>
-          <div className="cursor-pointer text-2xl" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
-            <FaUserCircle />
-          </div>
-          {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-              <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">My Profile</button>
-              <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">Sign Out</button>
-            </div>
-          )}
-        </div>
-      </nav>
-  
-      {/* Main content */}
-      <main className="max-w-xl mx-auto p-4 flex-grow">
-        <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
-  
-        {/* Sponsor dropdown */}
-        <div className="relative flex justify-center mb-4" ref={pointsDropdownRef}>
-          <div className="cursor-pointer text-lg flex items-center gap-2" onClick={() => setPointsDropdownOpen(!pointsDropdownOpen)}>
-            <span>{selectedSponsor || "Select Sponsor"}</span>
-            <span>
-              ({sponsorData && selectedSponsor ? sponsorData.find(s => s.sponsorCompanyName === selectedSponsor)?.totalPoints || 0 : 0} points)
-            </span>
-            <span className="text-xl">&#9660;</span>
-          </div>
-          {pointsDropdownOpen && (
-            <div className="absolute mt-2 w-40 bg-white text-black rounded shadow-lg">
-              {sponsorData?.map(sponsor => (
-                <div
-                  key={sponsor.sponsorCompanyName}
-                  onClick={() => {
-                    setSelectedSponsor(sponsor.sponsorCompanyName);
-                    setPointsDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                >
-                  {sponsor.sponsorCompanyName} ({sponsor.totalPoints} points)
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-  
-        {/* Toggle Catalog/My Songs */}
-        <div className="flex justify-center gap-4 mb-4">
-          <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
-          <button onClick={() => setShowCatalog(false)} className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>My Songs</button>
-        </div>
-  
-        {/* Catalog View */}
-        {showCatalog ? (
-          <div className="text-center mt-4">
-            <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
-            <ul className="mt-4 space-y-4">
-              {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
-                <li>No songs found in the catalog.</li>
-              ) : (
-                Array.isArray(sponsorCat) && sponsorCat.map(item => (
-                  <li
-                    key={item.song_id}
-                    className="border p-3 rounded shadow flex items-start space-x-4"
-                    onClick={(e) => {
-                      if ((e.target as HTMLElement).closest('button')) return;
-                      handleSongClick(item);
-                    }}
-                  >
-                    <div className="flex-shrink-0">
-                      <img src={item.artwork_url} alt={item.title} className="w-24 h-24 rounded" />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-bold">{item.title}</p>
-                      <p className="text-sm text-gray-600">By: {item.artist}</p>
-                      <p className="text-sm text-gray-600">Album: {item.album}</p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2 w-full">
-                      {item.preview_url && (
-                        <div className="w-full">
-                          <audio controls className="w-full">
-                            <source src={item.preview_url} type="audio/mpeg" />
-                          </audio>
-                          <div className="flex justify-between items-center mt-3 w-full">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddToCart(item);
-                              }}
-                              className="bg-green-500 text-white px-4 py-2 rounded"
-                            >
-                              Add to Cart
-                            </button>
-                          </div>
-                        </div>
+
+              {/* Cart dropdown */}
+              <div className="relative ml-auto" ref={cartDropdownRef}>
+                <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
+                {cartDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
+                    <ul>
+                      {cart.length === 0 ? (
+                        <li className="p-4 text-center text-gray-500">Your cart is empty</li>
+                      ) : (
+                        cart.map((item, index) => (
+                          <li key={index} className="flex items-center p-3 space-x-2 border-b">
+                            <img src={item.artworkUrl100 || item.artwork_url} alt={item.trackName || item.title} className="w-12 h-12 rounded" />
+                            <div className="flex-grow">
+                              <p className="font-bold">{item.trackName || item.title}</p>
+                              <p className="text-sm text-gray-600">By: {item.artistName || item.artist}</p>
+                              <p className="text-sm text-gray-600">Points: {item.points}</p>
+                            </div>
+                            <button onClick={() => handleRemoveFromCart(item.trackId)} className="bg-red-500 text-white px-2 py-1 rounded">Remove</button>
+                          </li>
+                        ))
                       )}
+                    </ul>
+                    <div className="flex justify-between p-3">
+                      <button onClick={handlePurchase} className="bg-blue-500 text-white px-4 py-2 rounded w-full">Purchase</button>
                     </div>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        ) : (
-          // My Songs View
-          <div className="text-center mt-4">
-            <h2 className="font-bold text-lg">Purchased Songs</h2>
-            <ul className="mt-4 space-y-4">
-              {purchasedSongs.length === 0 ? (
-                <li>No songs purchased yet.</li>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile dropdown */}
+              <div className="relative" ref={profileDropdownRef}>
+                <div className="cursor-pointer text-2xl" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
+                  <FaUserCircle />
+                </div>
+                {profileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+                    <button onClick={handleProfileClick} className="block w-full text-left px-4 py-2 hover:bg-gray-200">My Profile</button>
+                    <button onClick={handleSignOut} className="block w-full text-left px-4 py-2 hover:bg-gray-200">Sign Out</button>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Main content */}
+            <main className="max-w-xl mx-auto p-4 flex-grow">
+              <h1 className="text-2xl font-bold mb-4 text-center">{showCatalog ? "Catalog" : "My Songs"}</h1>
+
+              {/* Sponsor dropdown */}
+              <div className="relative flex justify-center mb-4" ref={pointsDropdownRef}>
+                <div className="cursor-pointer text-lg flex items-center gap-2" onClick={() => setPointsDropdownOpen(!pointsDropdownOpen)}>
+                  <span>{selectedSponsor || "Select Sponsor"}</span>
+                  <span>
+                    ({sponsorData && selectedSponsor ? sponsorData.find(s => s.sponsorCompanyName === selectedSponsor)?.totalPoints || 0 : 0} points)
+                  </span>
+                  <span className="text-xl">&#9660;</span>
+                </div>
+                {pointsDropdownOpen && (
+                  <div className="absolute mt-2 w-40 bg-white text-black rounded shadow-lg">
+                    {sponsorData?.map(sponsor => (
+                      <div
+                        key={sponsor.sponsorCompanyName}
+                        onClick={() => {
+                          setSelectedSponsor(sponsor.sponsorCompanyName);
+                          setPointsDropdownOpen(false);
+                        }}
+                        className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                      >
+                        {sponsor.sponsorCompanyName} ({sponsor.totalPoints} points)
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Toggle Catalog/My Songs */}
+              <div className="flex justify-center gap-4 mb-4">
+                <button onClick={() => setShowCatalog(true)} className={`${showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>Catalog</button>
+                <button onClick={() => setShowCatalog(false)} className={`${!showCatalog ? "bg-blue-600" : "bg-gray-700"} px-4 py-2 rounded text-white`}>My Songs</button>
+              </div>
+
+              {/* Catalog View */}
+              {showCatalog ? (
+                <div className="text-center mt-4">
+                  <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
+                  <ul className="mt-4 space-y-4">
+                    {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
+                      <li>No songs found in the catalog.</li>
+                    ) : (
+                      Array.isArray(sponsorCat) && sponsorCat.map(item => (
+                        <li
+                          key={item.song_id}
+                          className="border p-3 rounded shadow flex items-start space-x-4"
+                          onClick={(e) => {
+                            if ((e.target as HTMLElement).closest('button')) return;
+                            handleSongClick(item);
+                          }}
+                        >
+                          <div className="flex-shrink-0">
+                            <img src={item.artwork_url} alt={item.title} className="w-24 h-24 rounded" />
+                          </div>
+                          <div className="flex-grow">
+                            <p className="font-bold">{item.title}</p>
+                            <p className="text-sm text-gray-600">By: {item.artist}</p>
+                            <p className="text-sm text-gray-600">Album: {item.album}</p>
+                          </div>
+                          <div className="flex flex-col items-end space-y-2 w-full">
+                            {item.preview_url && (
+                              <div className="w-full">
+                                <audio controls className="w-full">
+                                  <source src={item.preview_url} type="audio/mpeg" />
+                                </audio>
+                                <div className="flex justify-between items-center mt-3 w-full">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToCart(item);
+                                    }}
+                                    className="bg-green-500 text-white px-4 py-2 rounded"
+                                  >
+                                    Add to Cart
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
               ) : (
-                purchasedSongs.map((song, index) => (
-                  <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <img src={song.artwork_url} alt={song.title || song.album} className="w-24 h-24 rounded" />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-bold">{song.title || song.album}</p>
-                      <p className="text-sm text-gray-600">By: {song.artist}</p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2 w-full">
-                      <audio controls className="w-full">
-                        <source src={song.preview_url} type="audio/mpeg" />
-                      </audio>
-                    </div>
-                  </li>
-                ))
+                // My Songs View
+                <div className="text-center mt-4">
+                  <h2 className="font-bold text-lg">Purchased Songs</h2>
+                  <ul className="mt-4 space-y-4">
+                    {purchasedSongs.length === 0 ? (
+                      <li>No songs purchased yet.</li>
+                    ) : (
+                      purchasedSongs.map((song, index) => (
+                        <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
+                          <div className="flex-shrink-0">
+                            <img src={song.artwork_url} alt={song.title || song.album} className="w-24 h-24 rounded" />
+                          </div>
+                          <div className="flex-grow">
+                            <p className="font-bold">{song.title || song.album}</p>
+                            <p className="text-sm text-gray-600">By: {song.artist}</p>
+                          </div>
+                          <div className="flex flex-col items-end space-y-2 w-full">
+                            <audio controls className="w-full">
+                              <source src={song.preview_url} type="audio/mpeg" />
+                            </audio>
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
               )}
-            </ul>
+            </main>
+
+            {/* Song modal */}
+            {modalOpen && selectedSong && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" onClick={handleModalClose}>
+                <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+                  <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
+                  <p className="text-lg">Album: {selectedSong.collectionName}</p>
+                  <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
+                  <div className="mt-4">
+                    <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </main>
-  
-      {/* Song modal */}
-      {modalOpen && selectedSong && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" onClick={handleModalClose}>
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
-            <p className="text-lg">Album: {selectedSong.collectionName}</p>
-            <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
-            <div className="mt-4">
-              <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        );
+
+      }}
+    </Authenticator>
   );
-  
-}
+};
