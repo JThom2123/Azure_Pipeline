@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes, signOut } from "aws-amplify/auth";
+import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
-import { FaUserCircle } from "react-icons/fa";
 
 // Define interfaces for our data:
 interface User {
@@ -30,10 +29,9 @@ interface SponsorDriver {
 
 export default function ReviewUserPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailParam = searchParams.get("email");
 
   // States for user attributes
+  const [emailParam, setEmailParam] = useState<string | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [userType, setUserType] = useState("");
@@ -52,6 +50,15 @@ export default function ReviewUserPage() {
   // Companies mapping: sponsorCompanyID (number) -> company_name (string)
   const [companiesMap, setCompaniesMap] = useState<Record<number, string>>({});
 
+  // On client-side mount, parse window.location.search to get the "email" query param.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get("email");
+      setEmailParam(email);
+    }
+  }, []);
+  
   // Fetch companies mapping from /dev1/companies
   useEffect(() => {
     const fetchCompanies = async () => {
