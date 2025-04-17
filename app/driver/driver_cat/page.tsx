@@ -108,7 +108,7 @@ export default function ITunesSearchPage() {
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
       const response = await fetch(
-        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/${encodeURIComponent(safeSponsor)}`,
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/?company_name=${encodeURIComponent(safeSponsor)}`,
         {
           method: "GET",
           headers: {
