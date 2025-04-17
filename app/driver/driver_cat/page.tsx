@@ -43,7 +43,29 @@ export default function ITunesSearchPage() {
   const pointsDropdownRef = useRef<HTMLDivElement>(null);
 
   const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null);
-
+    // Use useEffect to safely access localStorage on the client side.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("impersonatedDriverEmail");
+      if (storedEmail) {
+        setImpersonatedEmail(storedEmail);
+        setUserEmail(storedEmail);
+      } else {
+        // If not impersonating, fetch user email from Cognito.
+        const getUserEmail = async () => {
+          try {
+            const attributes = await fetchUserAttributes();
+            const email = attributes.email;
+            setUserEmail(email || "");
+          } catch (err) {
+            console.error("Error fetching user attributes:", err);
+          }
+        };
+        getUserEmail();
+      }
+    }
+  }, []);
+  
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedEmail = localStorage.getItem("impersonatedDriverEmail");
