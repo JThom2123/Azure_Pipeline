@@ -63,7 +63,9 @@ export default function ITunesSearchPage() {
         };
         getUserEmail();
       }
+      setImpersonatedEmail(storedEmail);
     }
+    getUserEmailAndSponsorData();
   }, []);
   
   useEffect(() => {
@@ -312,14 +314,15 @@ export default function ITunesSearchPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Impersonation banner */}
-      {impersonatedEmail && (
-        <div className="bg-yellow-200 p-4 text-center">
-          <p className="text-lg font-semibold">
-            You are impersonating <span className="underline">{impersonatedEmail}</span>. Go to Home Page to stop impersonation.
-          </p>
-        </div>
-      )}
+      {/* Impersonation Banner */}
+      {localStorage.getItem("impersonatedDriverEmail") && (
+              <div className="bg-yellow-200 p-4 text-center">
+                <p className="text-lg font-semibold">
+                  You are impersonating{" "}
+                  <span className="underline">{localStorage.getItem("impersonatedDriverEmail")}</span>. Go to Home Page to stop impersonation.
+                </p>
+              </div>
+            )}
   
       {/* Navigation Bar */}
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
