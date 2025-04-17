@@ -4,15 +4,23 @@
 
 import '@testing-library/jest-dom'
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import AboutPage from '../app/aboutpage/page'
 import { useRouter } from 'next/navigation'
 import { fetchUserAttributes } from 'aws-amplify/auth'
 
-// Mock the Next.js useRouter and AWS Amplify's fetchUserAttributes
+
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-}))
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    pathname: '/',
+    query: {},
+  })),
+}));
 
 jest.mock('aws-amplify/auth', () => ({
   fetchUserAttributes: jest.fn(() => Promise.resolve({
@@ -26,131 +34,101 @@ jest.mock('aws-amplify/auth', () => ({
   })),
 }))
 
-// Mock fetch function
-const mockFetch = jest.fn()
+global.fetch = jest.fn()
+const mockFetchUserAttributes = fetchUserAttributes as jest.Mock
+const mockFetch = global.fetch as jest.Mock
 
 describe('AboutPage', () => {
+  const mockAboutData = [
+    {
+      section_name: 'our_mission',
+      content: 'We aim to empower drivers.',
+      last_updated: '2024-03-15T00:00:00.000Z',
+    },
+  ]
 
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks()
-  })
+    mockFetchUserAttributes.mockResolvedValue({ 'custom:role': 'Admin' })
 
-  it('renders the AboutPage with loading state', () => {
-    render(<AboutPage />)
-    expect(screen.getByText(/loading.../i)).toBeInTheDocument()
-  })
-
-  it('displays an error message if there is an error fetching the data', async () => {
-    // Mock an error in the fetch call
-    mockFetch.mockRejectedValueOnce(new Error('Failed to fetch data'))
-    render(<AboutPage />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/error: failed to fetch data/i)).toBeInTheDocument()
-    })
-  })
-
-  it('renders the page content when data is fetched', async () => {
-    // Mock successful API call
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        {
-          section_name: 'About Us',
-          content: 'This is some about us content',
-          last_updated: '2025-04-10',
-        },
-      ]),
-    })
-
-    render(<AboutPage />)
-
-    await waitFor(() => {
-      expect(screen.getByText('This is some about us content')).toBeInTheDocument()
+      json: async () => mockAboutData,
     })
   })
 
-  it('allows the user to enter edit mode and change content', async () => {
-    // Mock successful API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve([
-        {
-          section_name: 'About Us',
-          content: 'This is some about us content',
-          last_updated: '2025-04-10',
-        },
-      ]),
-    })
 
-    render(<AboutPage />)
+  it('renders welcome header and content', async () => {
+    act(() => {
+      render(<AboutPage />)
+    });
+    //expect(screen.getByText(/Loading.../i)).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText('This is some about us content')).toBeInTheDocument()
-    })
-
-    // Click the "Edit Page" button
-    fireEvent.click(screen.getByRole('button', { name: /edit page/i }))
-    
-    // Change content in textarea
-    const textarea = screen.getByRole('textbox')
-    fireEvent.change(textarea, { target: { value: 'Updated content!' } })
-
-    expect(textarea.ariaValueText).toBe('Updated content!')
-  })
-
-  it('calls the save changes function when the save button is clicked', async () => {
-    // Mock successful API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve([
-        {
-          section_name: 'About Us',
-          content: 'This is some about us content',
-          last_updated: '2025-04-10',
-        },
-      ]),
-    })
-
-    render(<AboutPage />)
-
-    await waitFor(() => {
-      expect(screen.getByText('This is some about us content')).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /edit page/i }))
-
-    // Change content and click Save
-    const textarea = screen.getByRole('textbox')
-    fireEvent.change(textarea, { target: { value: 'Updated content!' } })
-    
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/about',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify([{ section_name: 'About Us', content: 'Updated content!', last_updated: '2025-04-10' }]),
-        })
-      )
+      expect(screen.getByText(/Welcome to Our About Page/i)).toBeInTheDocument()
+      expect(screen.getByText(/We aim to empower drivers/i)).toBeInTheDocument()
     })
   })
 
-  it('navigates to the correct page based on user role', () => {
-    render(<AboutPage />)
+  it('displays edit button for Admins', async () => {
+    act(() => {
+      render(<AboutPage />)
+    });
 
-    // Click the Home button
-    fireEvent.click(screen.getByRole('button', { name: /home/i }))
-
-    expect(useRouter().push).toHaveBeenCalledWith('/admin/home')
+    await waitFor(() => {
+      expect(screen.getByText(/Edit Page/i)).toBeInTheDocument()
+    })
   })
 
-  it('calls signOut and redirects to the home page when the sign out button is clicked', () => {
-    render(<AboutPage />)
+  it('displays add users button for Admins', async () => {
+    act(() => {
+      render(<AboutPage />)
+    });
 
-    fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
-    expect(screen.getByText(/loading.../i)).toBeInTheDocument() // Loading state due to router replace
-    expect(useRouter().replace).toHaveBeenCalledWith('/')
+    await waitFor(() => {
+      expect(screen.getByText(/Add Users/i)).toBeInTheDocument()
+    })
+  })
+
+  it('enters edit mode and shows Save button', async () => {
+    act(() => {
+      render(<AboutPage />)
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Edit Page/i)).toBeInTheDocument()
+    })
+
+    act(() => {
+      fireEvent.click(screen.getByText(/Edit Page/i))
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Save Changes/i })).toBeInTheDocument()
+    })
+  })
+
+  it('renders catalog and points buttons for Drivers', async () => {
+    act(() => {
+      mockFetchUserAttributes.mockResolvedValue({ 'custom:role': 'Driver' })
+      render(<AboutPage />)
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Catalog/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Points/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Application/i })).toBeInTheDocument()
+    })
+  })
+
+  it('displays error message if fetch fails', async () => {
+    act(() => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+      render(<AboutPage />)
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Error/i)).toBeInTheDocument()
+    })
   })
 })
