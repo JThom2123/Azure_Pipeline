@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
+import { fetchUserAttributes } from "aws-amplify/auth";
 
 export default function ITunesSearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,29 +17,21 @@ export default function ITunesSearchPage() {
   const [companyName, setCompanyName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedSponsor = localStorage.getItem("sponsor");
-    if (storedSponsor) {
+    const getUserAttributes = async () => {
       try {
-        const parsedSponsor = JSON.parse(storedSponsor);
-        if (parsedSponsor.company_name) {
-          setCompanyName(parsedSponsor.company_name);
+        const attributes = await fetchUserAttributes();
+        if (attributes["custom:sponsorCompany"]) {
+          setSponsorCompany(attributes["custom:sponsorCompany"]);
         }
-      } catch (err) {
-        console.error("Error parsing sponsor from localStorage:", err);
+      } catch (error) {
+        console.error("Error fetching user attributes:", error);
       }
-    }
+    };
 
-    const storedPoints = localStorage.getItem("songPoints");
-    if (storedPoints) {
-      setResults(JSON.parse(storedPoints));
-    }
-
-    const storedSelectedSongs = localStorage.getItem("selectedSongs");
-    if (storedSelectedSongs) {
-      setSelectedSongs(JSON.parse(storedSelectedSongs));
-    }
+    getUserAttributes();
   }, []);
 
   useEffect(() => {
@@ -119,6 +112,8 @@ export default function ITunesSearchPage() {
   };
 
   const saveSelectedSongsToBackend = async (songs: any[]) => {
+    const attributes = await fetchUserAttributes();
+    const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
     for (const song of songs) {
       const payload = {
         song_id: song.trackId,
@@ -130,7 +125,7 @@ export default function ITunesSearchPage() {
         store_url: song.trackViewUrl,
         release_date: song.releaseDate,
         genre: song.primaryGenreName,
-        company_name: companyName || "Unknown Company",
+        company_name: sponsorCompanyName || "Unknown Company",
         price: song.points || 0,
       };
 
@@ -162,9 +157,11 @@ export default function ITunesSearchPage() {
   };
 
   const removeSelectedSongsFromBackend = async (songs: any[]) => {
+    const attributes = await fetchUserAttributes();
+    const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
     for (const song of songs) {
       const payload = {
-        catalogue_id: companyName || "Unknown Company",
+        catalogue_id: sponsorCompanyName || "Unknown Company",
         song_id: song.trackId,
       };
 
