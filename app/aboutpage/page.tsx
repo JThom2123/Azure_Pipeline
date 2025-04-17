@@ -6,6 +6,7 @@ import "@aws-amplify/ui-react/styles.css";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth"; // Fetch user attributes
 import { FaUserCircle } from "react-icons/fa";
+import React from "react";
 
 interface AboutSection {
   section_name: string;

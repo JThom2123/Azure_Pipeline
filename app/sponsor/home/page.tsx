@@ -7,6 +7,7 @@ import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
+import React from "react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -58,27 +59,27 @@ export default function HomePage() {
         const attributes = await fetchUserAttributes();
         const email = attributes.email || null;
         const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
-
+  
         setUserEmail(email);
         setSponsorCompany(sponsorCompanyName);
-
+  
         if (!sponsorCompanyName) {
           throw new Error("Sponsor company not found in user attributes.");
         }
-
+  
         // Get list of connected drivers
         const res = await fetch(
           `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/drivers?sponsorCompanyName=${encodeURIComponent(
             sponsorCompanyName
           )}`
         );
-
+  
         if (!res.ok) {
           throw new Error("Failed to fetch drivers");
         }
-
+  
         const driverList = await res.json();
-
+  
         // For each driver, get total points from the new endpoint
         const enrichedDrivers = await Promise.all(
           driverList.map(async (driver: any) => {
@@ -86,31 +87,22 @@ export default function HomePage() {
               `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points/total?email=${driver.driverEmail}&sponsorCompanyID=${driver.sponsorCompanyID}`
             );
             const pointData = await pointsRes.json();
-
+  
             return {
               email: driver.driverEmail,
               points: pointData.totalPoints ?? 0,
             };
           })
         );
-
+  
         setDrivers(enrichedDrivers);
       } catch (err) {
         console.error("Error fetching sponsor driver info:", err);
       }
     };
-
+  
     fetchSponsorDriverData();
-  }, []);
-
-  // Handler for impersonation button
-  const handleImpersonate = (driverEmail: string) => {
-    // Store impersonation in localStorage.
-    localStorage.setItem("impersonatedDriverEmail", driverEmail);
-    alert(`You are now impersonating ${driverEmail}. You will see the site as that driver.`);
-    // Redirect to the driver home page.
-    router.push("/driver/home");
-  };
+  }, []);  
 
   return (
     <Authenticator>

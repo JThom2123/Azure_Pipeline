@@ -7,6 +7,7 @@ import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
+import React from "react";
 
 export default function HomePage() {
   const router = useRouter();
