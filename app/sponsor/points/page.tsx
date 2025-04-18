@@ -7,6 +7,7 @@ import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
+import { notDeepStrictEqual } from "assert";
 
 interface Driver {
     name: string;
@@ -153,7 +154,23 @@ export default function PointsSponsorPage() {
             });
 
             if (res.ok) {
-                alert("Points updated!");
+                // triger notification for driver
+                const notifName = pointDelta >= 0 ? "points_added" : "points_removed";
+                const notifDesc = `Your account has ${pointDelta >= 0 ? "gained" : "lost"
+                    } ${Math.abs(pointDelta)} points. Reason: ${reason}`;
+                fetch(
+                    "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/notifications",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userEmail: driver.email,
+                            notifName,
+                            notifDesc,
+                        }),
+                    }
+                ).catch((error) => console.error("Notif delivery failed:", err));
+                alert("Points updated successfully.");
                 fetchDrivers(sponsorCompanyName!); // Refresh driver info
             } else {
                 const err = await res.json();

@@ -5,13 +5,26 @@ import { useState, useEffect, useRef } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaBell } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
+
+interface Notification {
+  id:string;
+  message: string;
+  isRead: boolean;
+}
 
 export default function HomePage() {
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sponsorData, setSponsorData] = useState<
@@ -39,73 +52,23 @@ export default function HomePage() {
       getUserAttributes();
     }
   }, []);
-
-  // Close profile dropdown when clicking outside
+  
+  // Close icon dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
+      const t = event.target as Node;
+      if (profileOpen && profileRef.current && !profileRef.current.contains(t)) {
+        setProfileOpen(false);
+      }
+      if (notificationsOpen && notificationsRef.current && !notificationsRef.current.contains(t)) {
+        setNotificationsOpen(false);
       }
     };
-
-    if (dropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownOpen]);
-
-  // Get user email and fetch sponsor data
-  /*useEffect(() => {
-    const getUserEmailAndSponsorData = async () => {
-      try {
-        const attributes = await fetchUserAttributes();
-        const email = attributes.email;
-        setUserEmail(email || null);
-
-        const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/points?email=${email}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch sponsor data");
-        }
-
-        const data: any[] = await res.json();
-        console.log("Data returned from API:", data);
-
-        if (!data || data.length === 0) {
-          setSponsorData(null);
-        } else {
-          // Group the records by sponsorCompanyName and sum the points
-          const groupedData = data.reduce<Record<string, number>>((acc, record) => {
-            const sponsorName = record.sponsorCompanyName;
-            const points = Number(record.totalPoints ?? record.points);
-            if (acc[sponsorName] !== undefined) {
-              acc[sponsorName] += points;
-            } else {
-              acc[sponsorName] = points;
-            }
-            return acc;
-          }, {});
-
-          // Convert the grouped data into an array of sponsor objects
-          const sponsorArray = Object.entries(groupedData).map(([sponsorCompanyName, points]) => ({
-            sponsorCompanyName,
-            totalPoints: points,
-          }));
-
-          setSponsorData(sponsorArray);
-        }
-      } catch (err) {
-        console.error("Error fetching sponsor info:", err);
-        setError("Could not load sponsor info.");
-      } finally {
-        setLoading(false);
+      return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
       }
-    };
-
-    getUserEmailAndSponsorData();
-  }, []);*/
+  }, [profileOpen, notificationsOpen]);
 
   // Fetch sponsor data using userEmail (which might be impersonated)
   useEffect(() => {
@@ -152,23 +115,53 @@ export default function HomePage() {
     getSponsorData();
   }, [userEmail]);
 
+  // fetch notifications for driver user
   useEffect(() => {
-    const impersonatedEmail = localStorage.getItem("impersonatedDriverEmail");
-    if (impersonatedEmail) {
-      setUserEmail(impersonatedEmail);
-    } else {
-      // Otherwise, fetch the email from Cognito using fetchUserAttributes.
-      const getUserEmail = async () => {
-        try {
-          const attributes = await fetchUserAttributes();
-          setUserEmail(attributes.email || null);
-        } catch (err) {
-          console.error("Error fetching user attributes:", err);
-        }
-      };
-      getUserEmail();
-    }
-  }, []);
+    if (!userEmail) return;
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/notifications?userEmail=${encodeURIComponent(userEmail)}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: Array<{
+          notifID: number;
+          notifDesc: string;
+          is_read: 0 | 1;
+        }> = await res.json();
+        setNotifications(
+          data.map(n => ({
+            id: String(n.notifID),
+            message: n.notifDesc,
+            isRead: n.is_read === 1
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to load notifications:", err);
+      }
+    })();
+  }, [userEmail]);
+
+  // helper to mark a single notification as read
+ const markAsRead = async (notifID: string) => {
+     try {
+       const res = await fetch(
+         `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/notifications/${notifID}/read`,
+         { method: "PATCH" }
+       );
+       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+       // update local state
+       setNotifications((prev) =>
+         prev.map((n) =>
+           n.id === notifID
+             ? { ...n, isRead: true }
+             : n
+         )
+       );
+     } catch (err) {
+       console.error("Failed to mark read:", err);
+     }
+   };
 
   // Handler for "Stop Impersonation" button: clear localStorage and reload page.
   const handleStopImpersonation = () => {
@@ -186,6 +179,10 @@ export default function HomePage() {
 
         const handleProfileClick = () => {
           router.push("/profile"); // Navigate to the profile page
+        };
+
+        const handleSettingsClick = () => {
+          router.push("/driver/notifications_set"); // Navigate to the notification settings page
         };
 
         return (
@@ -231,16 +228,52 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Profile Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="cursor-pointer text-2xl"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                >
-                  <FaUserCircle />
+              {/* Icons */}
+              <div className="flex items-center space-x-4">
+                {/* Notifications */}
+                <div className="relative" ref={notificationsRef}>
+                  <FaBell
+                    className="cursor-pointer text-2xl"
+                    onClick={() => setNotificationsOpen(o => !o)}
+                  />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                  {notificationsOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-60 overflow-y-auto z-50">
+                      <button
+                      onClick={handleSettingsClick}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                    >
+                      Notification Settings
+                      </button>
+                      {notifications.length === 0 ? (
+                        <p className="px-4 py-2">No notifications</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`border-b px-4 py-2 cursor-pointer ${n.isRead ? "opacity-50" : "bg-gray-100 hover:bg-gray-200"}`}
+                            onClick={() => markAsRead(n.id)}
+                          >
+                            <p className="text-sm">{n.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {dropdownOpen && (
+                {/* Profile*/}
+              <div className="relative" ref={profileRef}>
+                <FaUserCircle
+                  className="cursor-pointer text-2xl"
+                  onClick={() => setProfileOpen(o => !o)}
+                />
+
+                {profileOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
                     <button
                       onClick={handleProfileClick}
@@ -257,6 +290,7 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
+            </div>
             </nav>
 
             {/* Main Content */}

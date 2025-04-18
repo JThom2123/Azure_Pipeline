@@ -77,6 +77,8 @@ const DriverAppPage = () => {
       if (storedEmail) {
         setImpersonatedEmail(storedEmail);
         setUserEmail(storedEmail);
+        setFormData(f => ({
+          ...f, email: storedEmail}))
       } else {
         // If not impersonating, fetch user email from Cognito.
         const getUserEmail = async () => {
@@ -84,6 +86,7 @@ const DriverAppPage = () => {
             const attributes = await fetchUserAttributes();
             const email = attributes.email;
             setUserEmail(email || "");
+            setFormData(f => ({ ...f, email: email || "" }));
           } catch (err) {
             console.error("Error fetching user attributes:", err);
           }
@@ -92,8 +95,6 @@ const DriverAppPage = () => {
       }
     }
   }, []);
-
-
 
   useEffect(() => {
     if (!userEmail) return;
@@ -153,13 +154,15 @@ const DriverAppPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    const { email, first_name, last_name, sponsor_company_id } = formData;
+    const { first_name, last_name, email, sponsor_company_id } = formData;
 
     // Validate fields
-    if (!email || !first_name || !last_name || !sponsor_company_id) {
+    if (!first_name || !last_name || !email || !sponsor_company_id) {
       alert("Please complete all fields before submitting.");
       return;
     }
+
+    const driverEmail = userEmail;
 
     try {
       // Submit application to the backend
@@ -167,7 +170,7 @@ const DriverAppPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          driverEmail: formData.email,
+          driverEmail,
           sponsorCompanyID: Number(formData.sponsor_company_id),
           fullName: `${formData.first_name} ${formData.last_name}`
         }),
@@ -316,7 +319,7 @@ const DriverAppPage = () => {
                   type="email"
                   id="email"
                   name="email"
-                  value={formData.email}
+                  value={userEmail || user?.signInDetails?.loginId || "No email found"}
                   disabled
                   className="border p-2 w-full bg-gray-100 cursor-not-allowed"
                 />

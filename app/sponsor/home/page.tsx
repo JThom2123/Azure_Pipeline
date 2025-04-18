@@ -138,6 +138,19 @@ export default function HomePage() {
         const err = await res.text();
         throw Error(err);
       }
+      // notification sent for driver notifications
+      await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/notifications`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userEmail: driverEmail,
+            notifName: "dropped_by_sponsor",
+            notifDesc: `You have been removed from sponsor "${sponsorCompany}".`
+          }),
+        }
+      );
       // remove from UI
       setDrivers((ds) => ds.filter((d) => d.email !== driverEmail));
     } catch (err: any) {
