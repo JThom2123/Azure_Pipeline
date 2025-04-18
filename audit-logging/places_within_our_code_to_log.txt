@@ -1,0 +1,40 @@
+1. Create logging for changes in points
+2. Create logging for driver application submissions
+3. Create logging for any change made to passwords (date changed, and username only)
+4. Create logging for login attempts
+
+########################
+#### login attempts ####
+app/signUp
+- new sign up (ln 40)
+	- email, userType
+- succ log in (ln 68)
+- fail log in (ln 72)
+
+app/admin/addUser
+- add new sponsor company (ln 104)
+	- newSponsorCompany
+- add user to database (ln 168)
+	- email, userType
+
+
+########################################
+#### driver application submissions ####
+app/driver/driver_app
+- impersonate driver (ln 76)
+- submit application (ln 175)
+	- driverEmail, sponsorCompanyID, fullName
+
+
+###########################
+#### changes in points ####
+app/driver/driver_cat
+- purchased song (ln 281) (look were points after purchase)
+	- songTites
+
+app/sponsor/points
+- sponsor updates points (ln 156)
+	- email, points, description, sponsorCompanyID
+
+
+
