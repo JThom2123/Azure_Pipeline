@@ -423,53 +423,59 @@ export default function ITunesSearchPage() {
               {/* Catalog View */}
               {showCatalog ? (
                 <div className="text-center mt-4">
-                  <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
-                  <ul className="mt-4 space-y-4">
-                    {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
-                      <li>No songs found in the catalog.</li>
-                    ) : (
-                      Array.isArray(sponsorCat) && sponsorCat.map(item => (
-                        <li
-                          key={item.song_id}
-                          className="border p-3 rounded shadow flex items-start space-x-4"
-                          onClick={(e) => {
-                            if ((e.target as HTMLElement).closest('button')) return;
-                            handleSongClick(item);
-                          }}
-                        >
-                          <div className="flex-shrink-0">
-                            <img src={item.artwork_url} alt={item.title} className="w-24 h-24 rounded" />
-                          </div>
-                          <div className="flex-grow">
-                            <p className="font-bold">{item.title}</p>
-                            <p className="text-sm text-gray-600">By: {item.artist}</p>
-                            <p className="text-sm text-gray-600">Album: {item.album}</p>
-                          </div>
-                          <div className="flex flex-col items-end space-y-2 w-full">
-                            {item.preview_url && (
-                              <div className="w-full">
-                                <audio controls className="w-full">
-                                  <source src={item.preview_url} type="audio/mpeg" />
-                                </audio>
-                                <div className="flex justify-between items-center mt-3 w-full">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddToCart(item);
-                                    }}
-                                    className="bg-green-500 text-white px-4 py-2 rounded"
-                                  >
-                                    Add to Cart
-                                  </button>
-                                </div>
+                <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
+                <ul className="mt-4 space-y-4">
+                  {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
+                    <li>No songs found in the catalog.</li>
+                  ) : (
+                    Array.isArray(sponsorCat) && sponsorCat.map(item => (
+                      <li
+                        key={item.song_id}
+                        className="border p-3 rounded shadow flex items-start space-x-4"
+                        onClick={(e) => {
+                          // Prevent modal opening when clicking on Add to Cart button
+                          if ((e.target as HTMLElement).closest('button')) return;
+                          handleSongClick(item); // Open modal if it's not the Add to Cart button
+                        }}
+                      >
+                        <div className="flex-shrink-0">
+                          <img
+                            src={item.artwork_url}
+                            alt={item.title}
+                            className="w-24 h-24 rounded"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <p className="font-bold">{item.title}</p>
+                          <p className="text-sm text-gray-600">By: {item.artist}</p>
+                          <p className="text-sm text-gray-600">Album: {item.album}</p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-2 w-full">
+                          {item.preview_url && (
+                            <div className="w-full">
+                              <audio controls className="w-full">
+                                <source src={item.preview_url} type="audio/mpeg" />
+                                Your browser does not support the audio element.
+                              </audio>
+                              <div className="flex justify-between items-center mt-3 w-full">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent triggering modal on button click
+                                    handleAddToCart(item); // Add to cart on button click
+                                  }}
+                                  className="bg-green-500 text-white px-4 py-2 rounded"
+                                >
+                                  Add to Cart
+                                </button>
                               </div>
-                            )}
-                          </div>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </div>
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
               ) : (
                 // My Songs View
                 <div className="text-center mt-4">
