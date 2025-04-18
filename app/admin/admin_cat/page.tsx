@@ -212,22 +212,24 @@ export default function ITunesSearchPage() {
     <div className="flex flex-col h-screen">
       <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
         <div className="flex gap-4">
-          <Link href="/sponsor/home">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button>
-          </Link>
-          <Link href="/aboutpage">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">About Page</button>
-          </Link>
-          <button className="bg-blue-600 px-4 py-2 rounded text-white">Catalog</button>
-          <Link href="/sponsor/points">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Points</button>
-          </Link>
-          <Link href="/sponsor/sponsor_app">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
-          </Link>
-          <Link href="/sponsor/addSponsors">
-            <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Sponsors</button>
-          </Link>
+                <Link href="/admin/home">
+                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Home</button>
+                </Link>
+                <Link href="/aboutpage">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    About Page
+                  </button>
+                </Link>
+                <Link href="/admin/addUsers">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Add Users
+                  </button>
+                </Link>
+                <Link href="/admin/admin_cat">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Catalog
+                  </button>
+                </Link>
         </div>
 
         <div className="relative" ref={dropdownRef}>
