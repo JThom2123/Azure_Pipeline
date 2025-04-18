@@ -234,6 +234,11 @@ export default function AdminPage() {
                                 <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
                                     Add Users
                                 </button>
+                                <Link href="/admin/admin_cat">
+                                <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                                    Catalog
+                                </button>
+                                </Link>
                             </div>
 
                             {/* Profile Dropdown */}
