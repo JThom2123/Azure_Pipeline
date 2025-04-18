@@ -141,6 +141,8 @@ const AboutPage = () => {
       router.push("/driver/driver_cat");
     } else if (userRole === "Sponsor") {
       router.push("/sponsor/sponsor_cat");
+    } else if (userRole === "Admin") {
+      router.push("/admin/admin_cat");
     } else {
       console.error("User role is not eligible for applications.");
     }
@@ -226,7 +228,18 @@ const AboutPage = () => {
                 <button className="bg-blue-600 px-4 py-2 rounded text-white">
                   About Page
                 </button>
-                {(userRole === "Driver" || userRole === "Sponsor") && (
+
+                {/* Show Add Users button for Admin */}
+                {(userRole === "Admin") && (
+                  <button
+                    onClick={handleAddUsersClick}
+                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Add Users
+                  </button>
+                )}
+
+                {(userRole === "Driver" || userRole === "Sponsor" || userRole == "Admin") && (
                   <button
                     onClick={handleCatClick}
                     className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
@@ -254,15 +267,6 @@ const AboutPage = () => {
                   </button>
                 )}
 
-                {/* Show Add Users button for Admin */}
-                {(userRole === "Admin") && (
-                  <button
-                    onClick={handleAddUsersClick}
-                    className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
-                  >
-                    Add Users
-                  </button>
-                )}
 
                 {/* Show Add Sponsors button for Sponsors */}
                 {(userRole === "Sponsor") && (
