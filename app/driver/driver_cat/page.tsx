@@ -189,20 +189,22 @@ export default function ITunesSearchPage() {
 
   //purchase songs
   const handlePurchase = async (songId: string, catalogueId: string) => {
+    /*
     const email = localStorage.getItem("userEmail"); // Ensure this is the correct way to get the user's email
     if (!email) {
       alert("User email is required for purchase.");
       return;
     }
+    */
   
     const purchaseData = {
-      email,
+      email: userEmail,
       song_id: songId,
       catalogue_id: catalogueId,
     };
   
     try {
-      const response = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1//catalogue/purchase`, {
+      const response = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/purchase`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
