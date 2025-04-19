@@ -80,7 +80,7 @@ export default function PointsSponsorPage() {
 
             setDrivers(enrichedDrivers);
         } catch (error) {
-            console.error("Error fetching driver info:", err);
+            console.error("Error fetching driver info:", error);
         }
     };
 
@@ -169,12 +169,12 @@ export default function PointsSponsorPage() {
                             notifDesc,
                         }),
                     }
-                ).catch((error) => console.error("Notif delivery failed:", err));
+                ).catch((error) => console.error("Notif delivery failed:", error));
                 alert("Points updated successfully.");
                 fetchDrivers(sponsorCompanyName!); // Refresh driver info
             } else {
                 const error = await res.json();
-                console.error("Point update failed:", err);
+                console.error("Point update failed:", error);
                 alert("Failed to update points.");
             }
         } catch (error) {
