@@ -370,6 +370,12 @@ export default function ITunesSearchPage() {
     }
   };
 
+  const handlePurchaseAll = () => {
+    cart.forEach(item => {
+      handlePurchase(item.trackId, item.catalogueId);
+    });
+  };
+
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -408,60 +414,56 @@ export default function ITunesSearchPage() {
               <div className="relative ml-auto" ref={cartDropdownRef}>
                 <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
                 {cartDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
-                    <ul>
-                    {cart.length === 0 ? (
-                        <li className="p-4 text-center text-gray-500">Your cart is empty</li>
-                      ) : (
-                        cart.map((item, index) => (
-                          <li
-                            key={index}
-                            className="flex flex-col items-center p-4 space-y-3 border-b w-full"
-                          >
-                            <img
-                              src={item.artworkUrl100 || item.artwork_url}
-                              alt={item.trackName || item.title}
-                              className="w-16 h-16 rounded shadow"
-                            />
-                            <div className="text-center space-y-1">
-                              <p className="font-semibold text-base break-words">
-                                {item.trackName || item.title}
-                              </p>
-                              <p className="text-sm text-gray-600 break-words">
-                                By: {item.artistName || item.artist}
-                              </p>
-                              <p className="text-sm text-gray-600">Points: {item.points}</p>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2 pt-2 w-full justify-center">
-                              <button
-                                onClick={() => handleRemoveFromCart(item.trackId)}
-                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-md text-sm w-full sm:w-auto"
-                              >
-                                Remove
-                              </button>
-                              <button
-                                onClick={() => handlePurchase(item.trackId, item.catalogueId)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-md text-sm w-full sm:w-auto"
-                              >
-                                Purchase
-                              </button>
-                            </div>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                    <div className="flex justify-between p-3">
-                     {/*
-                    <button
-                      onClick={() => handlePurchase(item.trackId, item.catalogueId)} // Pass the correct songId and catalogueId
-                      className="bg-blue-500 text-white px-4 py-2 rounded w-full"
-                    >
-                      Purchase
-                    </button>
-                          */}
-                    </div>
-                  </div>
-                )}
+  <div className="absolute right-0 mt-2 w-80 bg-white text-black rounded shadow-lg max-h-96 overflow-y-auto z-50">
+    <ul>
+      {cart.length === 0 ? (
+        <li className="p-4 text-center text-gray-500">Your cart is empty</li>
+      ) : (
+        cart.map((item, index) => (
+          <li
+            key={index}
+            className="flex items-center p-3 space-x-3 border-b"
+          >
+            <img
+              src={item.artworkUrl100 || item.artwork_url}
+              alt={item.trackName || item.title}
+              className="w-12 h-12 rounded shadow"
+            />
+            <div className="flex-grow text-sm">
+              <p className="font-semibold">{item.trackName || item.title}</p>
+              <p className="text-gray-600">By: {item.artistName || item.artist}</p>
+              <p className="text-gray-600">Points: {item.points}</p>
+            </div>
+            <div className="flex flex-col space-y-1">
+              <button
+                onClick={() => handleRemoveFromCart(item.trackId)}
+                className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+              >
+                Remove
+              </button>
+              <button
+                onClick={() => handlePurchase(item.trackId, item.catalogueId)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+              >
+                Purchase
+              </button>
+            </div>
+          </li>
+        ))
+      )}
+    </ul>
+    {cart.length > 0 && (
+      <div className="p-3 border-t">
+        <button
+          onClick={handlePurchaseAll}
+          className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm font-medium"
+        >
+          Purchase All
+        </button>
+      </div>
+    )}
+  </div>
+)}
               </div>
 
               {/* Profile dropdown */}
