@@ -15,7 +15,7 @@ interface Song {
   previewUrl: string;
   artworkUrl100: string;
   trackPrice: number;
-  points?: number;
+  points: number;
 }
 
 export default function ITunesSearchPage() {
@@ -30,6 +30,7 @@ export default function ITunesSearchPage() {
   const [purchasedSongs, setPurchasedSongs] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  const [catId, setCatId] = useState<number>(0);
   const [showCatalog, setShowCatalog] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sponsorData, setSponsorData] = useState<{ sponsorCompanyName: string; totalPoints: number }[] | null>(null);
@@ -46,7 +47,7 @@ export default function ITunesSearchPage() {
     store_url: string;
     release_date: string;
     genre: string;
-    points?: number;
+    price: number;
   }[] | null>(null);
   const [song_id, setSong] = useState<string[]>([]);
 
@@ -152,6 +153,8 @@ export default function ITunesSearchPage() {
       }
 
       const data = await response.json();
+      const catalogueId = data.catalogue?.catalogue_id;
+      setCatId(catalogueId);
       const songs = data.catalogue?.songs || [];
 
       if (songs.length === 0) {
@@ -188,7 +191,7 @@ export default function ITunesSearchPage() {
   
 
   //purchase songs
-  const handlePurchase = async (songId: string, catalogueId: string) => {
+  const handlePurchase = async (songId: string, catalogueId: number) => {
     /*
     const email = localStorage.getItem("userEmail"); // Ensure this is the correct way to get the user's email
     if (!email) {
@@ -200,7 +203,7 @@ export default function ITunesSearchPage() {
     const purchaseData = {
       email: userEmail,
       song_id: songId,
-      catalogue_id: catalogueId,
+      catalogue_id: catId,
     };
   
     try {
@@ -226,6 +229,9 @@ export default function ITunesSearchPage() {
     }
   };
 
+
+
+  
   // Fetch catalog whenever sponsor changes
   useEffect(() => {
     if (selectedSponsor) {
@@ -264,7 +270,7 @@ export default function ITunesSearchPage() {
 
       return {
         ...song,
-        points: catalogSong?.points || Math.floor(Math.random() * 100) + 1, // Default to random points if not available
+        points: catalogSong?.price || Math.floor(Math.random() * 100) + 1, // Default to random points if not available
       };
     });
 
@@ -374,7 +380,7 @@ export default function ITunesSearchPage() {
 
   const handlePurchaseAll = () => {
     cart.forEach(item => {
-      handlePurchase(item.trackId, item.catalogueId);
+      handlePurchase(item.trackId, catId);
     });
   };
 
@@ -416,56 +422,56 @@ export default function ITunesSearchPage() {
               <div className="relative ml-auto" ref={cartDropdownRef}>
                 <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
                 {cartDropdownOpen && (
-  <div className="absolute right-0 mt-2 w-80 bg-white text-black rounded shadow-lg max-h-96 overflow-y-auto z-50">
-    <ul>
-      {cart.length === 0 ? (
-        <li className="p-4 text-center text-gray-500">Your cart is empty</li>
-      ) : (
-        cart.map((item, index) => (
-          <li
-            key={index}
-            className="flex items-center p-3 space-x-3 border-b"
-          >
-            <img
-              src={item.artworkUrl100 || item.artwork_url}
-              alt={item.trackName || item.title}
-              className="w-12 h-12 rounded shadow"
-            />
-            <div className="flex-grow text-sm">
-              <p className="font-semibold">{item.trackName || item.title}</p>
-              <p className="text-gray-600">By: {item.artistName || item.artist}</p>
-              <p className="text-gray-600">Points: {item.points}</p>
-            </div>
-            <div className="flex flex-col space-y-1">
-              <button
-                onClick={() => handleRemoveFromCart(item.trackId)}
-                className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-              >
-                Remove
-              </button>
-              <button
-                onClick={() => handlePurchase(item.trackId, item.catalogueId)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
-              >
-                Purchase
-              </button>
-            </div>
-          </li>
-        ))
-      )}
-    </ul>
-    {cart.length > 0 && (
-      <div className="p-3 border-t">
-        <button
-          onClick={handlePurchaseAll}
-          className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm font-medium"
-        >
-          Purchase All
-        </button>
-      </div>
-    )}
-  </div>
-)}
+                <div className="absolute right-0 mt-2 w-80 bg-white text-black rounded shadow-lg max-h-96 overflow-y-auto z-50">
+                  <ul>
+                    {cart.length === 0 ? (
+                      <li className="p-4 text-center text-gray-500">Your cart is empty</li>
+                    ) : (
+                      cart.map((item, index) => (
+                        <li
+                          key={index}
+                          className="flex items-center p-3 space-x-3 border-b"
+                        >
+                          <img
+                            src={item.artworkUrl100 || item.artwork_url}
+                            alt={item.trackName || item.title}
+                            className="w-12 h-12 rounded shadow"
+                          />
+                          <div className="flex-grow text-sm">
+                            <p className="font-semibold">{item.trackName || item.title}</p>
+                            <p className="text-gray-600">By: {item.artistName || item.artist}</p>
+                            <p className="text-gray-600">Points: {item.price}</p>
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <button
+                              onClick={() => handleRemoveFromCart(item.trackId)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Remove
+                            </button>
+                            <button
+                              onClick={() => handlePurchase(item.trackId, catId)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Purchase
+                            </button>
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                  {cart.length > 0 && (
+                    <div className="p-3 border-t">
+                      <button
+                        onClick={handlePurchaseAll}
+                        className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm font-medium"
+                      >
+                        Purchase All
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
 
               {/* Profile dropdown */}
@@ -549,6 +555,7 @@ export default function ITunesSearchPage() {
                           <p className="font-bold">{item.title}</p>
                           <p className="text-sm text-gray-600">By: {item.artist}</p>
                           <p className="text-sm text-gray-600">Album: {item.album}</p>
+                          <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
                         </div>
                         <div className="flex flex-col items-end space-y-2 w-full">
                           {item.preview_url && (
@@ -587,7 +594,7 @@ export default function ITunesSearchPage() {
                       purchasedSongs.map((song, index) => (
                         <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
                           <div className="flex-shrink-0">
-                            <img src={song.artwork_url} alt={song.title || song.album} className="w-24 h-24 rounded" />
+                            <img src={song.artwork_url || song.artworkUrl100} alt={song.title || song.album} className="w-24 h-24 rounded" />
                           </div>
                           <div className="flex-grow">
                             <p className="font-bold">{song.title || song.album}</p>
