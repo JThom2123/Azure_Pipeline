@@ -7,6 +7,17 @@ import { fetchUserAttributes } from "aws-amplify/auth";
 import Link from "next/link";
 import { Authenticator } from "@aws-amplify/ui-react";
 
+interface Song {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string;
+  previewUrl: string;
+  artworkUrl100: string;
+  trackPrice: number;
+  points?: number;
+}
+
 export default function ITunesSearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -35,6 +46,7 @@ export default function ITunesSearchPage() {
     store_url: string;
     release_date: string;
     genre: string;
+    points?: number;
   }[] | null>(null);
   const [song_id, setSong] = useState<string[]>([]);
 
@@ -173,6 +185,45 @@ export default function ITunesSearchPage() {
     }
   };
 
+  
+
+  //purchase songs
+  const handlePurchase = async (songId: string, catalogueId: string) => {
+    const email = localStorage.getItem("userEmail"); // Ensure this is the correct way to get the user's email
+    if (!email) {
+      alert("User email is required for purchase.");
+      return;
+    }
+  
+    const purchaseData = {
+      email,
+      song_id: songId,
+      catalogue_id: catalogueId,
+    };
+  
+    try {
+      const response = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1//catalogue/purchase`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(purchaseData),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Purchase successful:", data);
+        alert(`Successfully purchased the song! Your new points balance is: ${data.data.new_points}`);
+      } else {
+        console.error("Error during purchase:", data.error);
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Network or server error:", error);
+      alert("There was an issue processing your purchase.");
+    }
+  };
+
   // Fetch catalog whenever sponsor changes
   useEffect(() => {
     if (selectedSponsor) {
@@ -184,31 +235,44 @@ export default function ITunesSearchPage() {
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10`
-      );
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=20`
+    );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const data = await response.json();
-      setResults(
-        data.results.map((item: any) => ({
-          ...item,
-          points: Math.floor(Math.random() * 100) + 1,
-        }))
-      );
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
     }
+
+    const data = await response.json();
+
+    // Filter search results to only show songs from sponsorCat
+    const filteredResults = data.results.filter((song: any) =>
+      sponsorCat?.some((catalogSong) => String(catalogSong.song_id) === String(song.trackId))
+    );
+
+    // Add point data from sponsorCat
+    const enrichedResults = filteredResults.map((song: any) => {
+      const catalogSong = sponsorCat?.find((c) =>
+        String(c.song_id) === String(song.trackId)
+      );
+
+      return {
+        ...song,
+        points: catalogSong?.points || Math.floor(Math.random() * 100) + 1, // Default to random points if not available
+      };
+    });
+
+    setResults(enrichedResults);
+  } catch (err) {
+    console.error("Search error:", err);
+    setError("Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
   };
 
   useEffect(() => {
@@ -246,7 +310,7 @@ export default function ITunesSearchPage() {
   const handleRemoveFromCart = (songId: number) => {
     setCart((prevCart) => prevCart.filter((song) => song.trackId !== songId));
   };
-
+  /*
   const handlePurchase = () => {
     if (!selectedSponsor) {
       alert("Please select a sponsor.");
@@ -279,7 +343,7 @@ export default function ITunesSearchPage() {
     setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
     setCart([]);
   };
-
+  */
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     const audio = e.target as HTMLAudioElement;
     setCurrentTime(audio.currentTime);
@@ -346,24 +410,55 @@ export default function ITunesSearchPage() {
                 {cartDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg max-h-80 overflow-y-auto z-50">
                     <ul>
-                      {cart.length === 0 ? (
+                    {cart.length === 0 ? (
                         <li className="p-4 text-center text-gray-500">Your cart is empty</li>
                       ) : (
                         cart.map((item, index) => (
-                          <li key={index} className="flex items-center p-3 space-x-2 border-b">
-                            <img src={item.artworkUrl100 || item.artwork_url} alt={item.trackName || item.title} className="w-12 h-12 rounded" />
-                            <div className="flex-grow">
-                              <p className="font-bold">{item.trackName || item.title}</p>
-                              <p className="text-sm text-gray-600">By: {item.artistName || item.artist}</p>
+                          <li
+                            key={index}
+                            className="flex flex-col items-center p-4 space-y-3 border-b w-full"
+                          >
+                            <img
+                              src={item.artworkUrl100 || item.artwork_url}
+                              alt={item.trackName || item.title}
+                              className="w-16 h-16 rounded shadow"
+                            />
+                            <div className="text-center space-y-1">
+                              <p className="font-semibold text-base break-words">
+                                {item.trackName || item.title}
+                              </p>
+                              <p className="text-sm text-gray-600 break-words">
+                                By: {item.artistName || item.artist}
+                              </p>
                               <p className="text-sm text-gray-600">Points: {item.points}</p>
                             </div>
-                            <button onClick={() => handleRemoveFromCart(item.trackId)} className="bg-red-500 text-white px-2 py-1 rounded">Remove</button>
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2 w-full justify-center">
+                              <button
+                                onClick={() => handleRemoveFromCart(item.trackId)}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-md text-sm w-full sm:w-auto"
+                              >
+                                Remove
+                              </button>
+                              <button
+                                onClick={() => handlePurchase(item.trackId, item.catalogueId)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-md text-sm w-full sm:w-auto"
+                              >
+                                Purchase
+                              </button>
+                            </div>
                           </li>
                         ))
                       )}
                     </ul>
                     <div className="flex justify-between p-3">
-                      <button onClick={handlePurchase} className="bg-blue-500 text-white px-4 py-2 rounded w-full">Purchase</button>
+                     {/*
+                    <button
+                      onClick={() => handlePurchase(item.trackId, item.catalogueId)} // Pass the correct songId and catalogueId
+                      className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+                    >
+                      Purchase
+                    </button>
+                          */}
                     </div>
                   </div>
                 )}
@@ -429,8 +524,9 @@ export default function ITunesSearchPage() {
                     <li>No songs found in the catalog.</li>
                   ) : (
                     Array.isArray(sponsorCat) && sponsorCat.map(item => (
+
                       <li
-                        key={item.song_id}
+                        key={item.song_id} // Ensures each list item has a unique "key"
                         className="border p-3 rounded shadow flex items-start space-x-4"
                         onClick={(e) => {
                           // Prevent modal opening when clicking on Add to Cart button
@@ -513,8 +609,17 @@ export default function ITunesSearchPage() {
                   <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
                   <p className="text-lg">Album: {selectedSong.collectionName}</p>
                   <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
-                  <div className="mt-4">
-                    <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                  <div className="mt-4 flex justify-between items-center">
+                    {/* Add to Cart button on the far right */}
+                    <button
+                      onClick={() => handleAddToCart(selectedSong)} // Calls handleAddToCart when clicked
+                      className="bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                      Add to Cart
+                    </button>
+                    <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
