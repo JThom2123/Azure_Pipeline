@@ -9,37 +9,46 @@ import { FaUserCircle } from "react-icons/fa";
 
 export default function SponsorAddPage() {
     const router = useRouter();
+    const [mode, setMode] = useState<"sponsor" | "driver">("sponsor");
     const [userRole, setUserRole] = useState<string | null>(null);
     const [sponsorCompany, setSponsorCompany] = useState<string | null>(null); // Sponsor's company
+    const [sponsorCompanyID, setSponsorCompanyID] = useState<number | null>(null);
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
     const [message, setMessage] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    /** Ensure only Sponsors can access this page */
     useEffect(() => {
-        const checkUserRole = async () => {
-            try {
-                const attributes = await fetchUserAttributes();
-                const role = attributes?.["custom:role"] || null;
-                const company = attributes?.["custom:sponsorCompany"] || null;
-                setUserRole(role);
-                setSponsorCompany(company);
-
-                if (role !== "Sponsor") {
-                    alert("Access Denied: You must be a Sponsor to access this page.");
-                    router.replace("/"); // Redirect non-sponsors
-                }
-            } catch (error) {
-                console.error("Error fetching user attributes:", error);
-                alert("⚠️ Error checking permissions. Redirecting...");
-                router.replace("/");
+        (async()=>{
+          try {
+            const attrs = await fetchUserAttributes();
+            const r = attrs["custom:role"] ?? null;
+            const c = attrs["custom:sponsorCompany"] ?? null;
+            setUserRole(r);
+            setSponsorCompany(c);
+            if (r !== "Sponsor") {
+              alert("Access Denied");
+              router.replace("/");
             }
-        };
-
-        checkUserRole();
-    }, [router]);
+            if (c){
+                const response = await fetch(
+                  `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`
+                );
+                const all = await response.json();
+                const found = all.find((company: any) => company.company_name === c);
+                if (found?.id) {
+                  setSponsorCompanyID(found.id);
+                } else {
+                    console.error("Could not find sponsor company ID");
+                }
+            }
+          } catch (err){
+            console.error(err);
+            router.replace("/");
+          }
+        })();
+      }, [router]);
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -58,85 +67,56 @@ export default function SponsorAddPage() {
         };
     }, [dropdownOpen]);
 
-    /** Create the new Sponsor user in Cognito */
-    const createUserInCognito = async (name: string, email: string, sponsorCompany: string) => {
+    async function signUpUser(userRole: "Sponsor"|"Driver") {
         try {
-            console.log("Creating Sponsor in Cognito:", { name, email, sponsorCompany });
-
-            await signUp({
-                username: email,
-                password: "TempPassword123!", // Must be changed later by the user
-                options: {
-                    userAttributes: {
-                        email,
-                        name,
-                        "custom:role": "Sponsor",
-                        "custom:sponsorCompany": sponsorCompany, // Assign the same sponsor company
-                    },
-                },
-            });
-
-            console.log("Sponsor successfully created in Cognito");
-            return true;
-        } catch (error) {
-            console.error("Error creating Sponsor in Cognito:", error);
-            setMessage("Failed to create Sponsor in Cognito. User may already exist.");
-            return false;
-        }
-    };
-
-    /** Step 2: Add the new Sponsor to the database via the API */
-    const addUserToDatabase = async (email: string, sponsorCompany: string) => {
-        try {
-            const apiUrl = "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user";
-
-            console.log("Sending API Request:", { email, sponsorCompany });
-
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, userType: "Sponsor", sponsorCompany }), // Include sponsorCompany
-            });
-
-            console.log("API Response Status:", response.status);
-
-            if (response.status === 201) {
-                const data = await response.json();
-                console.log("Sponsor successfully added to database:", data);
-                setMessage(`${email} has been added as a Sponsor under ${sponsorCompany}`);
-            } else {
-                const errorText = await response.text();
-                console.error("API Response Error:", response.status, errorText);
-                setMessage(`Failed to add Sponsor to database: ${errorText}`);
+          await signUp({
+            username: email,
+            password: "TempPass!123",
+            options:{
+              userAttributes:{
+                email, name,
+                "custom:role": userRole,
+                "custom:sponsorCompany": sponsorCompany!
+              }
             }
-        } catch (error) {
-            console.error("API Request Failed:", error);
-            setMessage("Failed to add Sponsor to database. Please try again.");
+          });
+          return true;
+        } catch(err:any){
+          setMessage("Cognito error: "+err.message);
+          return false;
         }
-    };
+      }
 
-    /** Handle Add Sponsor Form Submission */
-    const handleAddSponsor = async (event: React.FormEvent) => {
+      async function addToDB(userRole: "Sponsor"|"Driver") {
+        if (sponsorCompanyID == null) {
+            setMessage("Cannot add to DB: missing sponsor company ID");
+            return false;
+          }
+        try {
+          const res = await fetch(
+            "https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              userType: userRole,
+            }),
+          });
+          return res.ok;
+        } catch(err){
+          setMessage("DB error: "+err);
+        }
+    }
+
+    /** Handle Form Submission */
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-
-        if (!email.trim()) {
-            setMessage("⚠️ Email is required.");
-            return;
+        setMessage(null);
+        if(!name || !email){ setMessage("Name & email required"); return; }
+            const userRole = mode === "sponsor" ? "Sponsor" : "Driver";
+            if( !(await signUpUser(userRole)) ) return;
+            await addToDB(userRole);
         }
-
-        if (!sponsorCompany) {
-            setMessage("⚠️ You must have a sponsor company to add other sponsors.");
-            return;
-        }
-
-        // Create Sponsor in Cognito
-        const cognitoSuccess = await createUserInCognito(name, email, sponsorCompany);
-
-        if (cognitoSuccess) {
-            // Add Sponsor to MySQL Database
-            await addUserToDatabase(email, sponsorCompany);
-        }
-    };
 
     return (
         <Authenticator>
@@ -177,9 +157,19 @@ export default function SponsorAddPage() {
                                         Application</button>
                                 </Link>
                                 <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
-                                    Add Sponsors</button>
+                                    Add Users</button>
                             </div>
                             {/* Profile Dropdown */}
+                            <div className="space-x-4">
+                                <button
+                                    className={`px-3 py-1 rounded ${mode === "sponsor" ? "bg-blue-600" : "bg-gray-700"}`}
+                                    onClick={() => setMode("sponsor")}
+                                >Add Sponsor</button>
+                                <button
+                                    className={`px-3 py-1 rounded ${mode === "driver" ? "bg-blue-600" : "bg-gray-700"}`}
+                                    onClick={() => setMode("driver")}
+                                >Add Driver</button>
+                            </div>
                             <div className="relative" ref={dropdownRef}>
                                 <div
                                     className="cursor-pointer text-2xl"
@@ -207,29 +197,27 @@ export default function SponsorAddPage() {
                             </div>
                         </nav>
 
-                        {/* Sponsor Add Panel */}
+                        {/* New User Add Panel */}
                         <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-                            <h1 className="text-3xl font-bold mb-6">Sponsor - Add Other Sponsors</h1>
-
-                            {/* Success/Error Message */}
-                            {message && <p className="mb-4 text-lg">{message}</p>}
-
-                            {/* Sponsor Addition Form */}
-                            <form onSubmit={handleAddSponsor} className="bg-white p-6 rounded shadow-md">
-                                <label className="block text-lg font-semibold mb-2">Sponsor Full Name</label>
+                            <h1 className="text-3xl font-bold mb-6">Add Sponsors/Drivers to Your Sponsor Company</h1>
+                            <h2 className="text-2xl mb-4"> Add {mode==="sponsor" ? "Sponsor" : "Driver"} to your company.</h2>
+                            {/* New User Addition Form */}
+                            <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
+                            {message && <div className="mb-3 text-red-600">{message}</div>}
+                                <label className="block text-lg font-semibold mb-2">Full Name</label>
                                 <input
                                     type="text"
-                                    placeholder="Enter sponsor's full name"
+                                    placeholder="Enter full name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     required
                                     className="w-full p-2 border rounded mb-4"
                                 />
 
-                                <label className="block text-lg font-semibold mb-2">Sponsor Email</label>
+                                <label className="block text-lg font-semibold mb-2">Email</label>
                                 <input
                                     type="email"
-                                    placeholder="Enter sponsor's email"
+                                    placeholder="Enter user's email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -245,7 +233,7 @@ export default function SponsorAddPage() {
                                 />
 
                                 <button type="submit" className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                    Add Sponsor
+                                Create {mode==="sponsor" ? "Sponsor" : "Driver"}
                                 </button>
                             </form>
                         </div>
