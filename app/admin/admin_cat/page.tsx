@@ -19,12 +19,28 @@ export default function ITunesSearchPage() {
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
-  const [showCatalog, setShowCatalog] = useState(false);
   const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]);
+  const [showCatalog, setShowCatalog] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
+
+
+  const [formData, setFormData] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    sponsor_company_id: "",
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === "sponsor_company_id" ? Number(value) : value,  // cast to number
+    }));
+  };
 
   useEffect(() => {
     const getUserAttributes = async () => {
@@ -41,14 +57,6 @@ export default function ITunesSearchPage() {
     getUserAttributes();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: name === "sponsor_company_id" ? Number(value) : value,  // cast to number
-    }));
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -64,6 +72,28 @@ export default function ITunesSearchPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen]);
+
+
+
+  useEffect(() => {
+    const fetchSponsorCompanies = async () => {
+      try {
+        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
+
+        if (!response.ok) throw new Error("Failed to fetch sponsors");
+
+        const data: SponsorCompany[] = await response.json();
+        console.log("Fetched Sponsor Companies:", data); // Debugging log
+
+        setSponsorCompanies(data);
+      } catch (error) {
+        console.error("Error fetching sponsor companies:", error);
+      }
+    };
+
+    fetchSponsorCompanies();
+  }, []);
+
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -99,25 +129,6 @@ export default function ITunesSearchPage() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    const fetchSponsorCompanies = async () => {
-      try {
-        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
-
-        if (!response.ok) throw new Error("Failed to fetch sponsors");
-
-        const data: SponsorCompany[] = await response.json();
-        console.log("Fetched Sponsor Companies:", data); // Debugging log
-
-        setSponsorCompanies(data);
-      } catch (error) {
-        console.error("Error fetching sponsor companies:", error);
-      }
-    };
-
-    fetchSponsorCompanies();
-  }, []);
 
   const getStoredPoints = (trackId: number) => {
     const storedPoints = localStorage.getItem("songPoints");
@@ -295,6 +306,23 @@ export default function ITunesSearchPage() {
 
             <main className="max-w-3xl mx-auto p-6 flex-grow">
               <h1 className="text-3xl font-bold mb-6 text-center">Catalog</h1>
+
+              <label htmlFor="sponsor">Select a Sponsor Company:</label>
+                <select
+                  id="sponsorDropdown"
+                  name="sponsor_company_id"
+                  value={formData.sponsor_company_id}
+                  onChange={handleInputChange}
+                  className="border p-2 w-full mb-2"
+                >
+                  <option value="">Please Select a Sponsor Company</option>
+                  {sponsorCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.company_name}
+                    </option>
+                  ))}
+                </select>
+              
 
               {!showCatalog && (
                 <div className="flex gap-2 mb-6">
