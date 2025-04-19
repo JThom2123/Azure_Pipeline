@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes } from "aws-amplify/auth";
@@ -25,7 +25,7 @@ const ALWAYS_ON: NotifKey[] = [
   "dropped_by_sponsor",
 ];
 
-export default function NotificationSettingsPage() {
+export default function NotificationSetPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [settings, setSettings] = useState<Record<NotifKey, boolean>>({
     accepted_by_sponsor: true,
@@ -68,6 +68,41 @@ export default function NotificationSettingsPage() {
       setLoading(false);
     })();
   }, []);
+
+  /* may need this to fix build
+  useEffect(() => {
+  (async () => {
+    try {
+      const attrs = await fetchUserAttributes();
+      const email = attrs.email ?? null;
+      setUserEmail(email);
+      if (!email) return;
+
+      const res = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/notifications/settings?userEmail=${encodeURIComponent(
+          email
+        )}`
+      );
+      if (!res.ok) {
+        console.error("Failed to load notification settings");
+      } else {
+        const data: { notifName: string; enabled: boolean }[] = await res.json();
+        const next = { ...settings };
+        data.forEach((row) => {
+          if (row.notifName in next) {
+            next[row.notifName as NotifKey] = row.enabled;
+          }
+        });
+        setSettings(next);
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading notification settings:", err);
+    }
+  })();
+}, []);
+ */
 
   const toggle = async (key: NotifKey) => {
     if (!userEmail) return;
