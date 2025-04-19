@@ -7,6 +7,11 @@ import Link from "next/link";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import { Authenticator } from "@aws-amplify/ui-react";
 
+interface SponsorCompany {
+  id: number;
+  company_name: string;
+}
+
 export default function ITunesSearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -15,6 +20,7 @@ export default function ITunesSearchPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
   const [showCatalog, setShowCatalog] = useState(false);
+  const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]);
   const [companyName, setCompanyName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -34,6 +40,14 @@ export default function ITunesSearchPage() {
 
     getUserAttributes();
   }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === "sponsor_company_id" ? Number(value) : value,  // cast to number
+    }));
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -85,6 +99,25 @@ export default function ITunesSearchPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const fetchSponsorCompanies = async () => {
+      try {
+        const response = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
+
+        if (!response.ok) throw new Error("Failed to fetch sponsors");
+
+        const data: SponsorCompany[] = await response.json();
+        console.log("Fetched Sponsor Companies:", data); // Debugging log
+
+        setSponsorCompanies(data);
+      } catch (error) {
+        console.error("Error fetching sponsor companies:", error);
+      }
+    };
+
+    fetchSponsorCompanies();
+  }, []);
 
   const getStoredPoints = (trackId: number) => {
     const storedPoints = localStorage.getItem("songPoints");
