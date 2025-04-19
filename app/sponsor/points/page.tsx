@@ -222,10 +222,10 @@ export default function PointsSponsorPage() {
                                         Application
                                     </button>
                                 </Link>
-                                <Link href="/sponsor/addSponsors">
+                                <Link href="/sponsor/addUsers">
                                     <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                                        Add Sponsors
-                                    </button>
+                                        Add Users
+                                        </button>
                                 </Link>
                             </div>
 

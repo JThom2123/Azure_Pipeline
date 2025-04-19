@@ -222,10 +222,8 @@ const SponsorApplication = () => {
                                 <button className="bg-blue-600 px-4 py-2 rounded hover:bg-gray-600">
                                     Application
                                 </button>
-                                <Link href="/sponsor/addSponsors">
-                                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                                        Add Sponsors
-                                    </button>
+                                <Link href="/sponsor/addUsers">
+                                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Users</button>
                                 </Link>
                             </div>
 
