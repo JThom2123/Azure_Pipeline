@@ -169,17 +169,35 @@ export default function ITunesSearchPage() {
         idChunks.push(songIds.slice(i, i + 10));
       }
 
-      const fetchedSongs = [];
+      // Declare iTunesSongs 
+      let iTunesSongs: any[] = [];
+
       for (const chunk of idChunks) {
-        const iTunesResponse = await fetch(
-          `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
-        );
+        const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
         const iTunesData = await iTunesResponse.json();
-        fetchedSongs.push(...iTunesData.results);
+        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
       }
 
-      setSponsorCat(fetchedSongs);
-      console.log("Final catalog:", fetchedSongs);
+      // Merge sponsor price data into iTunes songs
+      const mergedSongs = iTunesSongs.map((itunesSong) => {
+        const custom = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
+        return {
+          song_id: custom?.song_id ?? itunesSong.trackId,
+          title: itunesSong.trackName,
+          artist: itunesSong.artistName,
+          album: itunesSong.collectionName,
+          artwork_url: itunesSong.artworkUrl100,
+          preview_url: itunesSong.previewUrl,
+          store_url: itunesSong.trackViewUrl,
+          release_date: itunesSong.releaseDate,
+          genre: itunesSong.primaryGenreName,
+          price: custom?.price ?? Math.floor(Math.random() * 100) + 1,
+          trackId: itunesSong.trackId,
+        };
+      });
+
+      setSponsorCat(mergedSongs);
+      console.log("Final catalog:", mergedSongs);
     } catch (err: any) {
       console.error("Error fetching song IDs or iTunes data:", err);
       setError(err.message);
@@ -188,7 +206,6 @@ export default function ITunesSearchPage() {
     }
   };
 
-  
 
   //purchase songs
   const handlePurchase = async (songId: string, catalogueId: number) => {
@@ -199,13 +216,13 @@ export default function ITunesSearchPage() {
       return;
     }
     */
-  
+
     const purchaseData = {
       email: userEmail,
       song_id: songId,
       catalogue_id: catId,
     };
-  
+
     try {
       const response = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/purchase`, {
         method: "POST",
@@ -214,7 +231,7 @@ export default function ITunesSearchPage() {
         },
         body: JSON.stringify(purchaseData),
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         console.log("Purchase successful:", data);
@@ -231,7 +248,7 @@ export default function ITunesSearchPage() {
 
 
 
-  
+
   // Fetch catalog whenever sponsor changes
   useEffect(() => {
     if (selectedSponsor) {
@@ -243,44 +260,44 @@ export default function ITunesSearchPage() {
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const response = await fetch(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=20`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
-    }
-
-    const data = await response.json();
-
-    // Filter search results to only show songs from sponsorCat
-    const filteredResults = data.results.filter((song: any) =>
-      sponsorCat?.some((catalogSong) => String(catalogSong.song_id) === String(song.trackId))
-    );
-
-    // Add point data from sponsorCat
-    const enrichedResults = filteredResults.map((song: any) => {
-      const catalogSong = sponsorCat?.find((c) =>
-        String(c.song_id) === String(song.trackId)
+    try {
+      const response = await fetch(
+        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=20`
       );
 
-      return {
-        ...song,
-        points: catalogSong?.price || Math.floor(Math.random() * 100) + 1, // Default to random points if not available
-      };
-    });
+      if (!response.ok) {
+        throw new Error("Failed to fetch data");
+      }
 
-    setResults(enrichedResults);
-  } catch (err) {
-    console.error("Search error:", err);
-    setError("Something went wrong. Please try again.");
-  } finally {
-    setLoading(false);
-  }
+      const data = await response.json();
+
+      // Filter search results to only show songs from sponsorCat
+      const filteredResults = data.results.filter((song: any) =>
+        sponsorCat?.some((catalogSong) => String(catalogSong.song_id) === String(song.trackId))
+      );
+
+      // Add point data from sponsorCat
+      const enrichedResults = filteredResults.map((song: any) => {
+        const catalogSong = sponsorCat?.find((c) =>
+          String(c.song_id) === String(song.trackId)
+        );
+
+        return {
+          ...song,
+          points: catalogSong?.price || Math.floor(Math.random() * 100) + 1, // Default to random points if not available
+        };
+      });
+
+      setResults(enrichedResults);
+    } catch (err) {
+      console.error("Search error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -422,56 +439,56 @@ export default function ITunesSearchPage() {
               <div className="relative ml-auto" ref={cartDropdownRef}>
                 <button onClick={() => setCartDropdownOpen(!cartDropdownOpen)} className="text-xl">🛒 Cart ({cart.length})</button>
                 {cartDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white text-black rounded shadow-lg max-h-96 overflow-y-auto z-50">
-                  <ul>
-                    {cart.length === 0 ? (
-                      <li className="p-4 text-center text-gray-500">Your cart is empty</li>
-                    ) : (
-                      cart.map((item, index) => (
-                        <li
-                          key={index}
-                          className="flex items-center p-3 space-x-3 border-b"
+                  <div className="absolute right-0 mt-2 w-80 bg-white text-black rounded shadow-lg max-h-96 overflow-y-auto z-50">
+                    <ul>
+                      {cart.length === 0 ? (
+                        <li className="p-4 text-center text-gray-500">Your cart is empty</li>
+                      ) : (
+                        cart.map((item, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center p-3 space-x-3 border-b"
+                          >
+                            <img
+                              src={item.artwork_url}
+                              alt={item.trackName || item.title}
+                              className="w-12 h-12 rounded shadow"
+                            />
+                            <div className="flex-grow text-sm">
+                              <p className="font-semibold">{item.trackName || item.title}</p>
+                              <p className="text-gray-600">By: {item.artistName || item.artist}</p>
+                              <p className="text-gray-600">Points: {item.price}</p>
+                            </div>
+                            <div className="flex flex-col space-y-1">
+                              <button
+                                onClick={() => handleRemoveFromCart(item.trackId)}
+                                className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                              >
+                                Remove
+                              </button>
+                              <button
+                                onClick={() => handlePurchase(item.trackId, catId)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                              >
+                                Purchase
+                              </button>
+                            </div>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                    {cart.length > 0 && (
+                      <div className="p-3 border-t">
+                        <button
+                          onClick={handlePurchaseAll}
+                          className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm font-medium"
                         >
-                          <img
-                            src={item.artworkUrl100 || item.artwork_url}
-                            alt={item.trackName || item.title}
-                            className="w-12 h-12 rounded shadow"
-                          />
-                          <div className="flex-grow text-sm">
-                            <p className="font-semibold">{item.trackName || item.title}</p>
-                            <p className="text-gray-600">By: {item.artistName || item.artist}</p>
-                            <p className="text-gray-600">Points: {item.price}</p>
-                          </div>
-                          <div className="flex flex-col space-y-1">
-                            <button
-                              onClick={() => handleRemoveFromCart(item.trackId)}
-                              className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Remove
-                            </button>
-                            <button
-                              onClick={() => handlePurchase(item.trackId, catId)}
-                              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Purchase
-                            </button>
-                          </div>
-                        </li>
-                      ))
+                          Purchase All
+                        </button>
+                      </div>
                     )}
-                  </ul>
-                  {cart.length > 0 && (
-                    <div className="p-3 border-t">
-                      <button
-                        onClick={handlePurchaseAll}
-                        className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm font-medium"
-                      >
-                        Purchase All
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
               </div>
 
               {/* Profile dropdown */}
@@ -528,61 +545,61 @@ export default function ITunesSearchPage() {
               {/* Catalog View */}
               {showCatalog ? (
                 <div className="text-center mt-4">
-                <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
-                <ul className="mt-4 space-y-4">
-                  {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
-                    <li>No songs found in the catalog.</li>
-                  ) : (
-                    Array.isArray(sponsorCat) && sponsorCat.map(item => (
+                  <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
+                  <ul className="mt-4 space-y-4">
+                    {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
+                      <li>No songs found in the catalog.</li>
+                    ) : (
+                      Array.isArray(sponsorCat) && sponsorCat.map(item => (
 
-                      <li
-                        key={item.song_id} // Ensures each list item has a unique "key"
-                        className="border p-3 rounded shadow flex items-start space-x-4"
-                        onClick={(e) => {
-                          // Prevent modal opening when clicking on Add to Cart button
-                          if ((e.target as HTMLElement).closest('button')) return;
-                          handleSongClick(item); // Open modal if it's not the Add to Cart button
-                        }}
-                      >
-                        <div className="flex-shrink-0">
-                          <img
-                            src={item.artwork_url}
-                            alt={item.title}
-                            className="w-24 h-24 rounded"
-                          />
-                        </div>
-                        <div className="flex-grow">
-                          <p className="font-bold">{item.title}</p>
-                          <p className="text-sm text-gray-600">By: {item.artist}</p>
-                          <p className="text-sm text-gray-600">Album: {item.album}</p>
-                          <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
-                        </div>
-                        <div className="flex flex-col items-end space-y-2 w-full">
-                          {item.preview_url && (
-                            <div className="w-full">
-                              <audio controls className="w-full">
-                                <source src={item.preview_url} type="audio/mpeg" />
-                                Your browser does not support the audio element.
-                              </audio>
-                              <div className="flex justify-between items-center mt-3 w-full">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent triggering modal on button click
-                                    handleAddToCart(item); // Add to cart on button click
-                                  }}
-                                  className="bg-green-500 text-white px-4 py-2 rounded"
-                                >
-                                  Add to Cart
-                                </button>
+                        <li
+                          key={item.song_id} // Ensures each list item has a unique "key"
+                          className="border p-3 rounded shadow flex items-start space-x-4"
+                          onClick={(e) => {
+                            // Prevent modal opening when clicking on Add to Cart button
+                            if ((e.target as HTMLElement).closest('button')) return;
+                            handleSongClick(item); // Open modal if it's not the Add to Cart button
+                          }}
+                        >
+                          <div className="flex-shrink-0">
+                            <img
+                              src={item.artwork_url}
+                              alt={item.title}
+                              className="w-24 h-24 rounded"
+                            />
+                          </div>
+                          <div className="flex-grow">
+                            <p className="font-bold">{item.title}</p>
+                            <p className="text-sm text-gray-600">By: {item.artist}</p>
+                            <p className="text-sm text-gray-600">Album: {item.album}</p>
+                            <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
+                          </div>
+                          <div className="flex flex-col items-end space-y-2 w-full">
+                            {item.preview_url && (
+                              <div className="w-full">
+                                <audio controls className="w-full">
+                                  <source src={item.preview_url} type="audio/mpeg" />
+                                  Your browser does not support the audio element.
+                                </audio>
+                                <div className="flex justify-between items-center mt-3 w-full">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent triggering modal on button click
+                                      handleAddToCart(item); // Add to cart on button click
+                                    }}
+                                    className="bg-green-500 text-white px-4 py-2 rounded"
+                                  >
+                                    Add to Cart
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
               ) : (
                 // My Songs View
                 <div className="text-center mt-4">
@@ -594,7 +611,7 @@ export default function ITunesSearchPage() {
                       purchasedSongs.map((song, index) => (
                         <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
                           <div className="flex-shrink-0">
-                            <img src={song.artwork_url || song.artworkUrl100} alt={song.title || song.album} className="w-24 h-24 rounded" />
+                            <img src={song.artwork_url} alt={song.title || song.album} className="w-24 h-24 rounded" />
                           </div>
                           <div className="flex-grow">
                             <p className="font-bold">{song.title || song.album}</p>
