@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
 import Link from "next/link";
-import { fetchUserAttributes, signOut, signUp } from "aws-amplify/auth";
+import { fetchUserAttributes, signUp } from "aws-amplify/auth";
 import { FaUserCircle } from "react-icons/fa";
 
 interface SponsorCompany {
@@ -133,42 +133,42 @@ export default function AdminPage() {
             // If Driver has a selected sponsor company, create connection
             if (userType === "Driver" && sponsorCompany) {
                 try {
-                  console.log("Fetching sponsor companies to match name:", sponsorCompany);
-                  const getCompanyRes = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
-                  const allCompanies: { id: string; company_name: string }[] = await getCompanyRes.json();
-                  const match = allCompanies.find((c) => c.company_name === sponsorCompany);
-              
-                  if (match?.id) {
-                    console.log("Matched sponsorCompanyID:", match.id);
-              
-                    const payload = {
-                      driverEmail: email,
-                      sponsorCompanyID: match.id,
-                    };
-              
-                    console.log("Sending relation payload:", payload);
-              
-                    const connectRes = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/relation", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(payload),
-                    });
-              
-                    console.log("Relation response status:", connectRes.status);
-                    if (!connectRes.ok) {
-                      const errText = await connectRes.text();
-                      console.error("Sponsor connection failed:", errText);
-                      setMessage("User added, but sponsor connection failed.");
+                    console.log("Fetching sponsor companies to match name:", sponsorCompany);
+                    const getCompanyRes = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies");
+                    const allCompanies: { id: string; company_name: string }[] = await getCompanyRes.json();
+                    const match = allCompanies.find((c) => c.company_name === sponsorCompany);
+
+                    if (match?.id) {
+                        console.log("Matched sponsorCompanyID:", match.id);
+
+                        const payload = {
+                            driverEmail: email,
+                            sponsorCompanyID: match.id,
+                        };
+
+                        console.log("Sending relation payload:", payload);
+
+                        const connectRes = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/relation", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload),
+                        });
+
+                        console.log("Relation response status:", connectRes.status);
+                        if (!connectRes.ok) {
+                            const errText = await connectRes.text();
+                            console.error("Sponsor connection failed:", errText);
+                            setMessage("User added, but sponsor connection failed.");
+                        }
+                    } else {
+                        console.warn("Sponsor company not found in DB:", sponsorCompany);
                     }
-                  } else {
-                    console.warn("Sponsor company not found in DB:", sponsorCompany);
-                  }
                 } catch (err) {
-                  console.error("Error during sponsor-driver connection:", err);
-                  setMessage("User added, but failed to link driver to sponsor.");
+                    console.error("Error during sponsor-driver connection:", err);
+                    setMessage("User added, but failed to link driver to sponsor.");
                 }
-              }
-              
+            }
+
 
             setMessage(`${email} added as ${userType}`);
         } catch (err: any) {
@@ -198,95 +198,123 @@ export default function AdminPage() {
 
     return (
         <Authenticator>
-            {() => (
-                <div className="flex flex-col h-screen">
-                    <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
-                        <div className="flex gap-4">
-                            <Link href="/admin/home"><button className="bg-gray-700 px-4 py-2 rounded">Home</button></Link>
-                            <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded">About Page</button></Link>
-                            <Link href="/admin/admin_cat"><button className="bg-gray-700 px-4 py-2 rounded">Catalog</button></Link>
-                            <Link href="/admin/applications">
+            {({ signOut, user }) => {
+                const handleSignOut = () => {
+                    signOut?.();
+                    router.replace("/");
+                };
+
+                const handleProfileClick = () => {
+                    router.push("/profile"); // Navigate to the profile page
+                  };
+
+                return (
+                    <div className="flex flex-col h-screen">
+                        <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
+                            <div className="flex gap-4">
+                                <Link href="/admin/home"><button className="bg-gray-700 px-4 py-2 rounded">Home</button></Link>
+                                <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded">About Page</button></Link>
+                                <Link href="/admin/admin_cat"><button className="bg-gray-700 px-4 py-2 rounded">Catalog</button></Link>
+                                <Link href="/admin/applications">
                                     <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
                                 </Link>
-                            <button className="bg-blue-600 px-4 py-2 rounded">Add Users</button>
-                            <Link href="/admin/reports"><button className="bg-gray-700 px-4 py-2 rounded">Reports</button></Link>
+                                <button className="bg-blue-600 px-4 py-2 rounded">Add Users</button>
+                                <Link href="/admin/reports"><button className="bg-gray-700 px-4 py-2 rounded">Reports</button></Link>
+                            </div>
+
+                            {/* Profile Dropdown */}
+                            <div className="relative" ref={dropdownRef}>
+                                <div
+                                    className="cursor-pointer text-2xl"
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                >
+                                    <FaUserCircle />
+                                </div>
+                                {dropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
+                                        <button
+                                            onClick={handleProfileClick}
+                                            className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                                        >
+                                            My Profile
+                                        </button>
+                                        <button
+                                            onClick={handleSignOut}
+                                            className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </nav>
+
+                        <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+                            <h1 className="text-3xl font-bold mb-6">Admin - Add Users</h1>
+                            {message && <p className="mb-4 text-lg">{message}</p>}
+
+                            <form onSubmit={handleAddUser} className="bg-white p-6 rounded shadow-md">
+                                <label className="block mb-1 font-semibold">Full Name</label>
+                                <input type="text" className="w-full p-2 border rounded mb-4" value={name} onChange={(e) => setName(e.target.value)} />
+
+                                <label className="block mb-1 font-semibold">Email</label>
+                                <input type="email" className="w-full p-2 border rounded mb-4" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+                                <label className="block mb-1 font-semibold">Role</label>
+                                <select className="w-full p-2 border rounded mb-4" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
+                                    <option value="Driver">Driver</option>
+                                    <option value="Sponsor">Sponsor</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+
+                                {selectedRole === "Sponsor" && (
+                                    <div>
+                                        <label className="block mb-1 font-semibold">Sponsor Company</label>
+                                        <select className="w-full p-2 border rounded mb-2" value={sponsorCompany} onChange={handleSponsorCompanyChange}>
+                                            <option value="">Select an existing company</option>
+                                            {sponsorCompanies.map((c, i) => (
+                                                <option key={i} value={c.company_name}>{c.company_name}</option>
+                                            ))}
+                                            <option value="new">Create New Company</option>
+                                        </select>
+
+                                        {isCreatingNewCompany && (
+                                            <div className="mt-2">
+                                                <input
+                                                    type="text"
+                                                    value={newSponsorCompany}
+                                                    onChange={(e) => setNewSponsorCompany(e.target.value)}
+                                                    className="w-full p-2 border rounded mb-2"
+                                                    placeholder="Enter new company name"
+                                                />
+                                                <button type="button" onClick={addNewSponsorCompany} className="bg-green-500 px-4 py-2 text-white rounded hover:bg-green-600">
+                                                    Add New Company
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {selectedRole === "Driver" && (
+                                    <div>
+                                        <label className="block mb-1 font-semibold">Optional Sponsor Company</label>
+                                        <select className="w-full p-2 border rounded mb-4" value={sponsorCompany} onChange={(e) => setSponsorCompany(e.target.value)}>
+                                            <option value="">No sponsor company</option>
+                                            {sponsorCompanies.map((c, i) => (
+                                                <option key={i} value={c.company_name}>{c.company_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                <button type="submit" className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">
+                                    Add User
+                                </button>
+                            </form>
                         </div>
-                        <div className="relative" ref={dropdownRef}>
-                            <FaUserCircle className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)} />
-                            {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-                                    <button onClick={() => router.push("/profile")} className="block px-4 py-2 w-full text-left hover:bg-gray-200">My Profile</button>
-                                    <button onClick={() => router.replace("/")} className="block px-4 py-2 w-full text-left hover:bg-gray-200">Sign Out</button>
-                                </div>
-                            )}
-                        </div>
-                    </nav>
-
-                    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-                        <h1 className="text-3xl font-bold mb-6">Admin - Add Users</h1>
-                        {message && <p className="mb-4 text-lg">{message}</p>}
-
-                        <form onSubmit={handleAddUser} className="bg-white p-6 rounded shadow-md">
-                            <label className="block mb-1 font-semibold">Full Name</label>
-                            <input type="text" className="w-full p-2 border rounded mb-4" value={name} onChange={(e) => setName(e.target.value)} />
-
-                            <label className="block mb-1 font-semibold">Email</label>
-                            <input type="email" className="w-full p-2 border rounded mb-4" value={email} onChange={(e) => setEmail(e.target.value)} />
-
-                            <label className="block mb-1 font-semibold">Role</label>
-                            <select className="w-full p-2 border rounded mb-4" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
-                                <option value="Driver">Driver</option>
-                                <option value="Sponsor">Sponsor</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-
-                            {selectedRole === "Sponsor" && (
-                                <div>
-                                    <label className="block mb-1 font-semibold">Sponsor Company</label>
-                                    <select className="w-full p-2 border rounded mb-2" value={sponsorCompany} onChange={handleSponsorCompanyChange}>
-                                        <option value="">Select an existing company</option>
-                                        {sponsorCompanies.map((c, i) => (
-                                            <option key={i} value={c.company_name}>{c.company_name}</option>
-                                        ))}
-                                        <option value="new">Create New Company</option>
-                                    </select>
-
-                                    {isCreatingNewCompany && (
-                                        <div className="mt-2">
-                                            <input
-                                                type="text"
-                                                value={newSponsorCompany}
-                                                onChange={(e) => setNewSponsorCompany(e.target.value)}
-                                                className="w-full p-2 border rounded mb-2"
-                                                placeholder="Enter new company name"
-                                            />
-                                            <button type="button" onClick={addNewSponsorCompany} className="bg-green-500 px-4 py-2 text-white rounded hover:bg-green-600">
-                                                Add New Company
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {selectedRole === "Driver" && (
-                                <div>
-                                    <label className="block mb-1 font-semibold">Optional Sponsor Company</label>
-                                    <select className="w-full p-2 border rounded mb-4" value={sponsorCompany} onChange={(e) => setSponsorCompany(e.target.value)}>
-                                        <option value="">No sponsor company</option>
-                                        {sponsorCompanies.map((c, i) => (
-                                            <option key={i} value={c.company_name}>{c.company_name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            <button type="submit" className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">
-                                Add User
-                            </button>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }}
         </Authenticator>
     );
-}
+};

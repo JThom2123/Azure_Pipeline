@@ -17,6 +17,9 @@ export default function AdminApplicationsPage() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [reasons, setReasons] = useState<{ [key: number]: string }>({});
+    const [selectedStatuses, setSelectedStatuses] = useState<{ [key: number]: string }>({});
+
     const fetchApplications = async () => {
         setLoading(true);
         try {
@@ -30,22 +33,35 @@ export default function AdminApplicationsPage() {
         }
     };
 
-    const updateStatus = async (appID: number, newStatus: string) => {
+    const updateStatus = async (appID: number) => {
+        const newStatus = selectedStatuses[appID];
+        const reason = reasons[appID] || "";
+
+        if (!newStatus) {
+            alert("Please select a status.");
+            return;
+        }
+
+        console.log("Sending update:", { appID, newStatus, reason });
+
         try {
             const res = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/status", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ appID, newStatus }),
+                body: JSON.stringify({ appID, newStatus, reason }),
             });
+
+            const text = await res.text();
+            console.log("Response:", res.status, text);
 
             if (res.ok) {
                 await fetchApplications();
             } else {
-                const error = await res.text();
-                console.error("Error updating status:", error);
+                alert("Failed to update. Please check the console for details.");
             }
         } catch (err) {
-            console.error("Error sending status update:", err);
+            console.error("Fetch error:", err);
+            alert("Error submitting update.");
         }
     };
 
@@ -124,52 +140,96 @@ export default function AdminApplicationsPage() {
                         </nav>
 
                         {/* Main Content */}
-                        <h1 className="text-3xl font-semibold mb-6">All Applications</h1>
-                        {loading ? (
-                            <p>Loading...</p>
-                        ) : (
-                            <table className="min-w-full border border-gray-300">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="border px-4 py-2">Full Name</th>
-                                        <th className="border px-4 py-2">Email</th>
-                                        <th className="border px-4 py-2">Date Submitted</th>
-                                        <th className="border px-4 py-2">Status</th>
-                                        <th className="border px-4 py-2">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {applications.map((app: any) => (
-                                        <tr key={app.appID}>
-                                            <td className="border px-4 py-2">{app.fullName}</td>
-                                            <td className="border px-4 py-2">{app.driverEmail}</td>
-                                            <td className="border px-4 py-2">{new Date(app.submitted_at).toLocaleDateString()}</td>
-                                            <td className="border px-4 py-2">{app.status}</td>
-                                            <td className="border px-4 py-2">
-                                                {app.status === 'pending' ? (
-                                                    <>
-                                                        <button
-                                                            onClick={() => updateStatus(app.appID, 'accepted')}
-                                                            className="bg-green-500 text-white px-2 py-1 rounded mr-2"
-                                                        >
-                                                            Accept
-                                                        </button>
-                                                        <button
-                                                            onClick={() => updateStatus(app.appID, 'rejected')}
-                                                            className="bg-red-500 text-white px-2 py-1 rounded"
-                                                        >
-                                                            Reject
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-gray-500 italic capitalize">{app.status}</span>
-                                                )}
-                                            </td>
+                        <main className="flex-grow flex flex-col items-center justify-center p-10">
+                            <h1 className="text-5xl font-light mb-4 text-center">
+                                Hello Admin, {user?.signInDetails?.loginId || "No email found"}
+                            </h1>
+                            <p className="text-lg text-center mb-8">
+                                Please review all incoming applications below as you please!
+                            </p>
+                            {loading ? (
+                                <p>Loading...</p>
+                            ) : (
+                                <table className="min-w-full border border-gray-300">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="border px-4 py-2">Full Name</th>
+                                            <th className="border px-4 py-2">Email</th>
+                                            <th className="border px-4 py-2">Date Submitted</th>
+                                            <th className="border px-4 py-2">Status</th>
+                                            <th className="border px-4 py-2">Actions</th>
+                                            <th className="border px-4 py-2">Reason</th>
+                                            <th className="border px-4 py-2">Update</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
+                                    </thead>
+                                    <tbody>
+                                        {applications.map((app: any) => (
+                                            <tr key={app.appID}>
+                                                <td className="border px-4 py-2">{app.fullName}</td>
+                                                <td className="border px-4 py-2">{app.driverEmail}</td>
+                                                <td className="border px-4 py-2">{new Date(app.submitted_at).toLocaleDateString()}</td>
+                                                <td className="border px-4 py-2">{app.status}</td>
+                                                <td className="border px-4 py-2">
+                                                    {app.status === 'submitted' ? (
+                                                        <>
+                                                            <select
+                                                                value={selectedStatuses[app.appID] || ""}
+                                                                onChange={(e) =>
+                                                                    setSelectedStatuses((prev) => ({
+                                                                        ...prev,
+                                                                        [app.appID]: e.target.value,
+                                                                    }))
+                                                                }
+                                                                className="border rounded px-2 py-1 mr-2"
+                                                            >
+                                                                <option value="">Select</option>
+                                                                <option value="accepted">Accept</option>
+                                                                <option value="rejected">Reject</option>
+                                                            </select>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-500 italic capitalize">{app.status}</span>
+                                                    )}
+                                                </td>
+
+                                                <td className="border px-4 py-2">
+                                                    {app.status === 'submitted' ? (
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Enter reason"
+                                                            value={reasons[app.appID] || ""}
+                                                            onChange={(e) =>
+                                                                setReasons((prev) => ({ ...prev, [app.appID]: e.target.value }))
+                                                            }
+                                                            className="border p-1 rounded w-full"
+
+                                                        />
+                                                    ) : (
+                                                        app.reason || "-"
+                                                    )}
+                                                </td>
+                                                <td className="border px-4 py-2">
+                                                    {app.status === 'submitted' ? (
+                                                        <button
+                                                            onClick={() => updateStatus(app.appID)}
+                                                            disabled={!selectedStatuses[app.appID]}
+                                                            className={`px-3 py-1 rounded ${selectedStatuses[app.appID]
+                                                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                                }`}
+                                                        >
+                                                            Submit
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-gray-500 italic capitalize">{app.status}</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </main>
                     </div>
                 );
             }}
