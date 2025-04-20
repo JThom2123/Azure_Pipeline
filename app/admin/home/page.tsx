@@ -133,7 +133,7 @@ export default function HomePage() {
                 Welcome, {user?.signInDetails?.loginId || "No email found"}
               </h1>
               <p className="text-lg text-center mb-8">
-                You are the best programmer in the world! Keep up the great work!! & you are an admin
+                Hello Admin! I hope you enjoy watching people, because that is all you do!
               </p>
 
               {/* New Users Table */}

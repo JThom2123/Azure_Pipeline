@@ -192,6 +192,9 @@ export default function HomePage() {
                 <Link href="/sponsor/addUsers">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Users</button>
                 </Link>
+                <Link href="/sponsor/sponsor_reports">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Reports</button>
+                </Link>
               </div>
 
               {/* Profile Dropdown */}
@@ -223,12 +226,12 @@ export default function HomePage() {
                 <span className="font-semibold">
                   {sponsorCompany ? sponsorCompany : "an unknown company"}
                 </span>
-                . You can view your driver rankings below.
+                . You can view your company's information below.
               </p>
 
               {/* Driver Information Table */}
               <div className="w-full max-w-lg">
-                <h2 className="text-2xl font-semibold text-center mb-4">Driver Rankings</h2>
+                <h2 className="text-2xl font-semibold text-center mb-4">Your Company's Drivers</h2>
                 <p className="mb-4 text-center text-sm italic">
                   Click "Impersonate" to see the site as that driver. The sponsor will assume the driver's view
                   and be able to perform any operations available to them.
