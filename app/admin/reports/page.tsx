@@ -23,6 +23,8 @@ export default function SponsorReportsPage() {
 
     const [connectedDrivers, setConnectedDrivers] = useState<string[]>([]);
     const [auditLogType, setAuditLogType] = useState("driver-applications");
+    const [allSponsors, setAllSponsors] = useState<any[]>([]);
+    const [selectedSponsorID, setSelectedSponsorID] = useState("ALL"); // default to all
 
     // Fetch user email & sponsor company on component mount
     useEffect(() => {
@@ -63,36 +65,22 @@ export default function SponsorReportsPage() {
     const handleDownload = async () => {
         setLoading(true);
         try {
-            if (!sponsorCompany) {
-                alert("Sponsor company not found.");
+            if (!selectedSponsorID) {
+                alert("Please select a sponsor company or choose 'All'");
                 return;
-            }
+              }              
 
             // Get sponsorCompanyID from your /companies endpoint using the name
             const companyRes = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`);
             const companies = await companyRes.json();
 
-            const match = companies.find((c: any) => c.company_name === sponsorCompany);
-            if (!match) {
-                alert("Sponsor company ID not found.");
-                return;
-            }
-
-            const sponsorCompanyID = match.id;
-            console.log("Download Params", {
-                reportType,
-                sponsorCompanyID,
-                startDate,
-                endDate,
-            });
-
             const query = new URLSearchParams({
                 reportType,
-                sponsorCompanyID: sponsorCompanyID,
+                sponsorCompanyID: selectedSponsorID,
                 startDate,
                 endDate,
                 ...(reportType === "audit-log" && { auditLogType })
-            });
+            });            
 
 
             const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/reports/sponsor?${query.toString()}`);
@@ -149,6 +137,19 @@ export default function SponsorReportsPage() {
 
         fetchConnectedDrivers();
     }, [sponsorCompany]);
+
+    useEffect(() => {
+        const fetchCompanies = async () => {
+            try {
+                const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`);
+                const data = await res.json();
+                setAllSponsors(data);
+            } catch (err) {
+                console.error("Failed to fetch sponsor companies", err);
+            }
+        };
+        fetchCompanies();
+    }, []);
 
     return (
         <Authenticator>
@@ -315,20 +316,20 @@ export default function SponsorReportsPage() {
                             )}
                             {reportType === "audit-log" && (
                                 <div className="mb-4">
-                                <label className="block font-semibold mb-1">Sponsor Emails (optional)</label>
-                                <select
-                                    value={driverEmail}
-                                    onChange={(e) => setDriverEmail(e.target.value)}
-                                    className="border p-2 rounded w-full"
-                                >
-                                    <option value="">All Drivers</option>
-                                    {connectedDrivers.map((email) => (
-                                        <option key={email} value={email}>
-                                            {email}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                    <label className="block font-semibold mb-1">Sponsor Company</label>
+                                    <select
+                                        value={selectedSponsorID}
+                                        onChange={(e) => setSelectedSponsorID(e.target.value)}
+                                        className="border p-2 rounded w-full"
+                                    >
+                                        <option value="ALL">All Sponsor Companies</option>
+                                        {allSponsors.map((sponsor) => (
+                                            <option key={sponsor.id} value={sponsor.id}>
+                                                {sponsor.company_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             )}
                             <button
                                 onClick={handleDownload}
