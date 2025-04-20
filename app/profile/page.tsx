@@ -239,7 +239,11 @@ export default function ProfilePage() {
     // Handle Catalog Button Click
     const handleCatalogClick = () => {
         if (userRole === "Driver") {
-            router.push("/driver/catalog");
+            router.push("/driver/driver_cat");
+        } else if (userRole === "Sponsor") {
+            router.push("/sponsor/sponsor_cat");
+        } else if (userRole === "Admin") {
+            router.push("/admin/admin_cat");
         } else {
             console.error("User role is not eligible for catalog access.");
         }
@@ -257,7 +261,7 @@ export default function ProfilePage() {
     // Handle Add Sponsors Button Click
     const handleAddSponsorsClick = () => {
         if (userRole === "Sponsor") {
-            router.push("/sponsor/addSponsors");
+            router.push("/sponsor/addUsers");
         } else {
             console.error("User role is not eligible for adding users.");
         }
@@ -291,10 +295,25 @@ export default function ProfilePage() {
             router.push("/driver/driver_app");
         } else if (userRole === "Sponsor") {
             router.push("/sponsor/sponsor_app");
-        } else {
+        } else if (userRole === "Admin") {
+            router.push("/admin/applications");
+        }
+        else {
             console.error("User role is not eligible for applications.");
         }
     };
+
+    // Hanlde Reports Button click
+    const handleReportsClick = () => {
+        if (userRole === "Sponsor") {
+            router.push("/sponsor/sponsor_reports");
+        } else if (userRole === "Admin") {
+            router.push("/admin/reports");
+        } else {
+            console.error("User role is not eligible for reports.");
+        }
+    }
+
     const handlePasswordResetRequest = async () => {
         try {
             await resetPassword({ username: userAttributes.email });
@@ -379,8 +398,8 @@ export default function ProfilePage() {
                                         Points
                                     </button>
                                 )}
-                                {/* Show Points button for Drivers and Sponsors */}
-                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                {/* Show Catalog button for Drivers and Sponsors */}
+                                {(userRole === "Driver" || userRole === "Sponsor" || userRole === "Admin") && (
                                     <button
                                         onClick={handleCatalogClick}
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
@@ -389,7 +408,7 @@ export default function ProfilePage() {
                                     </button>
                                 )}
                                 {/* Show Application button for Drivers and Sponsors */}
-                                {(userRole === "Driver" || userRole === "Sponsor") && (
+                                {(userRole === "Driver" || userRole === "Sponsor" || userRole === "Admin") && (
                                     <button
                                         onClick={handleApplicationClick}
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
@@ -413,7 +432,17 @@ export default function ProfilePage() {
                                         onClick={handleAddSponsorsClick}
                                         className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
                                     >
-                                        Add Sponsors
+                                        Add Users
+                                    </button>
+                                )}
+
+                                {/* Show Reports button for Sponsors & Admins*/}
+                                {(userRole === "Sponsor" || userRole === "Admin") && (
+                                    <button
+                                        onClick={handleReportsClick}
+                                        className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Reports
                                     </button>
                                 )}
                             </div>

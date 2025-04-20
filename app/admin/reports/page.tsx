@@ -211,7 +211,7 @@ export default function SponsorReportsPage() {
                             </h1>
                             <p className="text-lg text-center mb-8">
                                 You are logged in as an admin!
-                                You can view your reports below.
+                                You can download and view your reports below.
                             </p>
                             <div className="mb-4">
                                 <label className="block font-semibold mb-1">Report Type</label>
