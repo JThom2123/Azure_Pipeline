@@ -283,8 +283,10 @@ export default function ITunesSearchPage() {
         return;
       }
   
+      // ✅ Deduplicate song IDs
+      const songIds = [...new Set(songs.map((song: any) => song.song_id).filter(Boolean))];
+  
       // Chunk and fetch iTunes metadata
-      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
       const idChunks = [];
       for (let i = 0; i < songIds.length; i += 10) {
         idChunks.push(songIds.slice(i, i + 10));
@@ -323,6 +325,7 @@ export default function ITunesSearchPage() {
       setLoading(false);
     }
   };
+  
   
 
 
