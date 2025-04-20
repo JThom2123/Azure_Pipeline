@@ -150,6 +150,7 @@ export default function ITunesSearchPage() {
   //get catalog
   const getCatalog = async () => {
     setLoading(true);
+    //setError(null);  // Reset error state
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
       const response = await fetch(
@@ -161,37 +162,56 @@ export default function ITunesSearchPage() {
           },
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to fetch catalog");
       }
-
+  
       const data = await response.json();
       const catalogueId = data.catalogue?.catalogue_id;
       setCatId(catalogueId);
+  
       const songs = data.catalogue?.songs || [];
-
       if (songs.length === 0) {
         setSponsorCat([]);
         return;
       }
-
-      // Get all song_ids, batch them in chunks of 10 to query iTunes
+  
       const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      if (songIds.length === 0) {
+        console.error("No valid song IDs found");
+        setSponsorCat([]);
+        return;
+      }
+      console.log("Song IDs:", songIds);
+  
       const idChunks = [];
       for (let i = 0; i < songIds.length; i += 10) {
         idChunks.push(songIds.slice(i, i + 10));
       }
-
+      console.log("Song ID Chunks:", idChunks);
+  
       const fetchedSongs = [];
       for (const chunk of idChunks) {
-        const iTunesResponse = await fetch(
-          `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
-        );
-        const iTunesData = await iTunesResponse.json();
-        fetchedSongs.push(...iTunesData.results);
+        try {
+          const iTunesResponse = await fetch(
+            `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
+          );
+          const iTunesData = await iTunesResponse.json();
+          console.log("iTunes Response:", iTunesData);
+  
+          if (!iTunesData.results || iTunesData.results.length === 0) {
+            console.warn("No results for chunk:", chunk);
+            continue;
+          }
+  
+          fetchedSongs.push(...iTunesData.results);
+        } catch (err) {
+          console.error("Error fetching iTunes data for chunk:", chunk, err);
+          continue;
+        }
       }
-
+  
       setSponsorCat(fetchedSongs);
       console.log("Final catalog:", fetchedSongs);
     } catch (err: any) {
@@ -594,38 +614,47 @@ export default function ITunesSearchPage() {
                   ) : (
                     Array.isArray(sponsorCat) &&
                     sponsorCat.map((item, index) => {
-                      const artworkUrl = item.artwork_url || 'https://via.placeholder.com/150'; // Fallback image URL
-                      const songTitle = item.title || 'Unknown Song';
-                      const artistName = item.artist || 'Unknown Artist';
-                      const songId = item.song_id || index;
-              
-                      if (!songTitle || !artworkUrl || !artistName) {
-                        console.warn(`Missing required fields for item at index ${index}:`, item);
-                        return null;
+                      // Check for required fields to ensure key uniqueness
+                      const songId = item.song_id;
+                      const title = item.title;
+                      const album = item.album;
+                      const artist = item.artist;
+
+                      // Generate a unique key based on available fields
+                      let uniqueKey = songId;  // If songId exists, use it as the key
+                      if (!uniqueKey) {
+                        // Fallback to other fields for generating the key
+                        uniqueKey = `${title || 'unknown'}-${album || 'unknown'}-${artist || 'unknown'}-${index}`;
                       }
-              
+
+                      // Check if the generated key is valid and log any invalid keys
+                      if (!uniqueKey || uniqueKey.includes('undefined')) {
+                        console.error('Invalid key generated for item:', item);
+                        uniqueKey = `fallback-${index}`; // Fallback to a valid index-based key
+                      }
+
                       return (
                         <li
-                          key={songId}
+                          key={uniqueKey} // Ensure each list item has a unique "key" prop
                           className="border p-3 rounded shadow flex items-start space-x-4"
                           onClick={(e) => {
+                            // Prevent modal opening when clicking on Add to Cart button
                             if ((e.target as HTMLElement).closest('button')) return;
-                            handleSongClick(item); // Handle song click (open modal)
+                            handleSongClick(item); // Open modal if it's not the Add to Cart button
                           }}
                         >
                           <div className="flex-shrink-0">
                             <img
-                              src={artworkUrl}
-                              alt={songTitle}
+                              src={item.artwork_url}
+                              alt={item.title}
                               className="w-24 h-24 rounded"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/150'; // Placeholder fallback
-                              }}
                             />
                           </div>
                           <div className="flex-grow">
-                            <p className="font-bold">{songTitle}</p>
-                            <p className="text-sm text-gray-600">By: {artistName}</p>
+                            <p className="font-bold">{item.title}</p>
+                            <p className="text-sm text-gray-600">By: {item.artist}</p>
+                            <p className="text-sm text-gray-600">Album: {item.album}</p>
+                            <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
                           </div>
                           <div className="flex flex-col items-end space-y-2 w-full">
                             {item.preview_url && (
@@ -637,8 +666,8 @@ export default function ITunesSearchPage() {
                                 <div className="flex justify-between items-center mt-3 w-full">
                                   <button
                                     onClick={(e) => {
-                                      e.stopPropagation(); // Prevent triggering song click
-                                      handleAddToCart(item); // Add to cart
+                                      e.stopPropagation(); // Prevent triggering modal on button click
+                                      handleAddToCart(item); // Add to cart on button click
                                     }}
                                     className="bg-green-500 text-white px-4 py-2 rounded"
                                   >
