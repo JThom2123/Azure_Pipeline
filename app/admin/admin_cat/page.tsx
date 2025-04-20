@@ -18,6 +18,7 @@ export default function ITunesSearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [catId, setCatId] = useState<number>(0);
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
   const [sponsorCompanies, setSponsorCompanies] = useState<SponsorCompany[]>([]);
   const [showCatalog, setShowCatalog] = useState(false);
@@ -186,6 +187,10 @@ export default function ITunesSearchPage() {
           throw new Error(`Failed to save song: ${song.trackName}`);
         }
 
+        const data = await response.json();
+        const catalogueId = data.catalogue?.catalogue_id;
+        setCatId(catalogueId);
+
         console.log(`Saved: ${song.trackName}`);
       } catch (err) {
         console.error("Error saving song:", err);
@@ -198,7 +203,7 @@ export default function ITunesSearchPage() {
     const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
     for (const song of songs) {
       const payload = {
-        catalogue_id: sponsorCompanyName || "Unknown Company",
+        catalogue_id: catId,
         song_id: song.trackId,
       };
 
