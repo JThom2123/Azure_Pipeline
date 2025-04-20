@@ -144,7 +144,7 @@ export default function ITunesSearchPage() {
         }
         const data = await response.json();
         const catalogueId = data.catalogue?.catalogue_id;
-        setCatId(catalogueId)
+        setCatId(catalogueId);
 
         console.log(`Saved: ${song.trackName}`);
       } catch (err) {
