@@ -80,14 +80,13 @@ export default function SponsorReportsPage() {
                 startDate,
                 endDate,
                 ...(reportType === "audit-log" && { auditLogType })
-            });            
-
+              });                          
 
             const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/reports/sponsor?${query.toString()}`);
 
             if (!res.ok) {
                 const text = await res.text();
-                throw new Error(text);
+                throw Error(text);
             }
 
             const data = await res.json();
@@ -262,59 +261,6 @@ export default function SponsorReportsPage() {
                                     className="border p-2 rounded w-full"
                                 />
                             </div>
-
-                            {reportType === "sponsor-sales" && (
-                                <div className="mb-4">
-                                    <label className="block font-semibold mb-1">Sponsor Emails (optional)</label>
-                                    <select
-                                        value={driverEmail}
-                                        onChange={(e) => setDriverEmail(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    >
-                                        <option value="">All Drivers</option>
-                                        {connectedDrivers.map((email) => (
-                                            <option key={email} value={email}>
-                                                {email}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {reportType === "driver-sales" && (
-                                <div className="mb-4">
-                                    <label className="block font-semibold mb-1">Driver Emails (optional)</label>
-                                    <select
-                                        value={driverEmail}
-                                        onChange={(e) => setDriverEmail(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    >
-                                        <option value="">All Drivers</option>
-                                        {connectedDrivers.map((email) => (
-                                            <option key={email} value={email}>
-                                                {email}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {reportType === "invoice" && (
-                                <div className="mb-4">
-                                    <label className="block font-semibold mb-1">Sponsor Emails (optional)</label>
-                                    <select
-                                        value={driverEmail}
-                                        onChange={(e) => setDriverEmail(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    >
-                                        <option value="">All Drivers</option>
-                                        {connectedDrivers.map((email) => (
-                                            <option key={email} value={email}>
-                                                {email}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {reportType === "audit-log" && (
                                 <div className="mb-4">
                                     <label className="block font-semibold mb-1">Sponsor Company</label>
                                     <select
@@ -330,7 +276,7 @@ export default function SponsorReportsPage() {
                                         ))}
                                     </select>
                                 </div>
-                            )}
+                            
                             <button
                                 onClick={handleDownload}
                                 disabled={loading}
