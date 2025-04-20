@@ -16,6 +16,18 @@ export default function ITunesSearchPage() {
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
   const [showCatalog, setShowCatalog] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [sponsorCat, setSponsorCat] = useState<{
+    song_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    artwork_url: string;
+    preview_url: string;
+    store_url: string;
+    release_date: string;
+    genre: string;
+    price: number;
+  }[]>([]);
   const [catId, setCatId] = useState<number>(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -51,6 +63,80 @@ export default function ITunesSearchPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen]);
+
+
+
+  const getCatalog = async () => {
+    setLoading(true);
+    try {
+      const safeSponsor = sponsorCompany ?? "Unknown";
+      const response = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/?company_name=${encodeURIComponent(safeSponsor)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch catalog");
+      }
+
+      const data = await response.json();
+      const catalogueId = data.catalogue?.catalogue_id;
+      setCatId(catalogueId);
+      const songs = data.catalogue?.songs || [];
+
+      if (songs.length === 0) {
+        setSponsorCat([]);
+        return;
+      }
+
+      // Get all song_ids, batch them in chunks of 10 to query iTunes
+      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      const idChunks = [];
+      for (let i = 0; i < songIds.length; i += 10) {
+        idChunks.push(songIds.slice(i, i + 10));
+      }
+
+      // Declare iTunesSongs 
+      let iTunesSongs: any[] = [];
+
+      for (const chunk of idChunks) {
+        const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
+        const iTunesData = await iTunesResponse.json();
+        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
+      }
+
+      // Merge sponsor price data into iTunes songs
+      const mergedSongs = iTunesSongs.map((itunesSong) => {
+        const custom = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
+        return {
+          song_id: custom?.song_id ?? itunesSong.trackId,
+          title: itunesSong.trackName,
+          artist: itunesSong.artistName,
+          album: itunesSong.collectionName,
+          artwork_url: itunesSong.artworkUrl100,
+          preview_url: itunesSong.previewUrl,
+          store_url: itunesSong.trackViewUrl,
+          release_date: itunesSong.releaseDate,
+          genre: itunesSong.primaryGenreName,
+          price: custom?.price ?? Math.floor(Math.random() * 100) + 1,
+          trackId: itunesSong.trackId,
+        };
+      });
+
+      setSponsorCat(mergedSongs);
+      console.log("Final catalog:", mergedSongs);
+    } catch (err: any) {
+      console.error("Error fetching song IDs or iTunes data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   async function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -191,6 +277,12 @@ export default function ITunesSearchPage() {
     }
   };
 
+  useEffect(() => {
+    if (showCatalog) {
+      getCatalog();
+    }
+  }, [showCatalog]);
+
   const toggleSelectSong = (song: any) => {
     const isSelected = selectedSongs.some((selectedSong) => selectedSong.trackId === song.trackId);
     const updatedSelectedSongs = isSelected
@@ -304,80 +396,92 @@ export default function ITunesSearchPage() {
                 </form>
               )}
 
+
+              {showCatalog && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowCatalog(false)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                  >
+                    Back to Search
+                  </button>
+                </div>
+              )}
+
               {error && <p className="text-red-500 mt-2">{error}</p>}
 
               {showCatalog ? (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
-                  {selectedSongs.length === 0 ? (
-                    <p className="text-gray-500">You haven't selected any songs yet.</p>
-                  ) : (
-                    <ul className="space-y-4">
-                      {selectedSongs.map((song) => (
-                        <li key={song.trackId} className="flex justify-between items-center border p-4 rounded-lg shadow-md bg-white">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={song.artworkUrl100}
-                              alt={song.trackName}
-                              className="w-20 h-20 rounded"
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-semibold">{song.trackName} - {song.artistName}</span>
-                              <span className="text-sm text-gray-500">Points: {song.points}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => toggleSelectSong(song)}
-                            className="bg-red-500 text-white px-4 py-2 rounded"
-                          >
-                            Deselect
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : (
-                <ul className="space-y-4">
-                  {results.map((item) => (
-                    <li key={item.trackId || item.collectionId} className="border p-3 rounded shadow flex items-center">
-                      <img
-                        src={item.artworkUrl100}
-                        alt={item.trackName || item.collectionName}
-                        className="w-24 h-24 rounded mr-4"
-                      />
-                      <div className="flex-grow">
-                        <p className="font-bold">
-                          {item.trackName || item.collectionName} - {item.artistName}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Points:{" "}
-                          <input
-                            type="number"
-                            value={item.points}
-                            onChange={(e) =>
-                              handleEditPoints(item.trackId, Number(e.target.value))
-                            }
-                            className="w-16 p-1 border rounded"
-                          />
-                        </p>
-                      </div>
-                      {item.previewUrl && (
-                        <audio controls className="ml-4">
-                          <source src={item.previewUrl} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                      )}
-                      <button
-                        onClick={() => toggleSelectSong(item)}
-                        className={`ml-4 px-4 py-2 rounded ${selectedSongs.some((song) => song.trackId === item.trackId) ? 'bg-green-500' : 'bg-gray-500'}`}
-                      >
-                        {selectedSongs.some((song) => song.trackId === item.trackId) ? 'Deselect' : 'Select'}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+  <div className="space-y-6">
+    <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
+    {selectedSongs.length === 0 ? (
+      <p className="text-gray-500">You haven't selected any songs yet.</p>
+    ) : (
+      <ul className="space-y-4">
+        {selectedSongs.map((song) => (
+          <li key={song.trackId} className="flex justify-between items-center border p-4 rounded-lg shadow-md bg-white">
+            <div className="flex items-center space-x-4">
+              <img
+                src={song.artworkUrl100}
+                alt={song.trackName}
+                className="w-20 h-20 rounded"
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold">{song.trackName} - {song.artistName}</span>
+                <span className="text-sm text-gray-500">Points: {song.points}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => toggleSelectSong(song)}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Deselect
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+) : (
+  <ul className="space-y-4">
+    {results.map((item) => (
+      <li key={item.trackId || item.collectionId} className="border p-3 rounded shadow flex items-center">
+        <img
+          src={item.artworkUrl100}
+          alt={item.trackName || item.collectionName}
+          className="w-24 h-24 rounded mr-4"
+        />
+        <div className="flex-grow">
+          <p className="font-bold">
+            {item.trackName || item.collectionName} - {item.artistName}
+          </p>
+          <p className="text-sm text-gray-600">
+            Points:{" "}
+            <input
+              type="number"
+              value={item.points}
+              onChange={(e) =>
+                handleEditPoints(item.trackId, Number(e.target.value))
+              }
+              className="w-16 p-1 border rounded"
+            />
+          </p>
+        </div>
+        {item.previewUrl && (
+          <audio controls className="ml-4">
+            <source src={item.previewUrl} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+        )}
+        <button
+          onClick={() => toggleSelectSong(item)}
+          className={`ml-4 px-4 py-2 rounded ${selectedSongs.some((song) => song.trackId === item.trackId) ? 'bg-green-500' : 'bg-gray-500'}`}
+        >
+          {selectedSongs.some((song) => song.trackId === item.trackId) ? 'Deselect' : 'Select'}
+        </button>
+      </li>
+    ))}
+  </ul>
+)}
             </main>
           </div>
         );
