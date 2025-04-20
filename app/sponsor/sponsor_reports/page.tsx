@@ -7,7 +7,6 @@ import "@aws-amplify/ui-react/styles.css";
 import Link from "next/link";
 import { FaUserCircle } from "react-icons/fa";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import { format } from "date-fns";
 
 export default function SponsorReportsPage() {
     const router = useRouter();
@@ -23,6 +22,7 @@ export default function SponsorReportsPage() {
     const [loading, setLoading] = useState(false);
 
     const [connectedDrivers, setConnectedDrivers] = useState<string[]>([]);
+    const [auditLogType, setAuditLogType] = useState("driver-applications");
 
     // Fetch user email & sponsor company on component mount
     useEffect(() => {
@@ -79,7 +79,7 @@ export default function SponsorReportsPage() {
             }
 
             const sponsorCompanyID = match.id;
-            console.log("📤 Download Params", {
+            console.log("Download Params", {
                 reportType,
                 sponsorCompanyID,
                 startDate,
@@ -91,6 +91,7 @@ export default function SponsorReportsPage() {
                 sponsorCompanyID: sponsorCompanyID,
                 startDate,
                 endDate,
+                ...(reportType === "audit-log" && { auditLogType })
             });
 
 
@@ -138,7 +139,7 @@ export default function SponsorReportsPage() {
                 const driverEmails = driverData.map((d: any) => d.driverEmail);
 
                 setConnectedDrivers(driverEmails);
-                console.log("✅ Updated connectedDrivers state:", driverEmails); // ← this will log actual state values!
+                console.log("Updated connectedDrivers state:", driverEmails); // ← this will log actual state values!
 
 
             } catch (err) {
@@ -229,6 +230,21 @@ export default function SponsorReportsPage() {
                                     <option value="audit-log">Audit Log</option>
                                 </select>
                             </div>
+                            {reportType === "audit-log" && (
+                                <div className="mb-4">
+                                    <label className="block font-semibold mb-1">Audit Log Type</label>
+                                    <select
+                                        value={auditLogType}
+                                        onChange={(e) => setAuditLogType(e.target.value)}
+                                        className="border p-2 rounded w-full"
+                                    >
+                                        <option value="driver-applications">Driver Applications</option>
+                                        <option value="point-changes">Point Changes</option>
+                                        <option value="password-changes">Password Changes</option>
+                                        <option value="login-attempts">Login Attempts</option>
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="mb-4">
                                 <label className="block font-semibold mb-1">Start Date</label>
@@ -267,7 +283,6 @@ export default function SponsorReportsPage() {
                                     </select>
                                 </div>
                             )}
-
                             <button
                                 onClick={handleDownload}
                                 disabled={loading}

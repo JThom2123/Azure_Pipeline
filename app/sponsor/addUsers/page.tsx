@@ -135,7 +135,7 @@ export default function SponsorAddPage() {
                         {/* Navigation Bar */}
                         <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
                             <div className="flex space-x-4">
-                                <Link href="/">
+                                <Link href="/sponsor/home">
                                     <button className="bg-gray-700 px-4 py-2 rounded text-white">
                                         Home</button>
                                 </Link>

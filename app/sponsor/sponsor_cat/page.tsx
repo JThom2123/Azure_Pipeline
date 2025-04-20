@@ -232,6 +232,9 @@ export default function ITunesSearchPage() {
                 <Link href="/sponsor/addUsers">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Add Users</button>
                 </Link>
+                <Link href="/sponsor/sponsor_reports">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Reports</button>
+                </Link>
               </div>
 
               <div className="relative" ref={dropdownRef}>
