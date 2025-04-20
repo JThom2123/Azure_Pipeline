@@ -343,6 +343,15 @@ export default function ProfilePage() {
                 newPassword: newPassword,
             });
 
+            // Audit Log to Lambda
+            await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/audit/password-change", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email: userAttributes.email }),
+            });
+
             alert("Password successfully reset! You will now be signed out.");
 
             await signOut(); // Sign out the user completely
