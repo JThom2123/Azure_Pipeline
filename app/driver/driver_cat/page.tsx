@@ -236,6 +236,8 @@ export default function ITunesSearchPage() {
       if (response.ok) {
         console.log("Purchase successful:", data);
         alert(`Successfully purchased the song! Your new points balance is: ${data.data.new_points}`);
+        handleRemoveFromCart(songId);
+        getUserPurchases();
       } else {
         console.error("Error during purchase:", data.error);
         alert(`Error: ${data.error}`);
@@ -247,6 +249,81 @@ export default function ITunesSearchPage() {
   };
 
 
+  useEffect(() => {
+    getUserPurchases();
+  }, []);
+
+  const getUserPurchases = async () => {
+    if (!userEmail) {
+      console.warn("No user email found — skipping purchase fetch.");
+      return;
+    }
+  
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${encodeURIComponent(userEmail)}/purchases`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch purchased songs");
+      }
+  
+      const data = await response.json();
+      const songs = data.songs || [];
+  
+      if (songs.length === 0) {
+        setPurchasedSongs([]);
+        return;
+      }
+  
+      // Chunk and fetch iTunes metadata
+      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      const idChunks = [];
+      for (let i = 0; i < songIds.length; i += 10) {
+        idChunks.push(songIds.slice(i, i + 10));
+      }
+  
+      let iTunesSongs: any[] = [];
+  
+      for (const chunk of idChunks) {
+        const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
+        const iTunesData = await iTunesResponse.json();
+        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
+      }
+  
+      const mergedSongs = iTunesSongs.map((itunesSong) => {
+        const original = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
+        return {
+          song_id: original?.song_id ?? itunesSong.trackId,
+          title: itunesSong.trackName,
+          artist: itunesSong.artistName,
+          album: itunesSong.collectionName,
+          artwork_url: itunesSong.artworkUrl100,
+          preview_url: itunesSong.previewUrl,
+          store_url: itunesSong.trackViewUrl,
+          release_date: itunesSong.releaseDate,
+          genre: itunesSong.primaryGenreName,
+          trackId: itunesSong.trackId,
+        };
+      });
+  
+      setPurchasedSongs(mergedSongs);
+      console.log("Final purchased songs:", mergedSongs);
+    } catch (err: any) {
+      console.error("Error fetching purchases or iTunes data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
 
   // Fetch catalog whenever sponsor changes
@@ -332,7 +409,7 @@ export default function ITunesSearchPage() {
     setCart((prevCart) => [...prevCart, song]);
   };
 
-  const handleRemoveFromCart = (songId: number) => {
+  const handleRemoveFromCart = (songId: string) => {
     setCart((prevCart) => prevCart.filter((song) => song.trackId !== songId));
   };
   /*
@@ -571,7 +648,7 @@ export default function ITunesSearchPage() {
                           <div className="flex-grow">
                             <p className="font-bold">{item.title}</p>
                             <p className="text-sm text-gray-600">By: {item.artist}</p>
-                            <p className="text-sm text-gray-600">Album: {item.album}</p>
+                            
                             <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
                           </div>
                           <div className="flex flex-col items-end space-y-2 w-full">
@@ -632,25 +709,37 @@ export default function ITunesSearchPage() {
 
             {/* Song modal */}
             {modalOpen && selectedSong && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" onClick={handleModalClose}>
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-                  <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
-                  <p className="text-lg">Album: {selectedSong.collectionName}</p>
-                  <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
-                  <div className="mt-4 flex justify-between items-center">
-                    {/* Add to Cart button on the far right */}
-                    <button
-                      onClick={() => handleAddToCart(selectedSong)} // Calls handleAddToCart when clicked
-                      className="bg-green-500 text-white px-4 py-2 rounded"
-                    >
-                      Add to Cart
-                    </button>
-                    <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">
-                      Close
-                    </button>
-                  </div>
+            <div
+              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+              onClick={handleModalClose}
+            >
+              <div
+                className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-xl font-bold mb-4">{selectedSong.title}</h2>
+                <p className="text-lg">Album: {selectedSong.album}</p>
+                <p className="text-lg">Genre: {selectedSong.genre}</p>
+                <p className="text-lg">Price: {selectedSong.price} pts</p>
+
+
+
+                <div className="mt-4 flex justify-between items-center">
+                  <button
+                    onClick={() => handleAddToCart(selectedSong)}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={handleModalClose}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
+            </div>
             )}
           </div>
         );
