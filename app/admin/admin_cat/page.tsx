@@ -24,6 +24,18 @@ export default function ITunesSearchPage() {
   const [showCatalog, setShowCatalog] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [sponsorCat, setSponsorCat] = useState<{
+    song_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    artwork_url: string;
+    preview_url: string;
+    store_url: string;
+    release_date: string;
+    genre: string;
+    price: number;
+  }[]>([]);
   const router = useRouter();
   const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
 
@@ -198,12 +210,85 @@ export default function ITunesSearchPage() {
     }
   };
 
+
+  const getCatalog = async () => {
+    setLoading(true);
+    try {
+      const safeSponsor = sponsorCompany ?? "Unknown";
+      const response = await fetch(
+        `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/?company_name=${encodeURIComponent(safeSponsor)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch catalog");
+      }
+
+      const data = await response.json();
+      const catalogueId = data.catalogue?.catalogue_id;
+      setCatId(catalogueId);
+      const songs = data.catalogue?.songs || [];
+
+      if (songs.length === 0) {
+        setSponsorCat([]);
+        return;
+      }
+
+      // Get all song_ids, batch them in chunks of 10 to query iTunes
+      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
+      const idChunks = [];
+      for (let i = 0; i < songIds.length; i += 10) {
+        idChunks.push(songIds.slice(i, i + 10));
+      }
+
+      // Declare iTunesSongs 
+      let iTunesSongs: any[] = [];
+
+      for (const chunk of idChunks) {
+        const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
+        const iTunesData = await iTunesResponse.json();
+        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
+      }
+
+      // Merge sponsor price data into iTunes songs
+      const mergedSongs = iTunesSongs.map((itunesSong) => {
+        const custom = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
+        return {
+          song_id: custom?.song_id ?? itunesSong.trackId,
+          title: itunesSong.trackName,
+          artist: itunesSong.artistName,
+          album: itunesSong.collectionName,
+          artwork_url: itunesSong.artworkUrl100,
+          preview_url: itunesSong.previewUrl,
+          store_url: itunesSong.trackViewUrl,
+          release_date: itunesSong.releaseDate,
+          genre: itunesSong.primaryGenreName,
+          price: custom?.price ?? Math.floor(Math.random() * 100) + 1,
+          trackId: itunesSong.trackId,
+        };
+      });
+
+      setSponsorCat(mergedSongs);
+      console.log("Final catalog:", mergedSongs);
+    } catch (err: any) {
+      console.error("Error fetching song IDs or iTunes data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removeSelectedSongsFromBackend = async (songs: any[]) => {
     const attributes = await fetchUserAttributes();
     const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
     for (const song of songs) {
       const payload = {
-        catalogue_id: catId,
+        catalogue_id: sponsorCompany,
         song_id: song.trackId,
       };
 
@@ -233,6 +318,12 @@ export default function ITunesSearchPage() {
       }
     }
   };
+
+  useEffect(() => {
+    if (showCatalog) {
+      getCatalog();
+    }
+  }, [showCatalog]);
 
   const toggleSelectSong = (song: any) => {
     const isSelected = selectedSongs.some((selectedSong) => selectedSong.trackId === song.trackId);
@@ -273,20 +364,14 @@ export default function ITunesSearchPage() {
                     About Page
                   </button>
                 </Link>
-                <button className="bg-blue-600 px-4 py-2 rounded">Catalog</button>
-                 <Link href="/admin/applications">
-                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    Application
-                  </button>
-                </Link>
                 <Link href="/admin/addUsers">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Add Users
                   </button>
                 </Link>
-                <Link href="/admin/reports">
+                <Link href="/admin/admin_cat">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    Reports
+                    Catalog
                   </button>
                 </Link>
               </div>
@@ -336,13 +421,7 @@ export default function ITunesSearchPage() {
               
 
               {!showCatalog && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSearch();
-                  }}
-                  className="flex gap-2 mb-6"
-                >
+                <div className="flex gap-2 mb-6">
                   <input
                     type="text"
                     value={searchTerm}
@@ -350,9 +429,8 @@ export default function ITunesSearchPage() {
                     placeholder="Search for songs about TRUCKS..."
                     className="border p-2 rounded w-full"
                   />
-
                   <button
-                    type="submit"
+                    onClick={handleSearch}
                     disabled={loading}
                     className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
@@ -360,13 +438,12 @@ export default function ITunesSearchPage() {
                   </button>
 
                   <button
-                    type="button"
                     onClick={() => setShowCatalog(true)}
                     className="bg-green-500 text-white px-4 py-2 rounded ml-4"
                   >
                     View My Catalog
                   </button>
-                </form>
+                </div>
               )}
 
               {showCatalog && (
