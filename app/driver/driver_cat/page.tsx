@@ -48,7 +48,7 @@ export default function ITunesSearchPage() {
     release_date: string;
     genre: string;
     price: number;
-  }[] | null>(null);
+  }[]>([]);
 
   const [mySongs, getMySongs] = useState<{
     song_id: string;
@@ -147,10 +147,16 @@ export default function ITunesSearchPage() {
     getUserEmailAndSponsorData();
   }, [userEmail]);
 
+
+  useEffect(() => {
+    if (selectedSponsor) {
+      getCatalog(); // Fetch catalog data
+    }
+  }, [selectedSponsor]);
+
   //get catalog
   const getCatalog = async () => {
     setLoading(true);
-    //setError(null);  // Reset error state
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
       const response = await fetch(
@@ -168,57 +174,42 @@ export default function ITunesSearchPage() {
       }
   
       const data = await response.json();
-      const catalogueId = data.catalogue?.catalogue_id;
-      setCatId(catalogueId);
+      const songs = data.catalogue?.songs || []; // Assuming this structure
   
-      const songs = data.catalogue?.songs || [];
       if (songs.length === 0) {
         setSponsorCat([]);
         return;
       }
   
-      const songIds = songs.map((song: any) => song.song_id).filter(Boolean);
-      if (songIds.length === 0) {
-        console.error("No valid song IDs found");
-        setSponsorCat([]);
-        return;
-      }
-      console.log("Song IDs:", songIds);
+      // Loop through the songs and fetch song details
+      const songDetails = await Promise.all(
+        songs.map(async (song: any) => { // 'any' used here as a quick fix
+          console.log("Fetching details for songId:", song.song_id); // Assuming the song object has a song_id field
+          const songDetails = await fetchSongDetails(song.song_id); // Pass the song_id
+          return songDetails;
+        })
+      );
   
-      const idChunks = [];
-      for (let i = 0; i < songIds.length; i += 10) {
-        idChunks.push(songIds.slice(i, i + 10));
-      }
-      console.log("Song ID Chunks:", idChunks);
-  
-      const fetchedSongs = [];
-      for (const chunk of idChunks) {
-        try {
-          const iTunesResponse = await fetch(
-            `https://itunes.apple.com/lookup?id=${chunk.join(",")}`
-          );
-          const iTunesData = await iTunesResponse.json();
-          console.log("iTunes Response:", iTunesData);
-  
-          if (!iTunesData.results || iTunesData.results.length === 0) {
-            console.warn("No results for chunk:", chunk);
-            continue;
-          }
-  
-          fetchedSongs.push(...iTunesData.results);
-        } catch (err) {
-          console.error("Error fetching iTunes data for chunk:", chunk, err);
-          continue;
-        }
-      }
-  
-      setSponsorCat(fetchedSongs);
-      console.log("Final catalog:", fetchedSongs);
+      setSponsorCat(songDetails);
+      console.log("Final catalog:", songDetails);
     } catch (err: any) {
-      console.error("Error fetching song IDs or iTunes data:", err);
+      console.error("Error fetching song details:", err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchSongDetails = async (songId: string): Promise<any> => {
+    try {
+      const response = await fetch(
+        `https://itunes.apple.com/lookup?id=${songId}`
+      );
+      const data = await response.json();
+      return data.results[0]; // Assuming iTunes returns the song as the first result
+    } catch (err) {
+      console.error("Error fetching song details:", err);
+      return null;
     }
   };
 
@@ -612,49 +603,32 @@ export default function ITunesSearchPage() {
                   {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
                     <li>No songs found in the catalog.</li>
                   ) : (
-                    Array.isArray(sponsorCat) &&
-                    sponsorCat.map((item, index) => {
-                      // Check for required fields to ensure key uniqueness
-                      const songId = item.song_id;
-                      const title = item.title;
-                      const album = item.album;
-                      const artist = item.artist;
-
-                      // Generate a unique key based on available fields
-                      let uniqueKey = songId;  // If songId exists, use it as the key
-                      if (!uniqueKey) {
-                        // Fallback to other fields for generating the key
-                        uniqueKey = `${title || 'unknown'}-${album || 'unknown'}-${artist || 'unknown'}-${index}`;
-                      }
-
-                      // Check if the generated key is valid and log any invalid keys
-                      if (!uniqueKey || uniqueKey.includes('undefined')) {
-                        console.error('Invalid key generated for item:', item);
-                        uniqueKey = `fallback-${index}`; // Fallback to a valid index-based key
-                      }
-
+                    sponsorCat?.map((item, index) => {
+                      // Access song properties or provide fallback values
+                      const songId = item.song_id || `unknown-${index}`; // Ensure songId is unique
+                      const title = item.title || 'Untitled';
+                      const album = item.album || 'Unknown Album';
+                      const artist = item.artist || 'Unknown Artist';
+                      const artworkUrl = item.artwork_url || 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
+                      const price = item.price ?? 'N/A';
+              
+                      // Generate a unique key by appending index if songId is unknown
+                      const uniqueKey = songId; // songId or `unknown-${index}` if fallback
+              
                       return (
-                        <li
-                          key={uniqueKey} // Ensure each list item has a unique "key" prop
-                          className="border p-3 rounded shadow flex items-start space-x-4"
-                          onClick={(e) => {
-                            // Prevent modal opening when clicking on Add to Cart button
-                            if ((e.target as HTMLElement).closest('button')) return;
-                            handleSongClick(item); // Open modal if it's not the Add to Cart button
-                          }}
-                        >
+                        <li key={uniqueKey} className="border p-3 rounded shadow flex items-start space-x-4">
                           <div className="flex-shrink-0">
                             <img
-                              src={item.artwork_url}
-                              alt={item.title}
+                              src={artworkUrl}
+                              alt={title}
                               className="w-24 h-24 rounded"
                             />
                           </div>
                           <div className="flex-grow">
-                            <p className="font-bold">{item.title}</p>
-                            <p className="text-sm text-gray-600">By: {item.artist}</p>
-                            <p className="text-sm text-gray-600">Album: {item.album}</p>
-                            <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
+                            <p className="font-bold">{title}</p>
+                            <p className="text-sm text-gray-600">By: {artist}</p>
+                            <p className="text-sm text-gray-600">Album: {album}</p>
+                            <p className="text-sm text-gray-600">Points: {price}</p>
                           </div>
                           <div className="flex flex-col items-end space-y-2 w-full">
                             {item.preview_url && (
@@ -664,13 +638,7 @@ export default function ITunesSearchPage() {
                                   Your browser does not support the audio element.
                                 </audio>
                                 <div className="flex justify-between items-center mt-3 w-full">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation(); // Prevent triggering modal on button click
-                                      handleAddToCart(item); // Add to cart on button click
-                                    }}
-                                    className="bg-green-500 text-white px-4 py-2 rounded"
-                                  >
+                                  <button className="bg-green-500 text-white px-4 py-2 rounded">
                                     Add to Cart
                                   </button>
                                 </div>
