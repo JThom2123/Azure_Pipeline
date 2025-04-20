@@ -175,7 +175,9 @@ export default function ITunesSearchPage() {
   
       const data = await response.json();
       const songs = data.catalogue?.songs || []; // Assuming this structure
-  
+      const catalogueId = data.catalogue?.catalogue_id;
+      setCatId(catalogueId);
+
       if (songs.length === 0) {
         setSponsorCat([]);
         return;
