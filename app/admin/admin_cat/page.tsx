@@ -336,7 +336,13 @@ export default function ITunesSearchPage() {
               
 
               {!showCatalog && (
-                <div className="flex gap-2 mb-6">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSearch();
+                  }}
+                  className="flex gap-2 mb-6"
+                >
                   <input
                     type="text"
                     value={searchTerm}
@@ -344,8 +350,9 @@ export default function ITunesSearchPage() {
                     placeholder="Search for songs about TRUCKS..."
                     className="border p-2 rounded w-full"
                   />
+
                   <button
-                    onClick={handleSearch}
+                    type="submit"
                     disabled={loading}
                     className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
@@ -353,12 +360,13 @@ export default function ITunesSearchPage() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setShowCatalog(true)}
                     className="bg-green-500 text-white px-4 py-2 rounded ml-4"
                   >
                     View My Catalog
                   </button>
-                </div>
+                </form>
               )}
 
               {showCatalog && (
