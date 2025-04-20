@@ -26,6 +26,18 @@ export default function ITunesSearchPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [sponsorCompany, setSponsorCompany] = useState<string | null>(null);
+  const [sponsorCat, setSponsorCat] = useState<{
+    song_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    artwork_url: string;
+    preview_url: string;
+    store_url: string;
+    release_date: string;
+    genre: string;
+    price: number;
+  }[]>([]);
 
 
   const [formData, setFormData] = useState({
@@ -35,28 +47,25 @@ export default function ITunesSearchPage() {
     sponsor_company_id: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
+  
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "sponsor_company_id" ? Number(value) : value,  // cast to number
+      [name]: value,
     }));
+  
+    if (name === "sponsor_company_id") {
+      const selectedCompany = sponsorCompanies.find((company) => company.id === Number(value));
+      if (selectedCompany) {
+        setSponsorCompany(selectedCompany.company_name);
+      } else {
+        setSponsorCompany(""); // Clear if none selected
+      }
+    }
   };
 
-  useEffect(() => {
-    const getUserAttributes = async () => {
-      try {
-        const attributes = await fetchUserAttributes();
-        if (attributes["custom:sponsorCompany"]) {
-          setSponsorCompany(attributes["custom:sponsorCompany"]);
-        }
-      } catch (error) {
-        console.error("Error fetching user attributes:", error);
-      }
-    };
-
-    getUserAttributes();
-  }, []);
+  
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -197,7 +206,7 @@ export default function ITunesSearchPage() {
       }
     }
   };
-
+  
   const removeSelectedSongsFromBackend = async (songs: any[]) => {
     const attributes = await fetchUserAttributes();
     const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
@@ -233,6 +242,9 @@ export default function ITunesSearchPage() {
       }
     }
   };
+  useEffect(() => {
+    console.log("Sponsor company updated to:", sponsorCompany);
+  }, [sponsorCompany]);
 
   const toggleSelectSong = (song: any) => {
     const isSelected = selectedSongs.some((selectedSong) => selectedSong.trackId === song.trackId);
@@ -273,20 +285,14 @@ export default function ITunesSearchPage() {
                     About Page
                   </button>
                 </Link>
-                <button className="bg-blue-600 px-4 py-2 rounded">Catalog</button>
-                 <Link href="/admin/applications">
-                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    Application
-                  </button>
-                </Link>
                 <Link href="/admin/addUsers">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Add Users
                   </button>
                 </Link>
-                <Link href="/admin/reports">
+                <Link href="/admin/admin_cat">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    Reports
+                    Catalog
                   </button>
                 </Link>
               </div>
@@ -319,30 +325,24 @@ export default function ITunesSearchPage() {
               <h1 className="text-3xl font-bold mb-6 text-center">Catalog</h1>
 
               <label htmlFor="sponsor">Select a Sponsor Company:</label>
-                <select
-                  id="sponsorDropdown"
-                  name="sponsor_company_id"
-                  value={formData.sponsor_company_id}
-                  onChange={handleInputChange}
-                  className="border p-2 w-full mb-2"
-                >
-                  <option value="">Please Select a Sponsor Company</option>
-                  {sponsorCompanies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.company_name}
-                    </option>
-                  ))}
-                </select>
+              <select
+                id="sponsorDropdown"
+                name="sponsor_company_id"
+                value={formData.sponsor_company_id}
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-2"
+              >
+                <option value={0}>Please Select a Sponsor Company</option>
+                {sponsorCompanies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.company_name}
+                  </option>
+                ))}
+              </select>
               
 
               {!showCatalog && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSearch();
-                  }}
-                  className="flex gap-2 mb-6"
-                >
+                <div className="flex gap-2 mb-6">
                   <input
                     type="text"
                     value={searchTerm}
@@ -350,9 +350,8 @@ export default function ITunesSearchPage() {
                     placeholder="Search for songs about TRUCKS..."
                     className="border p-2 rounded w-full"
                   />
-
                   <button
-                    type="submit"
+                    onClick={handleSearch}
                     disabled={loading}
                     className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
@@ -360,13 +359,12 @@ export default function ITunesSearchPage() {
                   </button>
 
                   <button
-                    type="button"
                     onClick={() => setShowCatalog(true)}
                     className="bg-green-500 text-white px-4 py-2 rounded ml-4"
                   >
                     View My Catalog
                   </button>
-                </form>
+                </div>
               )}
 
               {showCatalog && (
@@ -384,29 +382,29 @@ export default function ITunesSearchPage() {
 
               {showCatalog ? (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
-                  {selectedSongs.length === 0 ? (
-                    <p className="text-gray-500">You haven't selected any songs yet.</p>
-                  ) : (
-                    <ul className="space-y-4">
-                      {selectedSongs.map((song) => (
-                        <li key={song.trackId} className="flex justify-between items-center border p-4 rounded-lg shadow-md bg-white">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={song.artworkUrl100}
-                              alt={song.trackName}
-                              className="w-20 h-20 rounded"
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-semibold">{song.trackName} - {song.artistName}</span>
-                              <span className="text-sm text-gray-500">Points: {song.points}</span>
-                            </div>
+                <h2 className="text-xl font-semibold">Your Selected Songs:</h2>
+                {sponsorCat.length === 0 ? (
+                  <p className="text-gray-500">You haven't selected any songs yet.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {sponsorCat.map((song) => (
+                      <li key={song.title} className="flex justify-between items-center border p-4 rounded-lg shadow-md bg-white">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={song.artwork_url}
+                            alt={song.title}
+                            className="w-20 h-20 rounded"
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{song.title} - {song.artist}</span>
+                            <span className="text-sm text-gray-500">Points: {song.price}</span>
                           </div>
-                          <button
-                            onClick={() => toggleSelectSong(song)}
-                            className="bg-red-500 text-white px-4 py-2 rounded"
-                          >
-                            Deselect
+                        </div>
+                        <button
+                          onClick={() => toggleSelectSong(song)}
+                          className="bg-red-500 text-white px-4 py-2 rounded"
+                        >
+                          Deselect
                           </button>
                         </li>
                       ))}
