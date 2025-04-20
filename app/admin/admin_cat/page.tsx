@@ -273,14 +273,20 @@ export default function ITunesSearchPage() {
                     About Page
                   </button>
                 </Link>
+                <button className="bg-blue-600 px-4 py-2 rounded">Catalog</button>
+                 <Link href="/admin/applications">
+                  <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
+                    Application
+                  </button>
+                </Link>
                 <Link href="/admin/addUsers">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
                     Add Users
                   </button>
                 </Link>
-                <Link href="/admin/admin_cat">
+                <Link href="/admin/reports">
                   <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">
-                    Catalog
+                    Reports
                   </button>
                 </Link>
               </div>

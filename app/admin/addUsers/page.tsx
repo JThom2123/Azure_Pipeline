@@ -203,9 +203,13 @@ export default function AdminPage() {
                     <nav className="flex justify-between items-center bg-gray-800 p-4 text-white">
                         <div className="flex gap-4">
                             <Link href="/admin/home"><button className="bg-gray-700 px-4 py-2 rounded">Home</button></Link>
-                            <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded">About</button></Link>
-                            <button className="bg-blue-600 px-4 py-2 rounded">Add Users</button>
+                            <Link href="/aboutpage"><button className="bg-gray-700 px-4 py-2 rounded">About Page</button></Link>
                             <Link href="/admin/admin_cat"><button className="bg-gray-700 px-4 py-2 rounded">Catalog</button></Link>
+                            <Link href="/admin/applications">
+                                    <button className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Application</button>
+                                </Link>
+                            <button className="bg-blue-600 px-4 py-2 rounded">Add Users</button>
+                            <Link href="/admin/reports"><button className="bg-gray-700 px-4 py-2 rounded">Reports</button></Link>
                         </div>
                         <div className="relative" ref={dropdownRef}>
                             <FaUserCircle className="cursor-pointer text-2xl" onClick={() => setDropdownOpen(!dropdownOpen)} />
