@@ -632,25 +632,38 @@ export default function ITunesSearchPage() {
 
             {/* Song modal */}
             {modalOpen && selectedSong && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" onClick={handleModalClose}>
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-                  <h2 className="text-xl font-bold mb-4">{selectedSong.trackName}</h2>
-                  <p className="text-lg">Album: {selectedSong.collectionName}</p>
-                  <p className="text-lg">Genre: {selectedSong.primaryGenreName}</p>
-                  <div className="mt-4 flex justify-between items-center">
-                    {/* Add to Cart button on the far right */}
-                    <button
-                      onClick={() => handleAddToCart(selectedSong)} // Calls handleAddToCart when clicked
-                      className="bg-green-500 text-white px-4 py-2 rounded"
-                    >
-                      Add to Cart
-                    </button>
-                    <button onClick={handleModalClose} className="bg-red-500 text-white px-4 py-2 rounded">
-                      Close
-                    </button>
-                  </div>
+            <div
+              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+              onClick={handleModalClose}
+            >
+              <div
+                className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-xl font-bold mb-4">{selectedSong.title}</h2>
+                <p className="text-lg">Album: {selectedSong.album}</p>
+                <p className="text-lg">Genre: {selectedSong.genre}</p>
+                <p className="text-lg">Price: {selectedSong.price} pts</p>
+
+
+                <div className="mt-4 flex justify-between items-center">
+                  <button
+                    onClick={() => handleAddToCart(selectedSong)}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={handleModalClose}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
+            </div>
+            )}
+          </div>
             )}
           </div>
         );
