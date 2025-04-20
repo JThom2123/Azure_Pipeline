@@ -203,7 +203,7 @@ export default function ITunesSearchPage() {
     const sponsorCompanyName = attributes["custom:sponsorCompany"] || null;
     for (const song of songs) {
       const payload = {
-        catalogue_id: catId,
+        catalogue_id: sponsorCompany,
         song_id: song.trackId,
       };
 
