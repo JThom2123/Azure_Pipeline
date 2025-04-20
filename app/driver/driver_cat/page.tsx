@@ -49,6 +49,20 @@ export default function ITunesSearchPage() {
     genre: string;
     price: number;
   }[] | null>(null);
+
+  const [mySongs, getMySongs] = useState<{
+    song_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    artwork_url: string;
+    preview_url: string;
+    store_url: string;
+    release_date: string;
+    genre: string;
+    last_cached: number;
+  }[] | null>(null);
+
   const [song_id, setSong] = useState<string[]>([]);
 
   const router = useRouter();
@@ -191,7 +205,7 @@ export default function ITunesSearchPage() {
   
 
   //purchase songs
-  const handlePurchase = async (songId: string, catalogueId: number) => {
+  const handlePurchase = async (songId: number, catalogueId: number) => {
     /*
     const email = localStorage.getItem("userEmail"); // Ensure this is the correct way to get the user's email
     if (!email) {
@@ -219,6 +233,7 @@ export default function ITunesSearchPage() {
       if (response.ok) {
         console.log("Purchase successful:", data);
         alert(`Successfully purchased the song! Your new points balance is: ${data.data.new_points}`);
+        handleRemoveFromCart(songId);
       } else {
         console.error("Error during purchase:", data.error);
         alert(`Error: ${data.error}`);
@@ -228,6 +243,44 @@ export default function ITunesSearchPage() {
       alert("There was an issue processing your purchase.");
     }
   };
+
+
+
+
+  //purchased songs
+  useEffect(() => {
+    const fetchPurchasedSongs = async () => {
+      if (!userEmail) return;
+  
+      try {
+        const response = await fetch(
+          `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/user/${encodeURIComponent(userEmail)}/purchases`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+  
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to fetch purchased songs:", errorData);
+          return;
+        }
+  
+        const data = await response.json();
+        console.log("Fetched purchased songs:", data);
+  
+        // Set the actual array of songs from the API response
+        setPurchasedSongs(Array.isArray(data.data) ? data.data : []);
+      } catch (error) {
+        console.error("Error fetching purchased songs:", error);
+      }
+    };
+  
+    fetchPurchasedSongs();
+  }, [userEmail]);
 
 
 
@@ -384,6 +437,12 @@ export default function ITunesSearchPage() {
     });
   };
 
+  /*
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    // Fallback to placeholder image on error
+    (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/150';
+  };
+*/
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -533,83 +592,102 @@ export default function ITunesSearchPage() {
                   {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
                     <li>No songs found in the catalog.</li>
                   ) : (
-                    Array.isArray(sponsorCat) && sponsorCat.map(item => (
-
-                      <li
-                        key={item.song_id} // Ensures each list item has a unique "key"
-                        className="border p-3 rounded shadow flex items-start space-x-4"
-                        onClick={(e) => {
-                          // Prevent modal opening when clicking on Add to Cart button
-                          if ((e.target as HTMLElement).closest('button')) return;
-                          handleSongClick(item); // Open modal if it's not the Add to Cart button
-                        }}
-                      >
-                        <div className="flex-shrink-0">
-                          <img
-                            src={item.artwork_url}
-                            alt={item.title}
-                            className="w-24 h-24 rounded"
-                          />
-                        </div>
-                        <div className="flex-grow">
-                          <p className="font-bold">{item.title}</p>
-                          <p className="text-sm text-gray-600">By: {item.artist}</p>
-                          <p className="text-sm text-gray-600">Album: {item.album}</p>
-                          <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
-                        </div>
-                        <div className="flex flex-col items-end space-y-2 w-full">
-                          {item.preview_url && (
-                            <div className="w-full">
-                              <audio controls className="w-full">
-                                <source src={item.preview_url} type="audio/mpeg" />
-                                Your browser does not support the audio element.
-                              </audio>
-                              <div className="flex justify-between items-center mt-3 w-full">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent triggering modal on button click
-                                    handleAddToCart(item); // Add to cart on button click
-                                  }}
-                                  className="bg-green-500 text-white px-4 py-2 rounded"
-                                >
-                                  Add to Cart
-                                </button>
+                    Array.isArray(sponsorCat) &&
+                    sponsorCat.map((item, index) => {
+                      const artworkUrl = item.artwork_url || 'https://via.placeholder.com/150'; // Fallback image URL
+                      const songTitle = item.title || 'Unknown Song';
+                      const artistName = item.artist || 'Unknown Artist';
+                      const songId = item.song_id || index;
+              
+                      if (!songTitle || !artworkUrl || !artistName) {
+                        console.warn(`Missing required fields for item at index ${index}:`, item);
+                        return null;
+                      }
+              
+                      return (
+                        <li
+                          key={songId}
+                          className="border p-3 rounded shadow flex items-start space-x-4"
+                          onClick={(e) => {
+                            if ((e.target as HTMLElement).closest('button')) return;
+                            handleSongClick(item); // Handle song click (open modal)
+                          }}
+                        >
+                          <div className="flex-shrink-0">
+                            <img
+                              src={artworkUrl}
+                              alt={songTitle}
+                              className="w-24 h-24 rounded"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/150'; // Placeholder fallback
+                              }}
+                            />
+                          </div>
+                          <div className="flex-grow">
+                            <p className="font-bold">{songTitle}</p>
+                            <p className="text-sm text-gray-600">By: {artistName}</p>
+                          </div>
+                          <div className="flex flex-col items-end space-y-2 w-full">
+                            {item.preview_url && (
+                              <div className="w-full">
+                                <audio controls className="w-full">
+                                  <source src={item.preview_url} type="audio/mpeg" />
+                                  Your browser does not support the audio element.
+                                </audio>
+                                <div className="flex justify-between items-center mt-3 w-full">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent triggering song click
+                                      handleAddToCart(item); // Add to cart
+                                    }}
+                                    className="bg-green-500 text-white px-4 py-2 rounded"
+                                  >
+                                    Add to Cart
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    ))
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })
                   )}
                 </ul>
               </div>
               ) : (
                 // My Songs View
                 <div className="text-center mt-4">
-                  <h2 className="font-bold text-lg">Purchased Songs</h2>
-                  <ul className="mt-4 space-y-4">
-                    {purchasedSongs.length === 0 ? (
-                      <li>No songs purchased yet.</li>
-                    ) : (
-                      purchasedSongs.map((song, index) => (
-                        <li key={index} className="border p-3 rounded shadow flex items-start space-x-4">
-                          <div className="flex-shrink-0">
-                            <img src={song.artwork_url || song.artworkUrl100} alt={song.title || song.album} className="w-24 h-24 rounded" />
-                          </div>
-                          <div className="flex-grow">
-                            <p className="font-bold">{song.title || song.album}</p>
-                            <p className="text-sm text-gray-600">By: {song.artist}</p>
-                          </div>
-                          <div className="flex flex-col items-end space-y-2 w-full">
-                            <audio controls className="w-full">
-                              <source src={song.preview_url} type="audio/mpeg" />
-                            </audio>
-                          </div>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </div>
+                <h2 className="font-bold text-lg">Purchased Songs</h2>
+                <ul className="mt-4 space-y-4">
+                  {purchasedSongs.length === 0 ? (
+                    <li>No songs purchased yet.</li>
+                  ) : (
+                    purchasedSongs.map((song) => (
+                      <li
+                        key={song.song_id || song.trackId}
+                        className="border p-3 rounded shadow flex items-start space-x-4"
+                      >
+                        <div className="flex-shrink-0">
+                          <img
+                            src={song.artwork_url || song.artworkUrl100}
+                            alt={song.title || song.album}
+                            className="w-24 h-24 rounded"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <p className="font-bold">{song.title || song.album}</p>
+                          <p className="text-sm text-gray-600">By: {song.artist}</p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-2 w-full">
+                          <audio controls className="w-full">
+                            <source src={song.preview_url} type="audio/mpeg" />
+                          </audio>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
               )}
             </main>
 
