@@ -326,7 +326,7 @@ const SponsorApplication = () => {
                                             <td className="border px-4 py-2">
                                                 {app.status === 'submitted' ? (
                                                     <button
-                                                        onClick={() => handleStatusChange(app.appID, selectedStatuses[app.appID])}
+                                                        onClick={() => handleStatusChange(app.appID)}
                                                         disabled={!selectedStatuses[app.appID]}
                                                         className={`px-3 py-1 rounded ${selectedStatuses[app.appID]
                                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
