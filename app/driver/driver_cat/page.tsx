@@ -199,7 +199,7 @@ export default function ITunesSearchPage() {
         const custom = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
         const original = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
         return {
-          song_id: original?.song_id ?? itunesSong.trackId,
+          song_id: itunesSong.song_id,
           title: itunesSong.title,
           artist: itunesSong.artist,
           album: itunesSong.album,
@@ -211,8 +211,7 @@ export default function ITunesSearchPage() {
           price: custom?.price ?? Math.floor(Math.random() * 100) + 1,
         };
       });
-      
-      //const cleanedSongs = mergedSongs.filter((s) => !!s.song_id);
+      console.log("Final catalog:", mergedSongs);
       setSponsorCat(mergedSongs);
 
       console.log("Final catalog:", mergedSongs);
@@ -226,7 +225,9 @@ export default function ITunesSearchPage() {
 
 
   //purchase songs
-  const handlePurchase = async (songId: string, catalogueId: number) => {
+  const handlePurchase = async (songId: string, catId: number) => {
+    console.log("Attempting purchase with:", { email: userEmail, songId, catId });
+
     /*
     const email = localStorage.getItem("userEmail"); // Ensure this is the correct way to get the user's email
     if (!email) {
@@ -235,6 +236,7 @@ export default function ITunesSearchPage() {
     }
     */
 
+    console.log("userEmail for purchase:", userEmail);
     const purchaseData = {
       email: userEmail,
       song_id: songId,
@@ -425,8 +427,8 @@ export default function ITunesSearchPage() {
   };
 
   const handleRemoveFromCart = (songId: string) => {
-    setCart((prevCart) => prevCart.filter((song) => song.trackId !== songId));
-  };
+    setCart((prevCart) => prevCart.filter((song) => song.song_id !== songId));
+  };  
 
   const handleSongClick = (song: any) => {
     setSelectedSong(song);
@@ -441,7 +443,7 @@ export default function ITunesSearchPage() {
 
   const handlePurchaseAll = () => {
     cart.forEach(item => {
-      handlePurchase(item.trackId, catId);
+      handlePurchase(item.song_id, catId);
     });
   };
 
@@ -511,13 +513,13 @@ export default function ITunesSearchPage() {
                             </div>
                             <div className="flex flex-col space-y-1">
                               <button
-                                onClick={() => handleRemoveFromCart(item.trackId)}
+                                onClick={() => handleRemoveFromCart(item.song_id)}
                                 className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
                               >
                                 Remove
                               </button>
                               <button
-                                onClick={() => handlePurchase(item.trackId, catId)}
+                                onClick={() => handlePurchase(item.song_id, catId)}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
                               >
                                 Purchase

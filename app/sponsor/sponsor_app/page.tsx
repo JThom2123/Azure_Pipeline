@@ -13,6 +13,7 @@ interface Application {
     driverEmail: string;
     submitted_at: string;
     status: string;
+    reason: string;
 }
 
 const SponsorApplication = () => {
@@ -25,41 +26,43 @@ const SponsorApplication = () => {
     const [applications, setApplications] = useState<Application[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [roleLoading, setRoleLoading] = useState(true);
+    const [reasons, setReasons] = useState<{ [key: number]: string }>({});
+    const [selectedStatuses, setSelectedStatuses] = useState<{ [key: number]: string }>({});
 
     useEffect(() => {
         const fetchSponsorCompanyIDFromCognito = async () => {
-          try {
-            const user = await getCurrentUser();
-            const email = user.signInDetails?.loginId ?? "";
-            setUserEmail(email);
-      
-            const attributes = await fetchUserAttributes();
-            const sponsorCompanyName = attributes["custom:sponsorCompany"] || "";
-      
-            if (sponsorCompanyName) {
-              const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`);
-              const companies = await res.json();
-      
-              const matchedCompany = companies.find(
-                (company: { company_name: string }) =>
-                  company.company_name === sponsorCompanyName
-              );
-      
-              if (matchedCompany?.id) {
-                setSponsorCompanyID(matchedCompany.id);
-                console.log("Matched Sponsor Company ID:", matchedCompany.id);
-              } else {
-                console.error("Sponsor company not found in DB");
-              }
-            } else {
-              console.log("Sponsor company name not found in Cognito attributes");
+            try {
+                const user = await getCurrentUser();
+                const email = user.signInDetails?.loginId ?? "";
+                setUserEmail(email);
+
+                const attributes = await fetchUserAttributes();
+                const sponsorCompanyName = attributes["custom:sponsorCompany"] || "";
+
+                if (sponsorCompanyName) {
+                    const res = await fetch(`https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/companies`);
+                    const companies = await res.json();
+
+                    const matchedCompany = companies.find(
+                        (company: { company_name: string }) =>
+                            company.company_name === sponsorCompanyName
+                    );
+
+                    if (matchedCompany?.id) {
+                        setSponsorCompanyID(matchedCompany.id);
+                        console.log("Matched Sponsor Company ID:", matchedCompany.id);
+                    } else {
+                        console.error("Sponsor company not found in DB");
+                    }
+                } else {
+                    console.log("Sponsor company name not found in Cognito attributes");
+                }
+            } catch (err) {
+                console.error("Error fetching sponsor company ID from Cognito", err);
             }
-          } catch (err) {
-            console.error("Error fetching sponsor company ID from Cognito", err);
-          }
         };
         fetchSponsorCompanyIDFromCognito();
-      }, []);   
+    }, []);
 
 
     useEffect(() => {
@@ -100,7 +103,7 @@ const SponsorApplication = () => {
                 `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/sponsor?sponsorCompanyID=${companyID}`
             );
             const data = await res.json();
-    
+
             if (Array.isArray(data)) {
                 setApplications(data);
             } else {
@@ -112,23 +115,33 @@ const SponsorApplication = () => {
             setApplications([]);
         }
     };
-    
 
-    const handleStatusChange = async (appID: number, newStatus: string) => {
+    const handleStatusChange = async (appID: number) => {
+        const newStatus = selectedStatuses[appID];
+        const reason = reasons[appID] || "";
+
+        if (!newStatus) {
+            alert("Please select a status.");
+            return;
+        }
+
+        console.log("Sending PATCH:", { appID, newStatus, reason });
+
         try {
             const res = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/application/status", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ appID, newStatus }),
+                body: JSON.stringify({ appID, newStatus, reason }),
             });
-            console.log("Sending PATCH:", { appID, newStatus });
 
             if (res.ok) {
                 setApplications((prev) =>
                     prev.map((app) =>
-                        app.appID === appID ? { ...app, status: newStatus } : app
+                        app.appID === appID ? { ...app, status: newStatus, reason } : app
                     )
                 );
+            } else {
+                alert("Failed to update application.");
             }
         } catch (error) {
             console.error("Failed to update status", error);
@@ -146,7 +159,6 @@ const SponsorApplication = () => {
             console.log("Sponsor Company ID:", sponsorID);
         }
     };
-    
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -167,7 +179,6 @@ const SponsorApplication = () => {
             fetchApplications(sponsorCompanyID);
         }
     }, [sponsorCompanyID]);
-    
 
     useEffect(() => {
         const fetchRole = async () => {
@@ -261,6 +272,8 @@ const SponsorApplication = () => {
                                         <th className="border px-4 py-2">Email</th>
                                         <th className="border px-4 py-2">Submitted</th>
                                         <th className="border px-4 py-2">Status</th>
+                                        <th className="border px-4 py-2">Reason</th>
+                                        <th className="border px-4 py-2">Submit</th>
                                     </tr>
                                 </thead>
 
@@ -271,26 +284,60 @@ const SponsorApplication = () => {
                                             <td className="border px-4 py-2">{app.driverEmail}</td>
                                             <td className="border px-4 py-2">{new Date(app.submitted_at).toLocaleDateString()}</td>
                                             <td className="border px-4 py-2">
-                                                {app.status === "submitted" || app.status === "pending" ? (
-                                                    <select
-                                                        value={app.status}
-                                                        onChange={(e) => handleStatusChange(app.appID, e.target.value)}
-                                                        className="p-1 border rounded"
-                                                    >
-                                                        <option value="pending">Pending</option>
-                                                        <option value="accepted">Accepted</option>
-                                                        <option value="rejected">Rejected</option>
-                                                    </select>
+                                                {app.status === 'submitted' ? (
+                                                    <>
+                                                        <select
+                                                            value={selectedStatuses[app.appID] || ""}
+                                                            onChange={(e) =>
+                                                                setSelectedStatuses((prev) => ({
+                                                                    ...prev,
+                                                                    [app.appID]: e.target.value,
+                                                                }))
+                                                            }
+                                                            className="p-1 border rounded"
+                                                        >
+                                                            <option value="">Pending</option>
+                                                            <option value="accepted">Accept</option>
+                                                            <option value="rejected">Reject</option>
+                                                        </select>
+                                                    </>
                                                 ) : (
-                                                    <span className={`px-2 py-1 rounded ${
-                                                        app.status === "accepted"
-                                                          ? "bg-green-400"
-                                                          : app.status === "rejected"
-                                                          ? "bg-red-400"
-                                                          : "bg-gray-400"
-                                                      } text-white`}>
-                                                      {app.status}
-                                                    </span>
+                                                    <span className="text-gray-500 italic capitalize">{app.status}</span>
+                                                )}
+                                            </td>
+
+                                            <td className="border px-4 py-2">
+                                                {app.status === 'submitted' ? (
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter reason"
+                                                        value={reasons[app.appID] || ""}
+                                                        onChange={(e) =>
+                                                            setReasons((prev) => ({ ...prev, [app.appID]: e.target.value }))
+                                                        }
+                                                        className="border p-1 rounded w-full"
+                                                    />
+
+                                                ) : (
+                                                    app.reason || "-"
+                                                )}
+                                            </td>
+
+                                            <td className="border px-4 py-2">
+                                                {app.status === 'submitted' ? (
+                                                    <button
+                                                        onClick={() => handleStatusChange(app.appID, selectedStatuses[app.appID])}
+                                                        disabled={!selectedStatuses[app.appID]}
+                                                        className={`px-3 py-1 rounded ${selectedStatuses[app.appID]
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            }`}
+                                                    >
+                                                        Submit
+                                                    </button>
+
+                                                ) : (
+                                                    <span className="text-gray-500 italic capitalize">{app.status}</span>
                                                 )}
                                             </td>
                                         </tr>
