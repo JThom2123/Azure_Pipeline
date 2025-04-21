@@ -37,7 +37,7 @@ export default function ITunesSearchPage() {
   const [selectedSponsor, setSelectedSponsor] = useState<string | null>(null);
   const [selectedSong, setSelectedSong] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [sponsorCat, setSponsorCat] = useState<{
+  const [sponsorCat, setSponsorCat] = useState<Array<{
     song_id: string;
     title: string;
     artist: string;
@@ -48,7 +48,7 @@ export default function ITunesSearchPage() {
     release_date: string;
     genre: string;
     price: number;
-  }[] | null>(null);
+  }>>([]);
   const [song_id, setSong] = useState<string[]>([]);
 
   const router = useRouter();
@@ -138,6 +138,8 @@ export default function ITunesSearchPage() {
     setLoading(true);
     try {
       const safeSponsor = selectedSponsor ?? "Unknown";
+      console.log("Fetching catalog for:", safeSponsor);
+
       const response = await fetch(
         `https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/?company_name=${encodeURIComponent(safeSponsor)}`,
         {
@@ -173,30 +175,46 @@ export default function ITunesSearchPage() {
       let iTunesSongs: any[] = [];
 
       for (const chunk of idChunks) {
-        const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
-        const iTunesData = await iTunesResponse.json();
-        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
-      }
+        console.log("Sending iTunes lookup for:", chunk);
+        const iTunesResponse = await fetch("https://n0dkxjq6pf.execute-api.us-east-1.amazonaws.com/dev1/catalogue/lookup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ ids: chunk })
+        });
+        console.log("Song IDs fetched:", songIds);
 
-      // Merge sponsor price data into iTunes songs
+        const iTunesData = await iTunesResponse.json();
+        console.log("Received iTunes data:", iTunesData);
+        if (!iTunesData || !Array.isArray(iTunesData.results)) {
+          console.error("Invalid iTunes data format:", iTunesData);
+          continue;
+        }
+      
+        iTunesSongs = [...iTunesSongs, ...iTunesData.results];
+      }      
+
       const mergedSongs = iTunesSongs.map((itunesSong) => {
         const custom = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
+        const original = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
         return {
-          song_id: custom?.song_id ?? itunesSong.trackId,
-          title: itunesSong.trackName,
-          artist: itunesSong.artistName,
-          album: itunesSong.collectionName,
-          artwork_url: itunesSong.artworkUrl100,
-          preview_url: itunesSong.previewUrl,
-          store_url: itunesSong.trackViewUrl,
-          release_date: itunesSong.releaseDate,
-          genre: itunesSong.primaryGenreName,
+          song_id: original?.song_id ?? itunesSong.trackId,
+          title: itunesSong.title,
+          artist: itunesSong.artist,
+          album: itunesSong.album,
+          artwork_url: itunesSong.artwork_url,
+          preview_url: itunesSong.preview_url,
+          store_url: itunesSong.preview_url,
+          release_date: itunesSong.release_date,
+          genre: itunesSong.genre,
           price: custom?.price ?? Math.floor(Math.random() * 100) + 1,
-          trackId: itunesSong.trackId,
         };
       });
-
+      
+      //const cleanedSongs = mergedSongs.filter((s) => !!s.song_id);
       setSponsorCat(mergedSongs);
+
       console.log("Final catalog:", mergedSongs);
     } catch (err: any) {
       console.error("Error fetching song IDs or iTunes data:", err);
@@ -250,15 +268,17 @@ export default function ITunesSearchPage() {
 
 
   useEffect(() => {
-    getUserPurchases();
-  }, []);
-
+    if (userEmail) {
+      getUserPurchases();
+    }
+  }, [userEmail]);
+  
   const getUserPurchases = async () => {
     if (!userEmail) {
       console.warn("No user email found — skipping purchase fetch.");
       return;
     }
-  
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -270,36 +290,39 @@ export default function ITunesSearchPage() {
           },
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to fetch purchased songs");
       }
-  
+
       const data = await response.json();
       const songs = data.songs || [];
-  
+      console.log("Fetched purchases:", data);
+
+
       if (songs.length === 0) {
         setPurchasedSongs([]);
         return;
       }
-  
+
       // ✅ Deduplicate song IDs
       const songIds = [...new Set(songs.map((song: any) => song.song_id).filter(Boolean))];
-  
+
       // Chunk and fetch iTunes metadata
       const idChunks = [];
       for (let i = 0; i < songIds.length; i += 10) {
         idChunks.push(songIds.slice(i, i + 10));
       }
-  
+
       let iTunesSongs: any[] = [];
-  
+
       for (const chunk of idChunks) {
+        console.log("iTunes ID chunk:", chunk);
         const iTunesResponse = await fetch(`https://itunes.apple.com/lookup?id=${chunk.join(",")}`);
         const iTunesData = await iTunesResponse.json();
         iTunesSongs = [...iTunesSongs, ...iTunesData.results];
       }
-  
+
       const mergedSongs = iTunesSongs.map((itunesSong) => {
         const original = songs.find((s: any) => String(s.song_id) === String(itunesSong.trackId));
         return {
@@ -315,7 +338,7 @@ export default function ITunesSearchPage() {
           trackId: itunesSong.trackId,
         };
       });
-  
+
       setPurchasedSongs(mergedSongs);
       console.log("Final purchased songs:", mergedSongs);
     } catch (err: any) {
@@ -325,17 +348,14 @@ export default function ITunesSearchPage() {
       setLoading(false);
     }
   };
-  
-  
-
 
   // Fetch catalog whenever sponsor changes
   useEffect(() => {
     if (selectedSponsor) {
-      getCatalog();
+      setSponsorCat([]);         // clear previous songs
+      getCatalog();              // fetch new ones
     }
   }, [selectedSponsor]);
-
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -400,63 +420,12 @@ export default function ITunesSearchPage() {
     };
   }, []);
 
-  const handleProfileClick = () => {
-    router.push("/profile");
-  };
-
-  const handleSignOut = () => {
-    router.replace("/");
-  };
-
   const handleAddToCart = (song: any) => {
     setCart((prevCart) => [...prevCart, song]);
   };
 
   const handleRemoveFromCart = (songId: string) => {
     setCart((prevCart) => prevCart.filter((song) => song.trackId !== songId));
-  };
-  /*
-  const handlePurchase = () => {
-    if (!selectedSponsor) {
-      alert("Please select a sponsor.");
-      return;
-    }
-
-    const selectedSponsorData = sponsorData?.find(sponsor => sponsor.sponsorCompanyName === selectedSponsor);
-
-    if (!selectedSponsorData) {
-      alert("Sponsor not found.");
-      return;
-    }
-
-    const userPoints = selectedSponsorData.totalPoints;
-    const totalPointsRequired = cart.reduce((total, song) => total + song.points, 0);
-
-    if (totalPointsRequired > userPoints) {
-      alert("You do not have enough points to purchase all items in the cart.");
-      return;
-    }
-
-    if (cart.length === 0) {
-      alert("Your cart is empty.");
-      return;
-    }
-
-    const songTitles = cart.map((song) => song.trackName || song.collectionName).join(", ");
-    alert(`Purchased the following songs: ${songTitles}`);
-
-    setPurchasedSongs((prevPurchasedSongs) => [...prevPurchasedSongs, ...cart]);
-    setCart([]);
-  };
-  */
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audio = e.target as HTMLAudioElement;
-    setCurrentTime(audio.currentTime);
-  };
-
-  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audio = e.target as HTMLAudioElement;
-    setDuration(audio.duration);
   };
 
   const handleSongClick = (song: any) => {
@@ -469,11 +438,6 @@ export default function ITunesSearchPage() {
     setSelectedSong(null);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
 
   const handlePurchaseAll = () => {
     cart.forEach(item => {
@@ -481,6 +445,12 @@ export default function ITunesSearchPage() {
     });
   };
 
+  useEffect(() => {
+    if (sponsorCat && sponsorCat.length > 0) {
+      console.log("SponsorCat Contents:", sponsorCat);
+    }
+  }, [sponsorCat]);
+  
   return (
     <Authenticator>
       {({ signOut, user }) => {
@@ -627,18 +597,16 @@ export default function ITunesSearchPage() {
                 <div className="text-center mt-4">
                   <h2 className="font-bold text-lg">{selectedSponsor} Catalog</h2>
                   <ul className="mt-4 space-y-4">
-                    {Array.isArray(sponsorCat) && sponsorCat.length === 0 ? (
+                    {sponsorCat.length === 0 && !loading ? (
                       <li>No songs found in the catalog.</li>
                     ) : (
-                      Array.isArray(sponsorCat) && sponsorCat.map(item => (
-
+                      sponsorCat.map((item) => (
                         <li
-                          key={item.song_id} // Ensures each list item has a unique "key"
+                          key={item.song_id}
                           className="border p-3 rounded shadow flex items-start space-x-4"
                           onClick={(e) => {
-                            // Prevent modal opening when clicking on Add to Cart button
                             if ((e.target as HTMLElement).closest('button')) return;
-                            handleSongClick(item); // Open modal if it's not the Add to Cart button
+                            handleSongClick(item);
                           }}
                         >
                           <div className="flex-shrink-0">
@@ -651,7 +619,6 @@ export default function ITunesSearchPage() {
                           <div className="flex-grow">
                             <p className="font-bold">{item.title}</p>
                             <p className="text-sm text-gray-600">By: {item.artist}</p>
-                            
                             <p className="text-sm text-gray-600">Points: {item.price ?? "N/A"}</p>
                           </div>
                           <div className="flex flex-col items-end space-y-2 w-full">
@@ -664,8 +631,8 @@ export default function ITunesSearchPage() {
                                 <div className="flex justify-between items-center mt-3 w-full">
                                   <button
                                     onClick={(e) => {
-                                      e.stopPropagation(); // Prevent triggering modal on button click
-                                      handleAddToCart(item); // Add to cart on button click
+                                      e.stopPropagation();
+                                      handleAddToCart(item);
                                     }}
                                     className="bg-green-500 text-white px-4 py-2 rounded"
                                   >
@@ -679,6 +646,7 @@ export default function ITunesSearchPage() {
                       ))
                     )}
                   </ul>
+
                 </div>
               ) : (
                 // My Songs View
@@ -712,37 +680,37 @@ export default function ITunesSearchPage() {
 
             {/* Song modal */}
             {modalOpen && selectedSong && (
-            <div
-              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-              onClick={handleModalClose}
-            >
               <div
-                className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                onClick={handleModalClose}
               >
-                <h2 className="text-xl font-bold mb-4">{selectedSong.title}</h2>
-                <p className="text-lg">Album: {selectedSong.album}</p>
-                <p className="text-lg">Genre: {selectedSong.genre}</p>
-                <p className="text-lg">Price: {selectedSong.price} pts</p>
+                <div
+                  className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2 className="text-xl font-bold mb-4">{selectedSong.title}</h2>
+                  <p className="text-lg">Album: {selectedSong.album}</p>
+                  <p className="text-lg">Genre: {selectedSong.genre}</p>
+                  <p className="text-lg">Price: {selectedSong.price} pts</p>
 
 
 
-                <div className="mt-4 flex justify-between items-center">
-                  <button
-                    onClick={() => handleAddToCart(selectedSong)}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    onClick={handleModalClose}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                  >
-                    Close
-                  </button>
+                  <div className="mt-4 flex justify-between items-center">
+                    <button
+                      onClick={() => handleAddToCart(selectedSong)}
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      onClick={handleModalClose}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
             )}
           </div>
         );
