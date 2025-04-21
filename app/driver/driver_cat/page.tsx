@@ -240,7 +240,7 @@ export default function ITunesSearchPage() {
     const purchaseData = {
       email: userEmail,
       song_id: songId,
-      catalogue_id: catalogueId,
+      catalogue_id: catId,
     };
 
     try {
